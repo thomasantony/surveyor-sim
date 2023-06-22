@@ -1,0 +1,8 @@
+[workspace]
+
+members = [
+    "surveyor-gnc",
+    "surveyor-graphics",
+    "surveyor-physics",
+    "surveyor-app",
+]
