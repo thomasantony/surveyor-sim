@@ -46,6 +46,8 @@ impl Plugin for GNC {
         app.add_startup_system(build_fsw)
             .add_event::<GncCommand>()
             .add_event::<sensors::IMUInput>()
+            .add_event::<sensors::IMUOutput>()
+            .add_event::<sensors::StarTrackerOutput>()
             .add_event::<sensors::StarTrackerInput>()
             .add_system(process_gnc_command)
             .add_system(update_imu.before(update_sensor_aggregator))
@@ -60,8 +62,8 @@ impl Plugin for GNC {
 }
 pub fn build_fsw(mut commands: Commands) {
     let spacecraft_state = commands.spawn((TrajectoryPhase::BeforeRetroBurn,)).id();
-    let imu = commands.spawn((sensors::IMUOutput::default(), GeometryConfig::default())).id();
-    let star_tracker = commands.spawn((sensors::StarTrackerOutput::default(), GeometryConfig::default())).id();
+    let imu = commands.spawn((sensors::IMU, GeometryConfig::default())).id();
+    let star_tracker = commands.spawn((sensors::StarTracker, GeometryConfig::default())).id();
     let ephemeris = commands.spawn((sensors::EphemerisOutput::default())).id();
     let sensor_data = commands.spawn((sensors::SensorData::default())).id();
     let estimator = commands.spawn((navigation::AttitudeEstimatorOutput::default())).id();
@@ -106,13 +108,18 @@ mod tests {
     #[test]
     fn test_command_handler()
     {
-        let mut fsw = World::new();
-        fsw.spawn((guidance::GuidanceMode::Idle,));
+        let mut app = App::new();
+        app.add_plugin(GNC);
+        app.update();
+        {
+            let guidance_mode = app.world.query::<&mut guidance::GuidanceMode>().single(&app.world);
+            assert_eq!(*guidance_mode, guidance::GuidanceMode::Idle);
+        }
 
-        let gnc_command = GncCommand::SetGuidanceMode(guidance::GuidanceMode::Manual);
-        process_gnc_command(gnc_command, &mut fsw);
-
-        let guidance_mode = fsw.query::<&mut guidance::GuidanceMode>().single_mut(&mut fsw);
+        // Send a command to the FSW using GncCommand event
+        app.world.send_event(GncCommand::SetGuidanceMode(guidance::GuidanceMode::Manual));
+        app.update();
+        let guidance_mode = app.world.query::<&mut guidance::GuidanceMode>().single(&app.world);
         assert_eq!(*guidance_mode, guidance::GuidanceMode::Manual);
     }
 }

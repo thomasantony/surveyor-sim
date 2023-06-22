@@ -1,5 +1,6 @@
 use bevy_ecs::prelude::*;
 use nalgebra as na;
+// TODO: Switch to using hifitime
 use chrono::prelude::*;
 
 use crate::GeometryConfig;
@@ -11,6 +12,11 @@ pub struct Measurement<T: Default> {
     pub valid: bool,
 }
 
+
+#[derive(Debug, Clone, Component)]
+pub struct StarTracker;
+
+// TODO: Switch to using entity IDs instead of usize
 #[derive(Debug, Clone, Component)]
 pub struct StarTrackerInput {
     pub sensor_id: usize,
@@ -37,6 +43,10 @@ impl Default for StarTrackerOutput {
         }
     }
 }
+
+
+#[derive(Debug, Clone, Component)]
+pub struct IMU;
 
 #[derive(Debug, Clone, Component)]
 pub struct IMUInput
@@ -107,30 +117,39 @@ impl Default for SensorData {
 
 /// System to update the IMU output
 /// Generalize this later to apply to any sensor with a vector input in component frame
-pub fn update_imu(mut imu_input: EventReader<IMUInput>,  mut query: Query<(&GeometryConfig, &mut IMUOutput)>) {
+pub fn update_imu(mut imu_input: EventReader<IMUInput>,  mut query: Query<(&IMU, &GeometryConfig)>, mut output: EventWriter<IMUOutput>) {
     // Rotate the angular velocity from the CF frame to the body frame and
     // assign it to the IMU output
-    let imu_input = imu_input.iter().last().unwrap();
+
     // Get IMU and geometry by sensor id
-    if let Some((geometry,
-            mut imu_output)) = query.iter_mut().nth(imu_input.sensor_id)
+    imu_input.iter().last().map(|imu_input|
     {
-        imu_output.omega_b = geometry.vec_cf2b(&imu_input.omega_cf);
-        imu_output.acc_b = geometry.vec_cf2b(&imu_input.acc_cf);
-    }else{
-        log::error!("IMU sensor id {} not found", imu_input.sensor_id);
-    }
+        if let Some((_, geometry)) = query.iter_mut().nth(imu_input.sensor_id)
+        {
+            let imu_output = IMUOutput{
+                omega_b: geometry.q_cf2b * imu_input.omega_cf,
+                acc_b: geometry.q_cf2b * imu_input.acc_cf,
+            };
+            output.send(imu_output);
+        }else{
+            log::error!("IMU sensor id {} not found", imu_input.sensor_id);
+        }
+    });
 }
 
 pub fn update_star_tracker(mut star_tracker_input: EventReader<StarTrackerInput>,
-                           mut query: Query<(&GeometryConfig, &mut StarTrackerOutput)>) {
-    let star_tracker_input = star_tracker_input.iter().last().unwrap();
-    // Get star tracker and geometry by sensor id
-    if let Some((geometry,
-            mut star_tracker_output)) = query.iter_mut().nth(star_tracker_input.sensor_id)
-    {
-        star_tracker_output.q_i2b = geometry.q_cf2b * star_tracker_input.q_j20002cf;
-    }else{
-        log::error!("Star tracker sensor id {} not found", star_tracker_input.sensor_id);
-    }
+                           mut query: Query<(&StarTracker, &GeometryConfig)>, mut output: EventWriter<StarTrackerOutput>) {
+    star_tracker_input.iter().last().map(| star_tracker_input|{
+        // Get star tracker and geometry by sensor id
+        if let Some((_, geometry,
+                )) = query.iter_mut().nth(star_tracker_input.sensor_id)
+        {
+            let star_tracker_output = StarTrackerOutput{
+                q_i2b: geometry.q_cf2b * star_tracker_input.q_j20002cf
+            };
+            output.send(star_tracker_output);
+        }else{
+            log::error!("Star tracker sensor id {} not found", star_tracker_input.sensor_id);
+        }
+    });
 }

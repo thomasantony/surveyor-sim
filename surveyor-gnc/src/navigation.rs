@@ -17,8 +17,8 @@ impl Default for AttitudeEstimatorOutput {
     }
 }
 
-pub fn update_sensor_aggregator(imu_query: Query<(&sensors::IMUOutput)>,
-                                str_query: Query<(&sensors::StarTrackerOutput)>,
+pub fn update_sensor_aggregator(mut imu_query: EventReader<sensors::IMUOutput>,
+                                mut str_query: EventReader<sensors::StarTrackerOutput>,
                                 mut sensor_data: Query<(&mut sensors::SensorData)>)
 {
     // TODO: Pass through "valid" flag and timestamp from the sensor data
@@ -43,12 +43,12 @@ pub fn update_sensor_aggregator(imu_query: Query<(&sensors::IMUOutput)>,
 }
 
 /// A simple attitude estimator that uses the data from the IMU and Star Tracker directly
-pub fn update_simple_attitude_estimator(imu_query: Query<&crate::sensors::IMUOutput>,
-                                        star_tracker_query: Query<&crate::sensors::StarTrackerOutput>,
+pub fn update_simple_attitude_estimator(sensor_data_query: Query<&sensors::SensorData>,
                                         mut estimator_query: Query<&mut AttitudeEstimatorOutput>) {
     let mut attitude_estimator_output = estimator_query.single_mut();
-    let imu = imu_query.iter().next().unwrap();
-    let star_tracker = star_tracker_query.iter().next().unwrap();
+    let sensor_data = sensor_data_query.single();
+    let imu = sensor_data.imus[0].value.clone();
+    let star_tracker = sensor_data.star_trackers[0].value.clone();
     attitude_estimator_output.q_i2b = star_tracker.q_i2b;
     attitude_estimator_output.omega_b = imu.omega_b;
 }

@@ -41,5 +41,5 @@ pub fn update_manual_mode(mut attitude_target_query: Query<&mut AttitudeTarget>)
     let mut attitude_target = attitude_target_query.single_mut();
     *attitude_target = AttitudeTarget::None;
     // TODO: Use user input to set the attitude target
-    todo!();
+    // todo!();
 }
