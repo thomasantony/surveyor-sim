@@ -124,33 +124,50 @@ mod tests {
         let guidance_mode = app.world.query::<&mut guidance::GuidanceMode>().single(&app.world);
         assert_eq!(*guidance_mode, guidance::GuidanceMode::Manual);
     }
+    #[test]
+    fn test_imu_sensor() {
+        let mut app = App::new();
+        app.add_plugin(GNC);
+        app.update();
+
+        // Set some dummy inputs to the sensor
+        let omega_b = nalgebra::Vector3::new(0.1, 0.2, 0.3);
+        let imu_input = crate::sensors::IMUInput {
+            sensor_id: 0,
+            acc_cf: nalgebra::Vector3::zeros(),
+            omega_cf: omega_b,
+        };
+        // Send events
+        app.world.send_event(imu_input);
+        app.update();
+
+        // Read IMU output event
+        let evt = app.world.get_resource::<Events<sensors::IMUOutput>>().unwrap();
+        let mut reader = evt.get_reader();
+        let imu_output = reader.iter(&evt).next().unwrap();
+        assert_eq!(imu_output.omega_b, omega_b);
+    }
+    #[test]
+    fn test_star_tracker()
+    {
+        let mut app = App::new();
+        app.add_plugin(GNC);
+        app.update();
+
+        let q_j20002cf = nalgebra::UnitQuaternion::from_euler_angles(0.1, 0.2, 0.3);
+
+        let st_input = crate::sensors::StarTrackerInput {
+            sensor_id: 0,
+            q_j20002cf: q_j20002cf,
+        };
+        app.world.send_event(st_input);
+
+        app.update();
+
+        // Read Star Tracker output event
+        let evt = app.world.get_resource::<Events<sensors::StarTrackerOutput>>().unwrap();
+        let mut reader = evt.get_reader();
+        let st_output = reader.iter(&evt).next().unwrap();
+        assert_eq!(st_output.q_i2b, q_j20002cf);
+    }
 }
-//     fn spawn_attitude_sensor_and_estimator() -> World {
-//         let mut fsw = World::new();
-//         let sensor = sensors::PerfectAttitudeSensor::spawn_entity(&mut fsw);
-//         let estimator = navigation::AttitudeEstimator::spawn_entity(&mut fsw);
-//         fsw.insert_one(sensor, sensors::PerfectAttitudeSensor {}).unwrap();
-//         fsw.insert_one(estimator, navigation::AttitudeEstimator::default()).unwrap();
-//         fsw
-//     }
-//     #[test]
-//     fn test_attitude_estimator() {
-//         let mut fsw = spawn_attitude_sensor_and_estimator();
-
-//         // Set some dummy inputs to the sensor
-//         let q_i2b = nalgebra::UnitQuaternion::from_euler_angles(0.1, 0.2, 0.3);
-//         let omega_b = nalgebra::Vector3::new(0.1, 0.2, 0.3);
-//         sensors::PerfectAttitudeSensor::set_input(&mut fsw, q_i2b, omega_b);
-
-//         // Update the estimator
-//         println!("Updating attitude estimator");
-//         navigation::AttitudeEstimator::system_update_attitude_estimator(&mut fsw);
-
-//         // Verify that the attitude estimate and angular velocity propagated correctly
-//         let mut query = fsw.query::<&navigation::AttitudeEstimator>();
-//         for (_id, estimator) in query.iter() {
-//             assert_eq!(estimator.get_q_i2b(), q_i2b);
-//             assert_eq!(estimator.get_omega_b(), omega_b);
-//         }
-//     }
-// }
