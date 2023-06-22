@@ -1,23 +1,13 @@
 use bevy_ecs::prelude::*;
 use nalgebra as na;
-// TODO: Switch to using hifitime
-use chrono::prelude::*;
 
 use crate::GeometryConfig;
-
-#[derive(Debug, Clone, Component, Default)]
-pub struct Measurement<T: Default> {
-    pub value: T,
-    pub time: DateTime<Utc>,
-    pub valid: bool,
-}
-
 
 #[derive(Debug, Clone, Component)]
 pub struct StarTracker;
 
 // TODO: Switch to using entity IDs instead of usize
-#[derive(Debug, Clone, Component)]
+#[derive(Debug, Clone)]
 pub struct StarTrackerInput {
     pub sensor_id: usize,
     pub q_j20002cf: na::UnitQuaternion<f64>,
@@ -31,7 +21,7 @@ impl Default for StarTrackerInput {
     }
 }
 
-#[derive(Debug, Clone, Component)]
+#[derive(Debug, Clone)]
 pub struct StarTrackerOutput
 {
     pub q_i2b: na::UnitQuaternion<f64>,
@@ -48,7 +38,7 @@ impl Default for StarTrackerOutput {
 #[derive(Debug, Clone, Component)]
 pub struct IMU;
 
-#[derive(Debug, Clone, Component)]
+#[derive(Debug, Clone)]
 pub struct IMUInput
 {
     pub sensor_id: usize,
@@ -67,7 +57,7 @@ impl Default for IMUInput {
 
 // TODO:  Add fields to show the time of the measurement being ingested
 // and if it is stale
-#[derive(Debug, Clone, Component)]
+#[derive(Debug, Clone)]
 pub struct IMUOutput
 {
     pub omega_b: na::Vector3<f64>,
@@ -99,21 +89,6 @@ impl Default for EphemerisOutput {
     }
 }
 
-
-#[derive(Debug, Clone, Component)]
-pub struct SensorData {
-    pub imus: [Measurement<IMUOutput>; 2],
-    pub star_trackers: [Measurement<StarTrackerOutput>; 2],
-}
-
-impl Default for SensorData {
-    fn default() -> Self {
-        Self {
-            imus: [Measurement::default(), Measurement::default()],
-            star_trackers: [Measurement::default(), Measurement::default()],
-        }
-    }
-}
 
 /// System to update the IMU output
 /// Generalize this later to apply to any sensor with a vector input in component frame

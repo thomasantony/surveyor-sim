@@ -45,17 +45,22 @@ impl Plugin for GNC {
     fn build(&self, app: &mut App) {
         app.add_startup_system(build_fsw)
             .add_event::<GncCommand>()
+            .add_system(process_gnc_command)
             .add_event::<sensors::IMUInput>()
             .add_event::<sensors::IMUOutput>()
             .add_event::<sensors::StarTrackerOutput>()
             .add_event::<sensors::StarTrackerInput>()
-            .add_system(process_gnc_command)
             .add_system(update_imu.before(update_sensor_aggregator))
             .add_system(update_star_tracker.before(update_sensor_aggregator))
+            .add_event::<navigation::SensorData>()
             .add_system(update_sensor_aggregator)
+            .add_event::<navigation::AttitudeEstimatorOutput>()
             .add_system(update_simple_attitude_estimator.after(update_sensor_aggregator))
+            .add_event::<guidance::AttitudeTarget>()
             .add_system(update_guidance.after(update_simple_attitude_estimator))
+            .add_event::<control::AttitudeTorqueRequest>()
             .add_system(update_attitude_controller.after(update_guidance))
+            .add_event::<control::RCSControllerInput>()
             .add_system(update_control_allocator.after(update_attitude_controller))
             .add_system(update_rcs_controller.after(update_control_allocator));
     }
@@ -65,12 +70,9 @@ pub fn build_fsw(mut commands: Commands) {
     let imu = commands.spawn((sensors::IMU, GeometryConfig::default())).id();
     let star_tracker = commands.spawn((sensors::StarTracker, GeometryConfig::default())).id();
     let ephemeris = commands.spawn((sensors::EphemerisOutput::default())).id();
-    let sensor_data = commands.spawn((sensors::SensorData::default())).id();
-    let estimator = commands.spawn((navigation::AttitudeEstimatorOutput::default())).id();
-    let attitude_target = commands.spawn((guidance::AttitudeTarget::default())).id();
-    let guidance = commands.spawn((guidance::GuidanceMode::Idle, control::AttitudeTorqueRequest::default())).id();
+    let guidance = commands.spawn((guidance::GuidanceMode::Idle)).id();
     let control_allocator = commands.spawn((control::ControlAllocator::default())).id();
-    let rcs_controller = commands.spawn((control::RCSController::default(), control::RCSControllerInput::default(), control::RCSControllerOutput::default())).id();
+    let rcs_controller = commands.spawn((control::RCSController::default(), control::RCSControllerOutput::default())).id();
 }
 
 pub enum GncCommand {

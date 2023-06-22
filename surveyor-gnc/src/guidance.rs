@@ -24,22 +24,20 @@ impl Default for AttitudeTarget {
     }
 }
 
-pub fn update_guidance(query: Query<&GuidanceMode>, attitude_target_query: Query<&mut AttitudeTarget>) {
+pub fn update_guidance(query: Query<&GuidanceMode>, attitude_target_writer: EventWriter<AttitudeTarget>) {
     let mode = query.single();
     match mode {
-        GuidanceMode::Idle => update_idle_mode(attitude_target_query),
-        GuidanceMode::Manual => update_manual_mode(attitude_target_query),
+        GuidanceMode::Idle => update_idle_mode(attitude_target_writer),
+        GuidanceMode::Manual => update_manual_mode(attitude_target_writer),
     }
 }
 // TODO: Make it so that it only changes the target when the mode changes
-pub fn update_idle_mode(mut attitude_target_query: Query<&mut AttitudeTarget>) {
-    let mut attitude_target = attitude_target_query.single_mut();
-    *attitude_target = AttitudeTarget::None;
+pub fn update_idle_mode(mut attitude_target_writer: EventWriter<AttitudeTarget>) {
+    attitude_target_writer.send(AttitudeTarget::None);
 }
 
-pub fn update_manual_mode(mut attitude_target_query: Query<&mut AttitudeTarget>) {
-    let mut attitude_target = attitude_target_query.single_mut();
-    *attitude_target = AttitudeTarget::None;
+pub fn update_manual_mode(mut attitude_target_writer: EventWriter<AttitudeTarget>) {
+    attitude_target_writer.send(AttitudeTarget::None);
     // TODO: Use user input to set the attitude target
     // todo!();
 }

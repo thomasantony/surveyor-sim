@@ -31,7 +31,7 @@ impl Default for RCSController {
     }
 }
 
-#[derive(Debug, Component)]
+#[derive(Debug)]
 pub struct RCSControllerInput {
     /// Torque vector in body frame
     pub torque_b: na::Vector3<f64>,
@@ -60,7 +60,7 @@ impl Default for RCSControllerOutput {
     }
 }
 
-#[derive(Debug, Component)]
+#[derive(Debug)]
 pub struct AttitudeTorqueRequest {
     pub torque_b: na::Vector3<f64>,
 }
@@ -74,15 +74,14 @@ impl Default for AttitudeTorqueRequest {
 }
 
 pub fn update_attitude_controller(
-    attitude_target_query: Query<&AttitudeTarget>,
-    mut torque_request_query: Query<&mut AttitudeTorqueRequest>
+    mut attitude_target_reader: EventReader<AttitudeTarget>,
+    mut torque_request_query: EventWriter<AttitudeTorqueRequest>
 )
 {
-    let attitude_target = attitude_target_query.single();
-    let mut torque_request = torque_request_query.single_mut();
-    match attitude_target {
+    let attitude_target = attitude_target_reader.iter().last().unwrap_or(&AttitudeTarget::None);
+    let torque_request = match attitude_target {
         AttitudeTarget::None => {
-            torque_request.torque_b = na::Vector3::zeros();
+            AttitudeTorqueRequest::default()
         },
         AttitudeTarget::Attitude(_q_i2b) => {
             // Implement quaternion feedback control
@@ -92,45 +91,56 @@ pub fn update_attitude_controller(
             // Implement body rate feedback control
             todo!("Not implemented yet");
         }
-    }
+    };
+    torque_request_query.send(torque_request);
 }
 
 pub fn update_control_allocator(
     control_allocator_query: Query<&ControlAllocator>,
-    torque_request_query: Query<&AttitudeTorqueRequest>,
-    mut rcs_torque_request_query: Query<&mut RCSControllerInput>,
+    mut torque_request_reader: EventReader<AttitudeTorqueRequest>,
+    mut rcs_torque_request_writer: EventWriter<RCSControllerInput>,
 )
 {
     // The control allocator gets configured elsewhere
     let control_allocator = control_allocator_query.single();
-    let torque_request = torque_request_query.single();
-    let mut rcs_torque_request = rcs_torque_request_query.single_mut();
+    torque_request_reader.iter().last().map(
+        |torque_request|{
+            if control_allocator.use_rcs {
+                // Pass through the torque request to the RCS controller
+                let rcs_torque_request = RCSControllerInput {
+                    torque_b: torque_request.torque_b,
+                };
+                rcs_torque_request_writer.send(rcs_torque_request);
+            }
+            if control_allocator.use_tvc {
+                // Pass through the torque request to the TVC controller
+                todo!("Not implemented yet");
+            }
+            if control_allocator.use_diff_thrust {
+                // Pass through the torque request to the differential thrust allocator
+                todo!("Not implemented yet");
+            }
 
-    if control_allocator.use_rcs {
-        // Pass through the torque request to the RCS controller
-        rcs_torque_request.torque_b = torque_request.torque_b;
-    }
-    if control_allocator.use_tvc {
-        // Pass through the torque request to the TVC controller
-        todo!("Not implemented yet");
-    }
-    if control_allocator.use_diff_thrust {
-        // Pass through the torque request to the differential thrust allocator
-        todo!("Not implemented yet");
-    }
+        }
+    );
+
 }
 
 pub fn update_rcs_controller(
-    mut query: Query<(&RCSController, &RCSControllerInput, &mut RCSControllerOutput)>,
+    mut rcs_controller_input_reader: EventReader<RCSControllerInput>,
+    mut query: Query<(&RCSController, &mut RCSControllerOutput)>,
 ) {
-    let (rcs_controller, rcs_controller_input, mut output) = query.single_mut();
-    let torque_rcs = rcs_controller.distribution_matrix_inv.clone() * rcs_controller_input.torque_b;
-    // Compute duty cycles and assign them to the output
-    let mut duty_cycles = Vec::new();
-    for (thrust, max_thrust) in torque_rcs.iter().zip(rcs_controller.max_thrusts.iter()) {
-        // Clip duty cycles to [0, 1]
-        let duty_cycle = (thrust.abs() / max_thrust).clamp(0., 1.);
-        duty_cycles.push(duty_cycle);
+    let (rcs_controller, mut output) = query.single_mut();
+    if let Some(rcs_controller_input) = rcs_controller_input_reader.iter().last()
+    {
+        let torque_rcs = rcs_controller.distribution_matrix_inv.clone() * rcs_controller_input.torque_b;
+        // Compute duty cycles and assign them to the output
+        let mut duty_cycles = Vec::new();
+        for (thrust, max_thrust) in torque_rcs.iter().zip(rcs_controller.max_thrusts.iter()) {
+            // Clip duty cycles to [0, 1]
+            let duty_cycle = (thrust.abs() / max_thrust).clamp(0., 1.);
+            duty_cycles.push(duty_cycle);
+        }
+        output.duty_cycles = duty_cycles;
     }
-    output.duty_cycles = duty_cycles;
 }
