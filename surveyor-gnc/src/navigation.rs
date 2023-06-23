@@ -66,8 +66,8 @@ pub fn update_sensor_aggregator(mut imu_query: EventReader<IMUOutput>,
         };
         sensor_data.star_trackers[st_idx] = meas;
     }
+    // TODO: Mark measurements as invalid if they are too old
     sensor_data_writer.send(sensor_data);
-    println!("foo");
 }
 
 /// A simple attitude estimator that uses the data from the IMU and Star Tracker directly

@@ -105,6 +105,7 @@ pub fn update_imu(mut imu_input: EventReader<IMUInput>,  mut query: Query<(&IMU,
                 omega_b: geometry.q_cf2b * imu_input.omega_cf,
                 acc_b: geometry.q_cf2b * imu_input.acc_cf,
             };
+            println!("Got imu input: {:?}", imu_input);
             output.send(imu_output);
         }else{
             log::error!("IMU sensor id {} not found", imu_input.sensor_id);

@@ -15,21 +15,18 @@ use navigation::{update_simple_attitude_estimator, update_sensor_aggregator};
 use sensors::{update_imu, update_star_tracker};
 use nalgebra as na;
 
-use std::{collections::HashMap, ops::{Deref, DerefMut}, time::Duration};
+use dashmap::DashMap;
 
-use bevy::MinimalPlugins;
-use bevy_app::{prelude::*, ScheduleRunnerSettings};
+
+use bevy_app::{prelude::*};
 use bevy_ecs::prelude::Entity;
 use bevy_ecs::schedule::IntoSystemConfig;
 
 pub struct SurveyorGNC {
-    pub app: App,
-    pub entities: HashMap<&'static str, Entity>,
+    pub entities: DashMap<&'static str, Entity>,
 }
-impl SurveyorGNC {
-    pub fn new() -> Self {
-        let mut app = App::new();
-
+impl Plugin for SurveyorGNC {
+    fn build(&self, app: &mut App) {
         app.add_event::<GncCommand>()
             .add_system(process_gnc_command)
             .add_event::<sensors::EphemerisOutput>()
@@ -49,11 +46,7 @@ impl SurveyorGNC {
             .add_system(update_attitude_controller.after(update_guidance))
             .add_event::<control::RCSControllerInput>()
             .add_system(update_control_allocator.after(update_attitude_controller))
-            .add_system(update_rcs_controller.after(update_control_allocator))
-            .insert_resource(ScheduleRunnerSettings::run_loop(Duration::from_secs_f64(
-                1.0 / 60.0,
-            )))
-            .add_plugins(MinimalPlugins);
+            .add_system(update_rcs_controller.after(update_control_allocator));
 
         let traj = app.world.spawn((Name("TrajectoryPhase"), TrajectoryPhase::BeforeRetroBurn,)).id();
         let imu = app.world.spawn((Name("IMU_A"), sensors::IMU, GeometryConfig::default())).id();
@@ -62,33 +55,23 @@ impl SurveyorGNC {
         let control_allocator = app.world.spawn((Name("ControlAllocator"), control::ControlAllocator::default())).id();
         let rcs_controller = app.world.spawn((Name("RCSController"), control::RCSController::default(), control::RCSControllerOutput::default())).id();
 
-        // Create hashmap with names
-        let mut entities = HashMap::new();
-        entities.insert("TrajectoryPhase", traj);
-        entities.insert("IMU_A", imu);
-        entities.insert("ST_A", star_tracker);
-        entities.insert("Guidance", guidance);
-        entities.insert("ControlAllocator", control_allocator);
-        entities.insert("RCSController", rcs_controller);
+        self.entities.insert("TrajectoryPhase", traj);
+        self.entities.insert("IMU_A", imu);
+        self.entities.insert("ST_A", star_tracker);
+        self.entities.insert("Guidance", guidance);
+        self.entities.insert("ControlAllocator", control_allocator);
+        self.entities.insert("RCSController", rcs_controller);
+    }
+}
+
+impl SurveyorGNC {
+    pub fn new() -> Self {
+
         Self {
-            app,
-            entities
+            entities: DashMap::new(),
         }
     }
 }
-impl Deref for SurveyorGNC {
-    type Target = App;
-
-    fn deref(&self) -> &Self::Target {
-        &self.app
-    }
-}
-impl DerefMut for SurveyorGNC {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.app
-    }
-}
-
 
 #[derive(Component)]
 pub struct Name(pub &'static str);
@@ -151,7 +134,8 @@ mod tests {
     #[test]
     fn test_command_handler()
     {
-        let mut app = SurveyorGNC::new();
+        let mut app = App::new();
+        app.add_simple_outer_schedule().add_plugin(SurveyorGNC::new());
         app.update();
         {
             let guidance_mode = app.world.query::<&mut guidance::GuidanceMode>().single(&app.world);

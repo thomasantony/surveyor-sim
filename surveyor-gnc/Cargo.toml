@@ -9,5 +9,6 @@ bevy = {version = "0.10.1", default-features = false}
 bevy_app = "0.10.1"
 bevy_ecs = "0.10.1"
 chrono = "0.4.26"
+dashmap = "5.4.0"
 log = "0.4.19"
 nalgebra = "0.32.2"
