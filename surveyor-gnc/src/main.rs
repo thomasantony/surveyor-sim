@@ -1,8 +1,5 @@
-use bevy_app::prelude::*;
-use surveyor_gnc::{GNC};
+use surveyor_gnc::SurveyorGNC;
 
 fn main() {
-    App::new()
-        .add_plugin(GNC)
-        .run();
+    SurveyorGNC::new().run()
 }

@@ -128,3 +128,71 @@ pub fn update_star_tracker(mut star_tracker_input: EventReader<StarTrackerInput>
         }
     });
 }
+
+#[cfg(test)]
+mod tests
+{
+    use bevy_app::App;
+    use bevy_ecs::{prelude::Events};
+    use crate::{sensors::{IMUOutput, StarTrackerOutput}, Name};
+
+    use super::*;
+
+    fn create_app() -> App
+    {
+        let mut app = App::new();
+        app.add_event::<IMUInput>()
+            .add_event::<IMUOutput>()
+            .add_event::<StarTrackerOutput>()
+            .add_event::<StarTrackerInput>()
+            .add_system(update_imu)
+            .add_system(update_star_tracker);
+        app.world.spawn((Name("IMU_A"), IMU, GeometryConfig::default()));
+        app.world.spawn((Name("ST_A"), StarTracker, GeometryConfig::default()));
+        app
+    }
+    #[test]
+    fn test_imu_sensor() {
+        let mut app = create_app();
+        app.update();
+
+        // Set some dummy inputs to the sensor
+        let omega_b = nalgebra::Vector3::new(0.1, 0.2, 0.3);
+        let imu_input = crate::sensors::IMUInput {
+            sensor_id: 0,
+            acc_cf: nalgebra::Vector3::zeros(),
+            omega_cf: omega_b,
+        };
+        // Send events
+        app.world.send_event(imu_input);
+        app.update();
+
+        // Read IMU output event
+        let evt = app.world.get_resource::<Events<IMUOutput>>().unwrap();
+        let mut reader = evt.get_reader();
+        let imu_output = reader.iter(&evt).next().unwrap();
+        assert_eq!(imu_output.omega_b, omega_b);
+    }
+    #[test]
+    fn test_star_tracker()
+    {
+        let mut app = create_app();
+        app.update();
+
+        let q_j20002cf = nalgebra::UnitQuaternion::from_euler_angles(0.1, 0.2, 0.3);
+
+        let st_input = crate::sensors::StarTrackerInput {
+            sensor_id: 0,
+            q_j20002cf: q_j20002cf,
+        };
+        app.world.send_event(st_input);
+
+        app.update();
+
+        // Read Star Tracker output event
+        let evt = app.world.get_resource::<Events<StarTrackerOutput>>().unwrap();
+        let mut reader = evt.get_reader();
+        let st_output = reader.iter(&evt).next().unwrap();
+        assert_eq!(st_output.q_i2b, q_j20002cf);
+    }
+}

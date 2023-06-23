@@ -8,13 +8,90 @@ pub mod navigation;
 pub mod guidance;
 pub mod control;
 
-use bevy_app::{Plugin, App};
 use bevy_ecs::{prelude::*};
 use control::{update_attitude_controller, update_control_allocator, update_rcs_controller};
 use guidance::{update_guidance};
 use navigation::{update_simple_attitude_estimator, update_sensor_aggregator};
 use sensors::{update_imu, update_star_tracker};
 use nalgebra as na;
+
+use std::{collections::HashMap, ops::{Deref, DerefMut}, time::Duration};
+
+use bevy::MinimalPlugins;
+use bevy_app::{prelude::*, ScheduleRunnerSettings};
+use bevy_ecs::prelude::Entity;
+use bevy_ecs::schedule::IntoSystemConfig;
+
+pub struct SurveyorGNC {
+    pub app: App,
+    pub entities: HashMap<&'static str, Entity>,
+}
+impl SurveyorGNC {
+    pub fn new() -> Self {
+        let mut app = App::new();
+
+        app.add_event::<GncCommand>()
+            .add_system(process_gnc_command)
+            .add_event::<sensors::EphemerisOutput>()
+            .add_event::<sensors::IMUInput>()
+            .add_event::<sensors::IMUOutput>()
+            .add_event::<sensors::StarTrackerOutput>()
+            .add_event::<sensors::StarTrackerInput>()
+            .add_system(update_imu.before(update_sensor_aggregator))
+            .add_system(update_star_tracker.before(update_sensor_aggregator))
+            .add_event::<navigation::SensorData>()
+            .add_system(update_sensor_aggregator)
+            .add_event::<navigation::AttitudeEstimatorOutput>()
+            .add_system(update_simple_attitude_estimator.after(update_sensor_aggregator))
+            .add_event::<guidance::AttitudeTarget>()
+            .add_system(update_guidance.after(update_simple_attitude_estimator))
+            .add_event::<control::AttitudeTorqueRequest>()
+            .add_system(update_attitude_controller.after(update_guidance))
+            .add_event::<control::RCSControllerInput>()
+            .add_system(update_control_allocator.after(update_attitude_controller))
+            .add_system(update_rcs_controller.after(update_control_allocator))
+            .insert_resource(ScheduleRunnerSettings::run_loop(Duration::from_secs_f64(
+                1.0 / 60.0,
+            )))
+            .add_plugins(MinimalPlugins);
+
+        let traj = app.world.spawn((Name("TrajectoryPhase"), TrajectoryPhase::BeforeRetroBurn,)).id();
+        let imu = app.world.spawn((Name("IMU_A"), sensors::IMU, GeometryConfig::default())).id();
+        let star_tracker = app.world.spawn((Name("ST_A"), sensors::StarTracker, GeometryConfig::default())).id();
+        let guidance = app.world.spawn((Name("SurveyorGNCMode"), guidance::GuidanceMode::Idle)).id();
+        let control_allocator = app.world.spawn((Name("ControlAllocator"), control::ControlAllocator::default())).id();
+        let rcs_controller = app.world.spawn((Name("RCSController"), control::RCSController::default(), control::RCSControllerOutput::default())).id();
+
+        // Create hashmap with names
+        let mut entities = HashMap::new();
+        entities.insert("TrajectoryPhase", traj);
+        entities.insert("IMU_A", imu);
+        entities.insert("ST_A", star_tracker);
+        entities.insert("Guidance", guidance);
+        entities.insert("ControlAllocator", control_allocator);
+        entities.insert("RCSController", rcs_controller);
+        Self {
+            app,
+            entities
+        }
+    }
+}
+impl Deref for SurveyorGNC {
+    type Target = App;
+
+    fn deref(&self) -> &Self::Target {
+        &self.app
+    }
+}
+impl DerefMut for SurveyorGNC {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.app
+    }
+}
+
+
+#[derive(Component)]
+pub struct Name(pub &'static str);
 
 /// Structure defining geometry of any spacecraft component
 #[derive(Debug, Clone, Component)]
@@ -37,42 +114,6 @@ impl GeometryConfig {
     pub fn vec_b2cf(&self, vec_b: &na::Vector3<f64>) -> na::Vector3<f64> {
         self.q_cf2b.inverse_transform_vector(vec_b)
     }
-}
-
-/// Bevy Plugin for the FSW
-pub struct GNC;
-impl Plugin for GNC {
-    fn build(&self, app: &mut App) {
-        app.add_startup_system(build_fsw)
-            .add_event::<GncCommand>()
-            .add_system(process_gnc_command)
-            .add_event::<sensors::IMUInput>()
-            .add_event::<sensors::IMUOutput>()
-            .add_event::<sensors::StarTrackerOutput>()
-            .add_event::<sensors::StarTrackerInput>()
-            .add_system(update_imu.before(update_sensor_aggregator))
-            .add_system(update_star_tracker.before(update_sensor_aggregator))
-            .add_event::<navigation::SensorData>()
-            .add_system(update_sensor_aggregator)
-            .add_event::<navigation::AttitudeEstimatorOutput>()
-            .add_system(update_simple_attitude_estimator.after(update_sensor_aggregator))
-            .add_event::<guidance::AttitudeTarget>()
-            .add_system(update_guidance.after(update_simple_attitude_estimator))
-            .add_event::<control::AttitudeTorqueRequest>()
-            .add_system(update_attitude_controller.after(update_guidance))
-            .add_event::<control::RCSControllerInput>()
-            .add_system(update_control_allocator.after(update_attitude_controller))
-            .add_system(update_rcs_controller.after(update_control_allocator));
-    }
-}
-pub fn build_fsw(mut commands: Commands) {
-    let spacecraft_state = commands.spawn((TrajectoryPhase::BeforeRetroBurn,)).id();
-    let imu = commands.spawn((sensors::IMU, GeometryConfig::default())).id();
-    let star_tracker = commands.spawn((sensors::StarTracker, GeometryConfig::default())).id();
-    let ephemeris = commands.spawn((sensors::EphemerisOutput::default())).id();
-    let guidance = commands.spawn((guidance::GuidanceMode::Idle)).id();
-    let control_allocator = commands.spawn((control::ControlAllocator::default())).id();
-    let rcs_controller = commands.spawn((control::RCSController::default(), control::RCSControllerOutput::default())).id();
 }
 
 pub enum GncCommand {
@@ -110,8 +151,7 @@ mod tests {
     #[test]
     fn test_command_handler()
     {
-        let mut app = App::new();
-        app.add_plugin(GNC);
+        let mut app = SurveyorGNC::new();
         app.update();
         {
             let guidance_mode = app.world.query::<&mut guidance::GuidanceMode>().single(&app.world);
@@ -123,51 +163,5 @@ mod tests {
         app.update();
         let guidance_mode = app.world.query::<&mut guidance::GuidanceMode>().single(&app.world);
         assert_eq!(*guidance_mode, guidance::GuidanceMode::Manual);
-    }
-    #[test]
-    fn test_imu_sensor() {
-        let mut app = App::new();
-        app.add_plugin(GNC);
-        app.update();
-
-        // Set some dummy inputs to the sensor
-        let omega_b = nalgebra::Vector3::new(0.1, 0.2, 0.3);
-        let imu_input = crate::sensors::IMUInput {
-            sensor_id: 0,
-            acc_cf: nalgebra::Vector3::zeros(),
-            omega_cf: omega_b,
-        };
-        // Send events
-        app.world.send_event(imu_input);
-        app.update();
-
-        // Read IMU output event
-        let evt = app.world.get_resource::<Events<sensors::IMUOutput>>().unwrap();
-        let mut reader = evt.get_reader();
-        let imu_output = reader.iter(&evt).next().unwrap();
-        assert_eq!(imu_output.omega_b, omega_b);
-    }
-    #[test]
-    fn test_star_tracker()
-    {
-        let mut app = App::new();
-        app.add_plugin(GNC);
-        app.update();
-
-        let q_j20002cf = nalgebra::UnitQuaternion::from_euler_angles(0.1, 0.2, 0.3);
-
-        let st_input = crate::sensors::StarTrackerInput {
-            sensor_id: 0,
-            q_j20002cf: q_j20002cf,
-        };
-        app.world.send_event(st_input);
-
-        app.update();
-
-        // Read Star Tracker output event
-        let evt = app.world.get_resource::<Events<sensors::StarTrackerOutput>>().unwrap();
-        let mut reader = evt.get_reader();
-        let st_output = reader.iter(&evt).next().unwrap();
-        assert_eq!(st_output.q_i2b, q_j20002cf);
     }
 }

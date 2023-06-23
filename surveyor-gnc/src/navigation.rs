@@ -2,7 +2,7 @@ use bevy_ecs::prelude::*;
 use nalgebra as na;
 // TODO: Switch to using hifitime
 use chrono::prelude::*;
-use crate::sensors::{self, StarTrackerOutput, IMUOutput};
+use crate::sensors::{StarTrackerOutput, IMUOutput};
 
 
 #[derive(Debug, Clone, Default)]
@@ -67,6 +67,7 @@ pub fn update_sensor_aggregator(mut imu_query: EventReader<IMUOutput>,
         sensor_data.star_trackers[st_idx] = meas;
     }
     sensor_data_writer.send(sensor_data);
+    println!("foo");
 }
 
 /// A simple attitude estimator that uses the data from the IMU and Star Tracker directly
