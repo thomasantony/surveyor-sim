@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<Config>
+    <UniverseConfig>
+        <CelestialBody name="Earth">
+            <gravity>
+                <mu>3.986004418e14</mu>
+            </gravity>
+        </CelestialBody>
+    </UniverseConfig>
+    <SpacecraftConfig>
+        <FSW>
+        </FSW>
+        <RcsSubsystem>
+            <thruster type="RCS" name="roll1">
+                <min_thrust>0.0</min_thrust>
+                <max_thrust>0.25</max_thrust>
+                <geometry>
+                    <!-- thruster pointed in the +X direction -->
+                    <q_cf2b>[0.7071068, 0.0, 0.7071068, 0.0]</q_cf2b>
+                    <cf_offset_com_b>[-0.1, 1.0, -0.5]</cf_offset_com_b>
+                </geometry>
+            </thruster>
+            <thruster type="RCS" name="roll2">
+                <min_thrust>0.0</min_thrust>
+                <max_thrust>0.25</max_thrust>
+                <geometry>
+                    <!-- thruster pointed in the -X direction -->
+                    <q_cf2b>[0.7071068, 0.0, -0.7071068, 0.0]</q_cf2b>
+                    <cf_offset_com_b>[-0.1, 1.0, -0.5]</cf_offset_com_b>
+                </geometry>
+            </thruster>
+            <thruster type="RCS" name="leg2A">
+                <min_thrust>0.0</min_thrust>
+                <max_thrust>0.25</max_thrust>
+                <geometry>
+                    <!-- thruster pointed in the +Z direction -->
+                    <q_cf2b>[1.0, 0.0, 0.0, 0.0]</q_cf2b>
+                    <cf_offset_com_b>[0.8660254037844386, -0.5, -0.6]</cf_offset_com_b>
+                </geometry>
+            </thruster>
+            <thruster type="RCS" name="leg2B">
+                <min_thrust>0.0</min_thrust>
+                <max_thrust>0.25</max_thrust>
+                <geometry>
+                    <!-- thruster pointed in the -Z direction -->
+                    <q_cf2b>[0.0, 1.0, 0.0, 0.0]</q_cf2b>
+                    <cf_offset_com_b>[0.8660254037844386, -0.5, -0.4]</cf_offset_com_b>
+                </geometry>
+            </thruster>
+            <thruster type="RCS" name="leg3A">
+                <min_thrust>0.0</min_thrust>
+                <max_thrust>0.25</max_thrust>
+                <geometry>
+                    <!-- thruster pointed in the +Z direction -->
+                    <q_cf2b>[1.0, 0.0, 0.0, 0.0]</q_cf2b>
+                    <cf_offset_com_b>[-0.8660254037844386, -0.5, -0.6]</cf_offset_com_b>
+                </geometry>
+            </thruster>
+            <thruster type="RCS" name="leg3B">
+                <min_thrust>0.0</min_thrust>
+                <max_thrust>0.25</max_thrust>
+                <geometry>
+                    <!-- thruster pointed in the -Z direction -->
+                    <q_cf2b>[0.0, 1.0, 0.0, 0.0]</q_cf2b>
+                    <cf_offset_com_b>[-0.8660254037844386, -0.5, -0.4]</cf_offset_com_b>
+                </geometry>
+            </thruster>
+        </RcsSubsystem>
+        <EngineSubsystem>
+            <!-- thrusters positioned in tripod configuration -->
+            <thruster type="VernierRocket" name="A">
+                <min_thrust>133.45</min_thrust>
+                <max_thrust>462.61</max_thrust>
+                <geometry>
+                    <q_cf2b>[0.0, 0.0, 0.0, 1.0]</q_cf2b>
+                    <cf_offset_com_b>[0.0, 1.0, -0.05]</cf_offset_com_b>
+                </geometry>
+                <tvc>
+                    <max_deflection>1.5707963267948966</max_deflection>
+                    <axis_cf>[0.0, 1.0, 0.0]</axis_cf>
+                </tvc>
+            </thruster>
+            <thruster type="VernierRocket" name="B">
+                <min_thrust>133.45</min_thrust>
+                <max_thrust>462.61</max_thrust>
+                <geometry>
+                    <q_cf2b>[0.0, 0.0, 0.0, 1.0]</q_cf2b>
+                    <cf_offset_com_b>[0.8660254037844386, -0.5, -0.05]</cf_offset_com_b>
+                </geometry>
+            </thruster>
+            <thruster type="VernierRocket" name="C">
+                <min_thrust>133.45</min_thrust>
+                <max_thrust>462.61</max_thrust>
+                <geometry>
+                    <q_cf2b>[0.0, 0.0, 0.0, 1.0]</q_cf2b>
+                    <cf_offset_com_b>[-0.8660254037844386, -0.5, -0.05]</cf_offset_com_b>
+                </geometry>
+            </thruster>
+        </EngineSubsystem>
+    </SpacecraftConfig>
+</Config>

@@ -3,8 +3,14 @@ name = "surveyor-physics"
 version = "0.1.0"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
-hecs = "0.10.3"
 nalgebra = "0.32.2"
+bevy_ecs = "0.10.1"
+hard-xml = "1.25.0"
+rvstruct = "0.3.2"
+log = "0.4.19"
+bevy = "0.10.1"
+hifitime = "3.8.2"
+
+[dev-dependencies]
+approx = "0.5.1"
