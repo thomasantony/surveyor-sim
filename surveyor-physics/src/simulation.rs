@@ -1,3 +1,4 @@
+use crate::{SimulationState, SimulationTime};
 use crate::integrators::do_rk4_step;
 use crate::spacecraft::{
     InitialState, OrbitalDynamics, OrbitalDynamicsInputs, SpacecraftModel, SpacecraftProperties,
@@ -79,14 +80,22 @@ impl SimulationResults {
 
 pub fn run_simulation_system(
     sim_params: Res<SimulationParams>,
-    mut query: Query<(&mut SpacecraftModel, &SpacecraftProperties, &mut OrbitalDynamicsInputs, &mut SimulationResults)>,
+    mut query: Query<(&mut SimulationTime, &mut SpacecraftModel, &SpacecraftProperties, &mut OrbitalDynamicsInputs, &mut SimulationResults)>,
     mut universe: Query<(&mut Universe)>,
+    mut set_sim_state: ResMut<NextState<SimulationState>>,
 ) {
-    let mut t = sim_params.t0;
-    let mut state = sim_params.initial_state.clone();
-
+    // let mut t = sim_params.t0;
+    // let mut state = sim_params.initial_state.clone();
     // Use query to extract references to the spacecraft model and orbital dynamics inputs
-    let (mut spacecraft_model, sc_props, mut orbital_dynamics_input, mut results) = query.single_mut();
+    let (mut t, mut spacecraft_model, sc_props, mut orbital_dynamics_input, mut results) = query.single_mut();
+
+    if t.0 >= sim_params.tf {
+        log::info!("Simulation has finished");
+        set_sim_state.set(SimulationState::Finished);
+        return;
+    }
+    log::info!("Sim time: {}", t.0);
+
     let mut universe = universe.single_mut();
 
     {
@@ -108,12 +117,5 @@ pub fn run_simulation_system(
             .history
             .push(spacecraft_model.get_trajectory().clone());
     }
-
-    // Update commands for each subsystem here
-    // Pass through engine commands to each subsystem
-    let _commands = EngineCommands {
-        vernier_thrust_a: 0.001,
-        vernier_thrust_b: 0.001,
-        vernier_thrust_c: 0.001,
-    };
+    t.0 += sim_params.dt;
 }

@@ -168,6 +168,7 @@ pub fn run_plotting_system(
     sim_params: Res<SimulationParams>,
     sim_results: Query<&SimulationResults>
 ) {
+    log::info!("Running plotting system");
     let sim_result = &sim_results.single();
     // Only plot of simulation has finished
     if sim_result.history.len() == 0 {

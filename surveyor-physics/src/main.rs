@@ -1,4 +1,5 @@
 use bevy_app::App;
+use surveyor_physics::SimulationState;
 use surveyor_physics::config::SimulationConfig;
 use surveyor_physics::universe::Universe;
 use nalgebra::SMatrix;
@@ -11,11 +12,12 @@ use surveyor_physics::spacecraft::{OrbitalDynamicsInputs, SpacecraftModel, Space
 // use bevy::prelude::*;
 use bevy_ecs::prelude::*;
 use hard_xml::XmlRead;
-
+use bevy_app::IntoSystemAppConfig;
 
 
 #[cfg(target_arch = "wasm32")]
 pub fn main() {
+    use bevy::MinimalPlugins;
     use surveyor_physics::{simulation::run_simulation_system, visualization::run_plotting_system};
 
     console_error_panic_hook::set_once();
@@ -40,30 +42,17 @@ pub fn main() {
     App::new()
         .add_plugin(surveyor_physics::SurveyorPhysicsPlugin)
         .add_plugin(gnc)
-        .add_system(run_plotting_system)
-        .set_runner(my_runner)
+        .add_system(run_plotting_system.in_schedule(OnExit(surveyor_physics::SimulationState::Running)))
+        .add_plugins(MinimalPlugins)
+        .add_startup_system(start_sim)
         .run();
 }
 
-fn my_runner(mut app: App) {
-    'mainloop: loop {
-        // first handle inputs (which we have none of)
-        // then update ECS systems
-        // Check if we have finished the simulation
-        app.update();
-        let ecs = &mut app.world;
-        let tf = ecs.get_resource::<SimulationParams>().unwrap().tf;
-        let sim_result = ecs.query::<&SimulationResults>().single(&ecs);
-
-        if sim_result.history[sim_result.history.len() - 1].time >= tf {
-            break 'mainloop;
-        }
-
-        // Log current time
-        let time = sim_result.history[sim_result.history.len() - 1].time;
-        log::info!("Current time: {}", time);
-    }
+fn start_sim(mut set_sim_state: ResMut<NextState<SimulationState>>)
+{
+    set_sim_state.set(SimulationState::Running);
 }
+
 #[cfg(not(target_arch = "wasm32"))]
 pub fn main() {
     // Parse spacecraft config and initialize spacecraft model object

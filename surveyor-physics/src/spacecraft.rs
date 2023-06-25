@@ -173,6 +173,10 @@ impl SpacecraftModel {
             // fsw: FlightSoftware::new(),
         }
     }
+    pub fn set_initial_state(&mut self, initial_state: &InitialState)
+    {
+        self.orbital_dynamics = OrbitalDynamics::from_initial_state(initial_state);
+    }
     pub fn from_config(config: SpacecraftConfig, initial_state: InitialState) -> Self {
         // Iterate over subsystems and create subsystems
         let subsystems: Vec<_> = config
@@ -193,7 +197,6 @@ impl SpacecraftModel {
             subsystems: HashMap::from_iter(subsystems),
             orbital_dynamics,
             ode_state,
-            // fsw: FlightSoftware::new(),
         }
     }
     // Loads and initializes subsystems from XML

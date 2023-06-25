@@ -61,12 +61,15 @@ pub enum SubsystemConfig {
     Propulsion(EngineSubsystemConfig),
     #[xml(tag = "RcsSubsystem")]
     Rcs(RcsSubsystemConfig),
+    #[xml(tag = "ImuSubsystem")]
+    Imu(ImuSubsystemConfig),
 }
 impl ToString for SubsystemConfig {
     fn to_string(&self) -> String {
         match self {
             SubsystemConfig::Propulsion(_) => "Propulsion".to_string(),
             SubsystemConfig::Rcs(_) => "Rcs".to_string(),
+            SubsystemConfig::Imu(_) => "Imu".to_string(),
         }
     }
 }
@@ -76,6 +79,13 @@ impl ToString for SubsystemConfig {
 pub struct RcsSubsystemConfig {
     #[xml(child = "thruster")]
     pub thrusters: Vec<ThrusterConfig>,
+}
+
+#[derive(Debug, XmlRead, PartialEq)]
+#[xml(tag = "ImuSubsystem")]
+pub struct ImuSubsystemConfig {
+    #[xml(child = "thruster")]
+    pub thrusters: Vec<ImuConfig>,
 }
 
 #[derive(Debug, XmlRead, PartialEq, Clone)]
@@ -120,4 +130,11 @@ pub struct GeometryParams {
     /// Position of the component frame relative to the spacecraft frame center-of-mass
     #[xml(flatten_text = "cf_offset_com_b")]
     pub cf_offset_com_b: Vector3,
+}
+
+#[derive(Debug, XmlRead, Clone, PartialEq)]
+#[xml(tag = "imu")]
+pub struct ImuConfig {
+    #[xml(child = "geometry")]
+    pub geometry: GeometryParams,
 }

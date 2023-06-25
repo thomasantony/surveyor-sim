@@ -18,6 +18,7 @@ plotly = { version = "0.8.3", features = ["wasm"] }
 console_error_panic_hook = "0.1.7"
 console_log = { version = "1.0.0", features = ["wasm-bindgen"] }
 web-sys = { version = "0.3.64", features = ["Window", "Document", "HtmlElement"] }
+bevy = {version ="0.10.1", default-features = false}
 
 [dev-dependencies]
 approx = "0.5.1"
