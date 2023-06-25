@@ -24,4 +24,8 @@ impl RcsThruster {
         outputs.total_force_b += thrust_b;
         outputs.total_torque_b += torque_b;
     }
+    pub fn handle_commands(&mut self, duty_cycle: f64) {
+        // Compute the thrust based on the duty cycle
+        self.thrust = self.config.max_thrust * duty_cycle;
+    }
 }

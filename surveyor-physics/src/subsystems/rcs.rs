@@ -13,8 +13,16 @@ impl RcsSubsystem {
         Self { thrusters }
     }
 }
+pub struct RcsCommands {
+    pub duty_cycles: Vec<f64>,
+}
 impl RcsSubsystem {
-    pub fn handle_commands(&mut self, _commands: &super::EngineCommands) {}
+    pub fn handle_commands(&mut self, commands: &RcsCommands) {
+        // Iterate over thrusters and call their handle_commands method
+        for (thruster, duty_cycle) in self.thrusters.iter_mut().zip(commands.duty_cycles.iter()) {
+            thruster.handle_commands(*duty_cycle);
+        }
+    }
     pub fn update_dynamics(&mut self, _outputs: &mut super::OrbitalDynamicsInputs) {
         // Iterate over thrusters and call their update_dynamics method
         for thruster in &mut self.thrusters {

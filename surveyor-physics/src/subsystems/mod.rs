@@ -1,20 +1,21 @@
-use std::ops::Sub;
+use enum_as_inner::EnumAsInner;
 
 use crate::{
     config::SubsystemConfig,
     integrators::NewDynamicSystem,
-    spacecraft::{OrbitalDynamicsInputs, SpacecraftDiscreteState},
+    spacecraft::{OrbitalDynamicsInputs, SpacecraftDiscreteState}, interfaces::ActuatorEvents,
 };
 pub mod propulsion;
 pub mod rcs;
 
 use self::propulsion::EngineCommands;
 
-#[derive(Debug)]
+#[derive(Debug, EnumAsInner)]
 pub enum Subsystem {
     Propulsion(propulsion::SurveyorPropulsion),
     Rcs(rcs::RcsSubsystem),
 }
+
 impl Subsystem {
     pub fn from_config(config: &SubsystemConfig) -> Self {
         match config {
@@ -27,17 +28,7 @@ impl Subsystem {
             _ => panic!("Invalid subsystem config"),
         }
     }
-    pub fn handle_commands(&mut self, commands: &EngineCommands) {
-        match self {
-            Subsystem::Propulsion(engine_subsystem) => {
-                engine_subsystem.handle_commands(commands);
-            }
-            Subsystem::Rcs(rcs_subsystem) => {
-                // rcs_subsystem.handle_commands(commands);
-            }
-        }
-    }
-    /// Represents a collection of models that make up a subsystem
+    // Represents a collection of models that make up a subsystem
     pub fn update_discrete(&mut self, dt: f64, _discrete_state: &SpacecraftDiscreteState) {
         match self {
             Subsystem::Propulsion(engine_subsystem) => {
@@ -70,6 +61,7 @@ impl Subsystem {
         }
     }
 }
+
 impl<'a> NewDynamicSystem<'a> for Subsystem {
     type DerivativeInputs = ();
     fn get_state(&self) -> &[f64] {

@@ -1,3 +1,4 @@
+use bevy_app::App;
 use surveyor_physics::config::SimulationConfig;
 use surveyor_physics::universe::Universe;
 use nalgebra::SMatrix;
@@ -11,40 +12,7 @@ use surveyor_physics::spacecraft::{OrbitalDynamicsInputs, SpacecraftModel, Space
 use bevy_ecs::prelude::*;
 use hard_xml::XmlRead;
 
-// Hardocde the timestep for now
-pub const DT: f64 = 0.1; // s
 
-fn build_sim_ecs(mut commands: Commands)
-{
-    // Orbit with: a = 500 km, 0 degree inclination, 0 degree RAAN, 0 degree argument of perigee, 0 degree true anomaly
-    let initial_state = InitialState::from_str(include_str!("../initial_state.xml")).unwrap();
-    // Create new spacecraft with engine subsystem
-    let spacecraft_config_xml = include_str!("../simulation.xml");
-
-    let sim_config = SimulationConfig::from_str(spacecraft_config_xml).unwrap();
-    let spacecraft_model =
-        SpacecraftModel::from_config(sim_config.spacecraft, initial_state.clone());
-
-    // Create new bevy ECS entity for spacecraft
-    commands.spawn(
-        (OrbitalDynamicsInputs::new(),
-        SpacecraftProperties::new(
-            1.0,
-            SMatrix::from_vec(vec![1., 0., 0., 0., 1., 0., 0., 0., 1.]),
-        ),
-        spacecraft_model,
-        SimulationResults::default())
-    );
-    let universe = Universe::from_config(sim_config.universe);
-    commands.spawn(universe);
-
-    let a: f64 = 6378.14 + 500.0;
-    // let period = 2.0 * PI * (a.powi(3) / 398600.0).sqrt();
-    let period = 0.1 * PI * (a.powi(3) / 398600.0).sqrt();
-    let sim_params: SimulationParams = SimulationParams::new(DT, 0.0, period, initial_state);
-    commands.insert_resource(sim_params);
-
-}
 
 #[cfg(target_arch = "wasm32")]
 pub fn main() {
@@ -69,34 +37,30 @@ pub fn main() {
         .unwrap();
 
     App::new()
-    /// Split this up into two systems - one that actually builds the ECS and one that
-    /// initializes the simulation. The latter can be run anytime we trigger a new simulation
-        .add_startup_system(build_sim_ecs)
-        .add_system(run_simulation_system)
-        // .add_system(run_plotting_system)
+        .add_plugin(SurveyorPhysicsPlugin)
         .set_runner(my_runner)
         .run();
 }
 
-// fn my_runner(mut app: App) {
-//     'mainloop: loop {
-//         // first handle inputs (which we have none of)
-//         // then update ECS systems
-//         // Check if we have finished the simulation
-//         app.update();
-//         let ecs = &mut app.world;
-//         let tf = ecs.get_resource::<SimulationParams>().unwrap().tf;
-//         let sim_result = ecs.query::<&SimulationResults>().single(&ecs);
+fn my_runner(mut app: App) {
+    'mainloop: loop {
+        // first handle inputs (which we have none of)
+        // then update ECS systems
+        // Check if we have finished the simulation
+        app.update();
+        let ecs = &mut app.world;
+        let tf = ecs.get_resource::<SimulationParams>().unwrap().tf;
+        let sim_result = ecs.query::<&SimulationResults>().single(&ecs);
 
-//         if sim_result.history[sim_result.history.len() - 1].time >= tf {
-//             break 'mainloop;
-//         }
+        if sim_result.history[sim_result.history.len() - 1].time >= tf {
+            break 'mainloop;
+        }
 
-//         // Log current time
-//         let time = sim_result.history[sim_result.history.len() - 1].time;
-//         log::info!("Current time: {}", time);
-//     }
-// }
+        // Log current time
+        let time = sim_result.history[sim_result.history.len() - 1].time;
+        log::info!("Current time: {}", time);
+    }
+}
 #[cfg(not(target_arch = "wasm32"))]
 pub fn main() {
     // Parse spacecraft config and initialize spacecraft model object

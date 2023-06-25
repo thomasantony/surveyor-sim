@@ -1,8 +1,10 @@
+use std::collections::HashMap;
+
 use crate::{
-    config::SpacecraftConfig,
+    config::{SpacecraftConfig, RcsSubsystemConfig},
     integrators::NewDynamicSystem,
     math::{UnitQuaternion, Vector3},
-    subsystems::Subsystem,
+    subsystems::Subsystem, interfaces::ActuatorEvents,
 };
 use hard_xml::XmlRead;
 use nalgebra::{DVector, SMatrix, SVector};
@@ -156,7 +158,7 @@ impl SpacecraftProperties {
 
 #[derive(Component, Debug)]
 pub struct SpacecraftModel {
-    subsystems: Vec<Subsystem>,
+    subsystems: HashMap<String, Subsystem>,
     orbital_dynamics: OrbitalDynamics,
     ode_state: DVector<f64>,
     // fsw: FlightSoftware,
@@ -165,7 +167,7 @@ pub struct SpacecraftModel {
 impl SpacecraftModel {
     pub fn new() -> Self {
         Self {
-            subsystems: Vec::new(),
+            subsystems: HashMap::new(),
             orbital_dynamics: OrbitalDynamics::new(0.0, SVector::<f64, 13>::zeros()),
             ode_state: DVector::<f64>::zeros(13),
             // fsw: FlightSoftware::new(),
@@ -176,19 +178,19 @@ impl SpacecraftModel {
         let subsystems: Vec<_> = config
             .subsystems
             .iter()
-            .map(|subsystem_config| Subsystem::from_config(subsystem_config))
+            .map(|subsystem_config| (subsystem_config.to_string(), Subsystem::from_config(subsystem_config)))
             .collect();
         let orbital_dynamics = OrbitalDynamics::from_initial_state(&initial_state);
         let mut ode_state = DVector::<f64>::zeros(
             13 + subsystems
                 .iter()
-                .map(|subsystem| subsystem.get_num_states())
+                .map(|(_, subsystem)| subsystem.get_num_states())
                 .sum::<usize>(),
         );
         // Set orbital dynamics state
         ode_state.rows_mut(0, 13).copy_from(&orbital_dynamics.state);
         Self {
-            subsystems,
+            subsystems: HashMap::from_iter(subsystems),
             orbital_dynamics,
             ode_state,
             // fsw: FlightSoftware::new(),
@@ -211,8 +213,8 @@ impl SpacecraftModel {
         Ok(Self::from_config(spacecraft_config, initial_state))
     }
     // Builder pattern to add subsystem
-    pub fn with_subsystem(mut self, subsystem: Subsystem) -> Self {
-        self.subsystems.push(subsystem);
+    pub fn with_subsystem(mut self, name: String, subsystem: Subsystem) -> Self {
+        self.subsystems.insert(name, subsystem);
         self
     }
     pub fn get_trajectory(&self) -> &OrbitalDynamics {
@@ -227,72 +229,23 @@ impl SpacecraftModel {
         let spacecraft_discrete_state =
             SpacecraftDiscreteState::new(self.get_t(), &self.orbital_dynamics.state);
 
-        for subsystem in self.subsystems.iter_mut() {
+        for (_, subsystem) in self.subsystems.iter_mut() {
             subsystem.update_discrete(dt, &spacecraft_discrete_state);
         }
-        // for subsystem in self.subsystems.iter_mut() {
-        //     subsystem.update_dynamics(commands);
-        // }
     }
     pub fn update_dynamics(&mut self, outputs: &mut OrbitalDynamicsInputs) {
-        for subsystem in self.subsystems.iter_mut() {
+        for (_, subsystem) in self.subsystems.iter_mut() {
             subsystem.update_dynamics(outputs);
         }
     }
+    pub fn handle_actuator_commands(&mut self, commands: &ActuatorEvents) {
+        match commands {
+            ActuatorEvents::RCS(rcs_command) => {
+                self.subsystems.get_mut("RCS").unwrap().as_rcs_mut().unwrap().handle_commands(rcs_command);
+            }
+        }
+    }
 }
-
-// impl<'a> DynamicSystem<'a, 13> for OrbitalDynamics {
-//     type OtherParams = (&'a SpacecraftProperties, &'a OrbitalDynamicsInputs);
-
-//     fn get_state(&self) -> &SVector<f64, 13> {
-//         &self.state
-//     }
-
-//     fn set_state(&mut self, t:f64, state: SVector<f64, 13>) {
-//         self.state = state;
-//         self.time = t;
-//     }
-
-//     fn get_num_states(&self) -> usize {
-//         13
-//     }
-
-//     fn get_t(&self) -> f64 {
-//         self.time
-//     }
-
-//     fn dynamics(&self, _t: f64, (sc, orbital_dynamics_inputs): Self::OtherParams) -> SVector<f64, 13> {
-//         let mut new_state = SVector::<f64, 13>::from_vec(vec![0.0; 13]);
-
-//         // Translational dynamics
-//         let v = self.state.fixed_rows::<3>(3);
-
-//         let mut dx = new_state.fixed_rows_mut::<3>(0);
-//         dx.copy_from_slice(v.as_slice());
-
-//         let mut dv = new_state.fixed_rows_mut::<3>(3);
-//         let acc = orbital_dynamics_inputs.total_force_b/sc.mass;
-//         dv.copy_from_slice(acc.as_slice());
-
-//         // Rotational dynamics
-//         // Quaternion is in the order [w, x, y, z]
-//         let q = self.state.fixed_rows::<4>(6);
-//         let w = self.state.fixed_rows::<3>(10);
-
-//         let mut q_dot = new_state.fixed_rows_mut::<4>(6);
-//         q_dot[0] = 0.5 * (-q[1] * w[0] - q[2] * w[1] - q[3] * w[2]);
-//         q_dot[1] = 0.5 * (q[0] * w[0] + q[2] * w[2] - q[3] * w[1]);
-//         q_dot[2] = 0.5 * (q[0] * w[1] - q[1] * w[2] + q[3] * w[0]);
-//         q_dot[3] = 0.5 * (q[0] * w[2] + q[1] * w[1] - q[2] * w[0]);
-
-//         let h = sc.inertia * w;
-//         let mut w_dot = new_state.fixed_rows_mut::<3>(10);
-//         let dwdt = sc.inertia_inv * (orbital_dynamics_inputs.total_torque_b - w.cross(&h));
-//         w_dot.copy_from_slice(dwdt.as_slice());
-
-//         new_state
-//     }
-// }
 
 // Need some way of passing in scprops to OrbitalDynamics
 impl<'a> NewDynamicSystem<'a> for OrbitalDynamics {
@@ -327,7 +280,7 @@ impl<'a> NewDynamicSystem<'a> for SpacecraftModel {
     fn get_num_states(&self) -> usize {
         self.subsystems
             .iter()
-            .map(|subsystem| subsystem.get_num_states())
+            .map(|(_, subsystem)| subsystem.get_num_states())
             .sum::<usize>()
             + 13
     }
@@ -340,7 +293,7 @@ impl<'a> NewDynamicSystem<'a> for SpacecraftModel {
         self.orbital_dynamics.set_state(t, &state[0..13]);
         // Set state for all subsystems while stepping through state vector
         let mut offset = 13;
-        for subsystem in self.subsystems.iter_mut() {
+        for (_, subsystem) in self.subsystems.iter_mut() {
             subsystem.set_state(t, &state[offset..offset + subsystem.get_num_states()]);
             offset += subsystem.get_num_states();
         }
@@ -356,7 +309,7 @@ impl<'a> NewDynamicSystem<'a> for SpacecraftModel {
         // then used by get_derivatives() which is called later
 
         // Call update_continuous on all subsystems
-        for subsystem in self.subsystems.iter_mut() {
+        for (_, subsystem) in self.subsystems.iter_mut() {
             subsystem.update_continuous(t);
         }
 
@@ -371,7 +324,7 @@ impl<'a> NewDynamicSystem<'a> for SpacecraftModel {
         let mut offset = 13;
         // Iterate over subsystems and get derivatives
         // TODO: Use wasm-bindgen-rayon to parallelize this
-        for subsystem in self.subsystems.iter_mut() {
+        for (_, subsystem) in self.subsystems.iter_mut() {
             subsystem.get_derivatives(
                 t,
                 &mut d_state[offset..offset + subsystem.get_num_states()],

@@ -62,6 +62,14 @@ pub enum SubsystemConfig {
     #[xml(tag = "RcsSubsystem")]
     Rcs(RcsSubsystemConfig),
 }
+impl ToString for SubsystemConfig {
+    fn to_string(&self) -> String {
+        match self {
+            SubsystemConfig::Propulsion(_) => "Propulsion".to_string(),
+            SubsystemConfig::Rcs(_) => "Rcs".to_string(),
+        }
+    }
+}
 
 #[derive(Debug, XmlRead, PartialEq)]
 #[xml(tag = "RcsSubsystem")]

@@ -9,8 +9,10 @@ bevy_ecs = "0.10.1"
 hard-xml = "1.25.0"
 rvstruct = "0.3.2"
 log = "0.4.19"
-bevy = "0.10.1"
+bevy_app = "0.10.1"
 hifitime = "3.8.2"
+surveyor-gnc = { path = "../surveyor-gnc" }
+enum-as-inner = "0.6.0"
 
 [dev-dependencies]
 approx = "0.5.1"
