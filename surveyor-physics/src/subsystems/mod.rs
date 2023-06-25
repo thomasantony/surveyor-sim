@@ -3,7 +3,7 @@ use enum_as_inner::EnumAsInner;
 use crate::{
     config::SubsystemConfig,
     integrators::NewDynamicSystem,
-    spacecraft::{OrbitalDynamicsInputs, SpacecraftDiscreteState}, interfaces::ActuatorEvents,
+    spacecraft::{OrbitalDynamicsInputs, SpacecraftDiscreteState}, interfaces::ActuatorEvent,
 };
 pub mod propulsion;
 pub mod rcs;

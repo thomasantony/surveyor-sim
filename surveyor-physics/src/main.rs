@@ -36,8 +36,11 @@ pub fn main() {
     body.append_child(&div)
         .unwrap();
 
+    let gnc = surveyor_gnc::SurveyorGNC::new();
     App::new()
-        .add_plugin(SurveyorPhysicsPlugin)
+        .add_plugin(surveyor_physics::SurveyorPhysicsPlugin)
+        .add_plugin(gnc)
+        .add_system(run_plotting_system)
         .set_runner(my_runner)
         .run();
 }

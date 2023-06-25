@@ -13,6 +13,11 @@ bevy_app = "0.10.1"
 hifitime = "3.8.2"
 surveyor-gnc = { path = "../surveyor-gnc" }
 enum-as-inner = "0.6.0"
+wasm-bindgen-futures = "0.4.37"
+plotly = { version = "0.8.3", features = ["wasm"] }
+console_error_panic_hook = "0.1.7"
+console_log = { version = "1.0.0", features = ["wasm-bindgen"] }
+web-sys = { version = "0.3.64", features = ["Window", "Document", "HtmlElement"] }
 
 [dev-dependencies]
 approx = "0.5.1"

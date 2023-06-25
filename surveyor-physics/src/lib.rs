@@ -25,6 +25,7 @@ use simulation::{SimulationResults, SimulationParams, run_simulation_system};
 use spacecraft::{InitialState, SpacecraftModel, OrbitalDynamicsInputs, SpacecraftProperties};
 use hard_xml::XmlRead;
 use universe::Universe;
+use bevy_ecs::schedule::IntoSystemConfig;
 
 // Hardocde the timestep for now
 pub const DT: f64 = 0.1; // s
@@ -66,6 +67,11 @@ impl Plugin for SurveyorPhysicsPlugin {
         // Split this up into two systems - one that actually builds the ECS and one that
         // initializes the simulation. The latter can be run anytime we trigger a new simulation
         app.add_startup_system(build_sim_ecs)
+            .add_event::<crate::interfaces::SensorEvent>()
+            .add_event::<crate::interfaces::ActuatorEvent>()
+            .add_system(crate::interfaces::send_sensor_events)
+            .add_system(crate::interfaces::recv_actuator_events)
+            .add_system(crate::spacecraft::actuator_commands_system.after(crate::interfaces::recv_actuator_events))
             .add_system(run_simulation_system);
     }
 }

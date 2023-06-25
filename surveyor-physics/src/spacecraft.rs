@@ -4,7 +4,7 @@ use crate::{
     config::{SpacecraftConfig, RcsSubsystemConfig},
     integrators::NewDynamicSystem,
     math::{UnitQuaternion, Vector3},
-    subsystems::Subsystem, interfaces::ActuatorEvents,
+    subsystems::Subsystem, interfaces::ActuatorEvent,
 };
 use hard_xml::XmlRead;
 use nalgebra::{DVector, SMatrix, SVector};
@@ -238,9 +238,9 @@ impl SpacecraftModel {
             subsystem.update_dynamics(outputs);
         }
     }
-    pub fn handle_actuator_commands(&mut self, commands: &ActuatorEvents) {
+    pub fn handle_actuator_commands(&mut self, commands: &ActuatorEvent) {
         match commands {
-            ActuatorEvents::RCS(rcs_command) => {
+            ActuatorEvent::RCS(rcs_command) => {
                 self.subsystems.get_mut("RCS").unwrap().as_rcs_mut().unwrap().handle_commands(rcs_command);
             }
         }
@@ -332,6 +332,14 @@ impl<'a> NewDynamicSystem<'a> for SpacecraftModel {
             );
             offset += subsystem.get_num_states();
         }
+    }
+}
+
+pub fn actuator_commands_system(mut query: Query<&mut SpacecraftModel>, mut events: EventReader<ActuatorEvent>)
+{
+    let mut spacecraft = query.single_mut();
+    for event in events.iter() {
+        spacecraft.handle_actuator_commands(event);
     }
 }
 
