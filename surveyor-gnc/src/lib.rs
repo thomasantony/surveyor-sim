@@ -46,6 +46,7 @@ impl Plugin for SurveyorGNC {
             .add_system(update_attitude_controller.after(update_guidance))
             .add_event::<control::RCSControllerInput>()
             .add_system(update_control_allocator.after(update_attitude_controller))
+            .add_event::<control::RCSControllerOutput>()
             .add_system(update_rcs_controller.after(update_control_allocator));
 
         let traj = app.world.spawn((Name("TrajectoryPhase"), TrajectoryPhase::BeforeRetroBurn,)).id();

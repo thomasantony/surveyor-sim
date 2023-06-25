@@ -46,7 +46,7 @@ impl Default for RCSControllerInput {
 }
 
 /// Contains the duty cycles of each RCS thruster
-#[derive(Debug, Component)]
+#[derive(Debug, Component, Clone)]
 pub struct RCSControllerOutput {
     /// Thrust vector in body frame
     pub duty_cycles: Vec<f64>,
