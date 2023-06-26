@@ -1,11 +1,9 @@
 use crate::{SimulationState, SimulationTime};
-use crate::integrators::do_rk4_step;
 use crate::spacecraft::{
-    InitialState, OrbitalDynamics, OrbitalDynamicsInputs, SpacecraftModel, SpacecraftProperties,
+    InitialState, OrbitalDynamics, SpacecraftModel,
 };
-use crate::subsystems::propulsion::EngineCommands;
 use crate::universe::Universe;
-use nalgebra::{Dyn, SVectorView, U13};
+use nalgebra::{Dyn, U13};
 use bevy_ecs::prelude::*;
 
 // // Enum defining stopping conditions for simulation
@@ -76,18 +74,14 @@ impl SimulationResults {
     }
 }
 
-// System holding time history of simulation of spacecraft
-
+// System that updates simulation state and the time after stepping the dynamics
 pub fn run_simulation_system(
     sim_params: Res<SimulationParams>,
-    mut query: Query<(&mut SimulationTime, &mut SpacecraftModel, &SpacecraftProperties, &mut OrbitalDynamicsInputs, &mut SimulationResults)>,
-    mut universe: Query<(&mut Universe)>,
+    mut query: Query<(&mut SimulationTime, &mut SpacecraftModel)>,
     mut set_sim_state: ResMut<NextState<SimulationState>>,
 ) {
-    // let mut t = sim_params.t0;
-    // let mut state = sim_params.initial_state.clone();
     // Use query to extract references to the spacecraft model and orbital dynamics inputs
-    let (mut t, mut spacecraft_model, sc_props, mut orbital_dynamics_input, mut results) = query.single_mut();
+    let (mut t, _) = query.single_mut();
 
     if t.0 >= sim_params.tf {
         log::info!("Simulation has finished");
@@ -96,26 +90,5 @@ pub fn run_simulation_system(
     }
     log::info!("Sim time: {}", t.0);
 
-    let mut universe = universe.single_mut();
-
-    {
-        let trajectory = spacecraft_model.get_trajectory();
-        let r = SVectorView::from_slice(trajectory.get_position());
-        // Apply all gravity model forces to external force
-        orbital_dynamics_input.total_torque_b.fill(0.0);
-        orbital_dynamics_input.total_force_b = universe.compute_force(&r, &sc_props);
-    }
-
-    spacecraft_model.update_discrete(sim_params.dt);
-    {
-        do_rk4_step(
-            sim_params.dt,
-            &mut *spacecraft_model,
-            &mut (&sc_props, &orbital_dynamics_input),
-        );
-        results
-            .history
-            .push(spacecraft_model.get_trajectory().clone());
-    }
     t.0 += sim_params.dt;
 }

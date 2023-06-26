@@ -1,14 +1,43 @@
-use std::collections::HashMap;
+//! New module for spacecraft model
+use na::SVectorView;
+use nalgebra as na;
+use bevy::prelude::*;
+use bevy_ecs::system::Commands;
 
+
+/// A component defining a continuous system that can be stepped over time
+#[derive(Debug, Component)]
+pub struct ContinuousSystemState {
+    /// Indices of the state vector that this system operates on within a larger state vector
+    state_vector: na::DVector<f64>,
+    /// Number of states in the system
+    num_states: usize,
+}
+
+impl ContinuousSystemState {
+    /// Create a new continuous system
+    pub fn new(initial_state: &[f64]) -> Self {
+        let num_states = initial_state.len();
+        let state_vector = na::DVector::from_vec(initial_state.to_vec());
+        Self {
+            state_vector,
+            num_states,
+        }
+    }
+}
+
+
+
+use crate::universe::Universe;
 use crate::{
-    config::{SpacecraftConfig, RcsSubsystemConfig},
+    config::SpacecraftConfig,
     integrators::NewDynamicSystem,
     math::{UnitQuaternion, Vector3},
-    subsystems::Subsystem, interfaces::ActuatorEvent,
+    subsystems::{Subsystem}, interfaces::{ActuatorEvent},
 };
 use hard_xml::XmlRead;
 use nalgebra::{DVector, SMatrix, SVector};
-use bevy_ecs::prelude::*;
+
 
 #[derive(Debug, XmlRead, Clone)]
 #[xml(tag = "InitialState")]
@@ -131,8 +160,8 @@ pub struct OrbitalDynamicsInputs {
     pub total_torque_b: SVector<f64, 3>,
 }
 
-impl OrbitalDynamicsInputs {
-    pub fn new() -> Self {
+impl Default for OrbitalDynamicsInputs {
+    fn default() -> Self {
         Self {
             total_force_b: SVector::<f64, 3>::zeros(),
             total_torque_b: SVector::<f64, 3>::zeros(),
@@ -157,98 +186,8 @@ impl SpacecraftProperties {
 }
 
 #[derive(Component, Debug)]
-pub struct SpacecraftModel {
-    subsystems: HashMap<String, Subsystem>,
-    orbital_dynamics: OrbitalDynamics,
-    ode_state: DVector<f64>,
-    // fsw: FlightSoftware,
-}
+pub struct SpacecraftModel;
 
-impl SpacecraftModel {
-    pub fn new() -> Self {
-        Self {
-            subsystems: HashMap::new(),
-            orbital_dynamics: OrbitalDynamics::new(0.0, SVector::<f64, 13>::zeros()),
-            ode_state: DVector::<f64>::zeros(13),
-            // fsw: FlightSoftware::new(),
-        }
-    }
-    pub fn set_initial_state(&mut self, initial_state: &InitialState)
-    {
-        self.orbital_dynamics = OrbitalDynamics::from_initial_state(initial_state);
-    }
-    pub fn from_config(config: SpacecraftConfig, initial_state: InitialState) -> Self {
-        // Iterate over subsystems and create subsystems
-        let subsystems: Vec<_> = config
-            .subsystems
-            .iter()
-            .map(|subsystem_config| (subsystem_config.to_string(), Subsystem::from_config(subsystem_config)))
-            .collect();
-        let orbital_dynamics = OrbitalDynamics::from_initial_state(&initial_state);
-        let mut ode_state = DVector::<f64>::zeros(
-            13 + subsystems
-                .iter()
-                .map(|(_, subsystem)| subsystem.get_num_states())
-                .sum::<usize>(),
-        );
-        // Set orbital dynamics state
-        ode_state.rows_mut(0, 13).copy_from(&orbital_dynamics.state);
-        Self {
-            subsystems: HashMap::from_iter(subsystems),
-            orbital_dynamics,
-            ode_state,
-        }
-    }
-    // Loads and initializes subsystems from XML
-    pub fn load_from_file(filename: &str, initial_state_xml_file: &str) -> std::io::Result<Self> {
-        let xml_text = std::fs::read_to_string(filename)?;
-        let initial_state_xml = std::fs::read_to_string(initial_state_xml_file)?;
-        Self::load_from_xml(&xml_text, &initial_state_xml).map_err(|xml_err| {
-            std::io::Error::new(std::io::ErrorKind::InvalidData, xml_err.to_string())
-        })
-    }
-    pub fn load_from_xml(
-        xml_text: &str,
-        initial_state_xml: &str,
-    ) -> Result<Self, hard_xml::XmlError> {
-        let spacecraft_config = SpacecraftConfig::from_str(xml_text)?;
-        let initial_state = InitialState::from_str(initial_state_xml)?;
-        Ok(Self::from_config(spacecraft_config, initial_state))
-    }
-    // Builder pattern to add subsystem
-    pub fn with_subsystem(mut self, name: String, subsystem: Subsystem) -> Self {
-        self.subsystems.insert(name, subsystem);
-        self
-    }
-    pub fn get_trajectory(&self) -> &OrbitalDynamics {
-        &self.orbital_dynamics
-    }
-    pub fn get_trajectory_mut(&mut self) -> &mut OrbitalDynamics {
-        &mut self.orbital_dynamics
-    }
-
-    pub fn update_discrete(&mut self, dt: f64) {
-        // Set up the generic input to be used by all subsystems
-        let spacecraft_discrete_state =
-            SpacecraftDiscreteState::new(self.get_t(), &self.orbital_dynamics.state);
-
-        for (_, subsystem) in self.subsystems.iter_mut() {
-            subsystem.update_discrete(dt, &spacecraft_discrete_state);
-        }
-    }
-    pub fn update_dynamics(&mut self, outputs: &mut OrbitalDynamicsInputs) {
-        for (_, subsystem) in self.subsystems.iter_mut() {
-            subsystem.update_dynamics(outputs);
-        }
-    }
-    pub fn handle_actuator_commands(&mut self, commands: &ActuatorEvent) {
-        match commands {
-            ActuatorEvent::RCS(rcs_command) => {
-                self.subsystems.get_mut("RCS").unwrap().as_rcs_mut().unwrap().handle_commands(rcs_command);
-            }
-        }
-    }
-}
 
 // Need some way of passing in scprops to OrbitalDynamics
 impl<'a> NewDynamicSystem<'a> for OrbitalDynamics {
@@ -278,73 +217,6 @@ impl<'a> NewDynamicSystem<'a> for OrbitalDynamics {
         d_state.copy_from_slice(dynamics.as_slice());
     }
 }
-impl<'a> NewDynamicSystem<'a> for SpacecraftModel {
-    type DerivativeInputs = (&'a SpacecraftProperties, &'a OrbitalDynamicsInputs);
-    fn get_num_states(&self) -> usize {
-        self.subsystems
-            .iter()
-            .map(|(_, subsystem)| subsystem.get_num_states())
-            .sum::<usize>()
-            + 13
-    }
-    fn get_state(&self) -> &[f64] {
-        // Combine state vectors from all subsystems and orbital dynamics
-        self.ode_state.as_slice()
-    }
-    fn set_state(&mut self, t: f64, state: &[f64]) {
-        self.ode_state.copy_from_slice(state);
-        self.orbital_dynamics.set_state(t, &state[0..13]);
-        // Set state for all subsystems while stepping through state vector
-        let mut offset = 13;
-        for (_, subsystem) in self.subsystems.iter_mut() {
-            subsystem.set_state(t, &state[offset..offset + subsystem.get_num_states()]);
-            offset += subsystem.get_num_states();
-        }
-    }
-
-    fn get_t(&self) -> f64 {
-        self.orbital_dynamics.get_t()
-    }
-    fn get_derivatives(&mut self, t: f64, d_state: &mut [f64], inputs: &'a Self::DerivativeInputs) {
-        // This is hte only place where update_continuous() is called as part of get_derivative()
-        //
-        // In all the other subsystems, update_continuous() is called first (from here) which sets the values that are
-        // then used by get_derivatives() which is called later
-
-        // Call update_continuous on all subsystems
-        for (_, subsystem) in self.subsystems.iter_mut() {
-            subsystem.update_continuous(t);
-        }
-
-        let mut a: OrbitalDynamicsInputs = inputs.1.clone();
-        // Update dynamic forces
-        self.update_dynamics(&mut a);
-
-        // We assume that d_state has been initialized to the correct length
-        self.orbital_dynamics
-            .get_derivatives(t, &mut d_state[0..13], &(inputs.0, &a));
-
-        let mut offset = 13;
-        // Iterate over subsystems and get derivatives
-        // TODO: Use wasm-bindgen-rayon to parallelize this
-        for (_, subsystem) in self.subsystems.iter_mut() {
-            subsystem.get_derivatives(
-                t,
-                &mut d_state[offset..offset + subsystem.get_num_states()],
-                &mut (),
-            );
-            offset += subsystem.get_num_states();
-        }
-    }
-}
-
-pub fn actuator_commands_system(mut query: Query<&mut SpacecraftModel>, mut events: EventReader<ActuatorEvent>)
-{
-    let mut spacecraft = query.single_mut();
-    for event in events.iter() {
-        spacecraft.handle_actuator_commands(event);
-    }
-}
 
 /// Struct used to pass spacecraft state information to subsystems without copying
 pub struct SpacecraftDiscreteState<'a> {
@@ -364,4 +236,130 @@ impl<'a> SpacecraftDiscreteState<'a> {
             omega_b: &state_vector.as_slice()[10..13],
         }
     }
+}
+
+
+
+
+// Have a startup system that initializes all the continuous systems
+// Queries for the size of all continuous systems and creates a new strate vector component that
+// holds all the states for all the continuous systems in a single vector
+
+pub fn build_spacecraft_entity(commands: &mut Commands, config: &SpacecraftConfig, initial_state: &InitialState) {
+    let spacecraft_ent = commands.spawn((
+        SimulationTime(0.0),
+        OrbitalDynamics::from_initial_state(&initial_state),
+        SpacecraftProperties::new(
+            1.0,
+            SMatrix::from_vec(vec![1., 0., 0., 0., 1., 0., 0., 0., 1.]),
+        ),
+        SpacecraftModel,
+        SimulationResults::default(),
+    )).id();
+
+    // commands.entity(spacecraft_ent).push_children(&[orbital_dynamics]);
+    commands.entity(spacecraft_ent).with_children(|parent| {
+        config.subsystems.iter().for_each(|subsystem_config| {
+            parent.spawn((Subsystem::from_config(subsystem_config)));
+        });
+    });
+}
+
+/// Computes the derivatives of the spacecraft state from the current state and inputs
+/// and all the subsystems
+fn dydt(t: f64, state: &[f64], universe: &Universe, subsystems: &[&Subsystem], orb: &mut OrbitalDynamics, sc_props: &SpacecraftProperties) -> DVector<f64>
+{
+    // None of the subsystems have internal continuous states for now
+    let mut d_state = DVector::zeros(13);
+
+    // First call update_dynamics on all subsystems
+    let mut orbital_dynamics_input = OrbitalDynamicsInputs::default();
+    {
+        let r = SVectorView::from_slice(orb.get_position());
+        // Apply all gravity model forces to external force
+        orbital_dynamics_input.total_torque_b.fill(0.0);
+        orbital_dynamics_input.total_force_b = universe.compute_force(&r, &sc_props);
+    }
+
+    for subsystem in subsystems.iter() {
+        subsystem.update_dynamics(&mut orbital_dynamics_input);
+    }
+
+    let deriv_inputs = (sc_props, &orbital_dynamics_input);
+    orb.get_derivatives(0.0, d_state.as_mut_slice(), &deriv_inputs);
+    d_state
+}
+
+use crate::SimulationTime;
+use crate::simulation::{SimulationParams, SimulationResults};
+// System that steps the spacecraft model over one timestep and updates orbital dynamics component
+pub fn step_spacecraft_model(
+    mut q_universe: Query<&mut Universe>,
+    mut q_spacecrafts: Query<(&mut SpacecraftModel, &SimulationTime, &SpacecraftProperties, &mut OrbitalDynamics, &mut SimulationResults, &Children)>,
+    mut q_subsystems: Query<&mut Subsystem>,
+    sim_params: Res<SimulationParams>)
+{
+    let dt = sim_params.dt;
+
+    let universe = q_universe.single_mut();
+
+    // Iterate over all spacecrafts
+    for (spacecraft_model, t, sc_props, mut orb, mut results, children) in q_spacecrafts.iter_mut() {
+        let t = t.0;
+
+        // Iterate over all subsystems
+        let subsystems = children.iter().map(|child| q_subsystems.get(*child).unwrap()).collect::<Vec<_>>();
+
+        // TODO: Also call update_continuous on all subsystems each with its own state
+        // Call RK4 over all subsystems and orbital dynamics
+        let state = DVector::from_column_slice(orb.get_state());
+        let k1 = dydt(t, state.as_slice(), &universe, &subsystems, &mut orb, &sc_props);
+        let k2 = dydt(t+dt/2.0, state.as_slice(), &universe, &subsystems, &mut orb, &sc_props);
+        let k3 = dydt(t+dt/2.0, state.as_slice(), &universe, &subsystems, &mut orb, &sc_props);
+        let k4 = dydt(t+dt, state.as_slice(), &universe, &subsystems, &mut orb, &sc_props);
+        let new_state = state + (k1 + 2.0 * k2 + 2.0 * k3 + k4) * dt / 6.0;
+        orb.set_state(t + dt, new_state.as_slice());
+
+        // TODO: Move to a separate logging system. Convert the "new state" into an event
+        results
+            .history
+            .push(orb.clone());
+    }
+}
+
+// System that updates the discrete state of all subsystems
+// Will be called at half the simulation rate
+pub fn do_discrete_update(mut q_spacecrafts: Query<(&mut SpacecraftModel, &SimulationTime, &OrbitalDynamics, &Children)>,
+    mut q_subsystems: Query<&mut Subsystem>)
+{
+    for (spacecraft_model, t, orbital_dynamics, children) in q_spacecrafts.iter_mut() {
+        let t = t.0;
+        let spacecraft_discrete_state =
+            SpacecraftDiscreteState::new(t, &orbital_dynamics.state);
+
+        for child in children.iter() {
+            let mut subsystem = q_subsystems.get_mut(*child).unwrap();
+            subsystem.update_discrete(t, &spacecraft_discrete_state);
+        }
+    }
+}
+
+pub fn actuator_commands_system(mut q_spacecraft: Query<(&mut SpacecraftModel, &Children)>,
+    mut q_subsystems: Query<&mut Subsystem>,
+    mut events: EventReader<ActuatorEvent>)
+{
+
+    let (spacecraft, children) = q_spacecraft.single_mut();
+    // Need to query subsystems by name
+    // For that I need to add a name component to subsystems
+    // for event in events.iter() {
+    // for child in children.iter() {
+    //     let mut subsystem = q_subsystems.get_mut(*child).unwrap();
+    //     match commands {
+    //         ActuatorEvent::RCS(rcs_command) => {
+    //             self.subsystems.get_mut("RCS").unwrap().as_rcs_mut().unwrap().handle_commands(rcs_command);
+    //         }
+    //     }
+    // }
+    // }
 }

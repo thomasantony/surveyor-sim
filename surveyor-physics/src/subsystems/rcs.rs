@@ -23,9 +23,9 @@ impl RcsSubsystem {
             thruster.handle_commands(*duty_cycle);
         }
     }
-    pub fn update_dynamics(&mut self, _outputs: &mut super::OrbitalDynamicsInputs) {
+    pub fn update_dynamics(&self, _outputs: &mut super::OrbitalDynamicsInputs) {
         // Iterate over thrusters and call their update_dynamics method
-        for thruster in &mut self.thrusters {
+        for thruster in &self.thrusters {
             thruster.update_dynamics(_outputs);
         }
     }

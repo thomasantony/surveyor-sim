@@ -1,25 +1,42 @@
-use enum_as_inner::EnumAsInner;
+use std::ops::Sub;
+
+use bevy_ecs::{system::Commands, prelude::{Entity, Component}};
 
 use crate::{
     config::SubsystemConfig,
     integrators::NewDynamicSystem,
-    spacecraft::{OrbitalDynamicsInputs, SpacecraftDiscreteState}, interfaces::ActuatorEvent,
+    spacecraft::{OrbitalDynamicsInputs, SpacecraftDiscreteState},
 };
-use bevy_ecs::prelude::*;
 pub mod propulsion;
 pub mod rcs;
 
-#[derive(Debug, EnumAsInner, Component)]
+use self::propulsion::EngineCommands;
+
+pub use crate::spacecraft::OrbitalDynamicsInputs as DynamicsOutput;
+
+#[derive(Debug, Component)]
 pub enum Subsystem {
-    Propulsion(propulsion::SurveyorPropulsion),
+    Propulsion(propulsion::SurveyorPropulsionSubsystem),
     Rcs(rcs::RcsSubsystem),
 }
 
 impl Subsystem {
+    pub fn spawn_entity(config: &SubsystemConfig, commands: &mut Commands) -> Entity {
+        match config {
+            SubsystemConfig::Propulsion(engine_subsystem_config) => {
+                propulsion::SurveyorPropulsionSubsystem::spawn_entity(engine_subsystem_config, commands)
+            }
+            SubsystemConfig::Rcs(rcs_subsystem_config) => {
+                rcs::RcsSubsystem::spawn_entity(rcs_subsystem_config, commands)
+            }
+            _ => panic!("Invalid subsystem config"),
+        }
+    }
+
     pub fn from_config(config: &SubsystemConfig) -> Self {
         match config {
             SubsystemConfig::Propulsion(engine_subsystem_config) => Subsystem::Propulsion(
-                propulsion::SurveyorPropulsion::from_config(engine_subsystem_config),
+                propulsion::SurveyorPropulsionSubsystem::from_config(engine_subsystem_config),
             ),
             SubsystemConfig::Rcs(rcs_subsystem_config) => {
                 Subsystem::Rcs(rcs::RcsSubsystem::from_config(rcs_subsystem_config))
@@ -27,18 +44,28 @@ impl Subsystem {
             _ => panic!("Invalid subsystem config"),
         }
     }
-    // Represents a collection of models that make up a subsystem
-    pub fn update_discrete(&mut self, dt: f64, _discrete_state: &SpacecraftDiscreteState) {
+    pub fn handle_commands(&mut self, commands: &EngineCommands) {
         match self {
             Subsystem::Propulsion(engine_subsystem) => {
-                // Create discrete input for propulsion subsystem using SpacecraftDiscreteState
-                engine_subsystem.update_discrete(dt);
+                engine_subsystem.handle_commands(commands);
             }
             Subsystem::Rcs(rcs_subsystem) => {
-                rcs_subsystem.update_discrete(dt);
+                // rcs_subsystem.handle_commands(commands);
             }
         }
     }
+    // /// Represents a collection of models that make up a subsystem
+    // pub fn update_discrete(&mut self, dt: f64, _discrete_state: &SpacecraftDiscreteState) {
+    //     match self {
+    //         Subsystem::Propulsion(engine_subsystem) => {
+    //             // Create discrete input for propulsion subsystem using SpacecraftDiscreteState
+    //             engine_subsystem.update_discrete(dt);
+    //         }
+    //         Subsystem::Rcs(rcs_subsystem) => {
+    //             rcs_subsystem.update_discrete(dt);
+    //         }
+    //     }
+    // }
     pub fn update_continuous(&mut self, dt: f64) {
         match self {
             Subsystem::Propulsion(engine_subsystem) => {
@@ -49,7 +76,7 @@ impl Subsystem {
             }
         }
     }
-    pub fn update_dynamics(&self, outputs: &mut OrbitalDynamicsInputs) {
+    pub fn update_dynamics(&mut self, outputs: &mut OrbitalDynamicsInputs) {
         match self {
             Subsystem::Propulsion(engine_subsystem) => {
                 engine_subsystem.update_dynamics(outputs);
@@ -60,7 +87,6 @@ impl Subsystem {
         }
     }
 }
-
 impl<'a> NewDynamicSystem<'a> for Subsystem {
     type DerivativeInputs = ();
     fn get_state(&self) -> &[f64] {

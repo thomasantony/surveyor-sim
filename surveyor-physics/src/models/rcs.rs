@@ -13,7 +13,7 @@ impl RcsThruster {
             thrust: 0.0,
         }
     }
-    pub fn update_dynamics(&mut self, outputs: &mut OrbitalDynamicsInputs) {
+    pub fn update_dynamics(&self, outputs: &mut OrbitalDynamicsInputs) {
         // Assume thrust is in Z direction in the component frame
         let thrust_cf = nalgebra::Vector3::<f64>::new(0.0, 0.0, self.thrust);
         // Rotate the thrust vector into the spacecraft body frame

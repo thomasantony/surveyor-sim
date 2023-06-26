@@ -15,14 +15,13 @@ pub mod math;
 
 pub mod interfaces;
 
-use std::{f64::consts::PI, ops::Deref};
+use std::{f64::consts::PI};
 
 use bevy_app::prelude::*;
 use bevy_ecs::prelude::*;
 use config::SimulationConfig;
-use nalgebra::SMatrix;
 use simulation::{SimulationResults, SimulationParams, run_simulation_system};
-use spacecraft::{InitialState, SpacecraftModel, OrbitalDynamicsInputs, SpacecraftProperties};
+use spacecraft::{InitialState, SpacecraftModel, build_spacecraft_entity, OrbitalDynamics};
 use hard_xml::XmlRead;
 use universe::Universe;
 use bevy_ecs::schedule::IntoSystemConfig;
@@ -51,37 +50,24 @@ pub fn build_sim_ecs(mut commands: Commands)
     let spacecraft_config_xml = include_str!("../simulation.xml");
 
     let sim_config = SimulationConfig::from_str(spacecraft_config_xml).unwrap();
-    let spacecraft_model =
-        SpacecraftModel::from_config(sim_config.spacecraft, initial_state.clone());
 
     // Create new bevy ECS entity for spacecraft
-    commands.spawn(
-    (
-        SimulationTime(0.0),
-        OrbitalDynamicsInputs::new(),
-        SpacecraftProperties::new(
-            1.0,
-            SMatrix::from_vec(vec![1., 0., 0., 0., 1., 0., 0., 0., 1.]),
-        ),
-        spacecraft_model,
-        SimulationResults::default())
-    );
-    let universe = Universe::from_config(sim_config.universe);
-    commands.spawn(universe);
+    build_spacecraft_entity(&mut commands, &sim_config.spacecraft, &initial_state);
+    commands.spawn(Universe::from_config(sim_config.universe));
 
     let a: f64 = 6378.14 + 500.0;
     // let period = 2.0 * PI * (a.powi(3) / 398600.0).sqrt();
-    let period = 0.1 * PI * (a.powi(3) / 398600.0).sqrt();
+    let period = 0.05 * PI * (a.powi(3) / 398600.0).sqrt();
     let sim_params: SimulationParams = SimulationParams::new(DT, 0.0, period, initial_state);
     commands.insert_resource(sim_params);
 }
 
 // System used to initalize the simulation
-fn initialize_simulation(mut query: Query<(&mut SpacecraftModel, &mut SimulationResults)>)
+fn initialize_simulation(mut query: Query<(&SpacecraftModel, &mut OrbitalDynamics, &mut SimulationResults)>)
 {
     let initial_state: InitialState = InitialState::from_str(include_str!("../initial_state.xml")).unwrap();
-    let (mut spacecraft, mut sim_results) = query.single_mut();
-    spacecraft.set_initial_state(&initial_state);
+    let (_, mut orbital_dynamics, mut sim_results) = query.single_mut();
+    *orbital_dynamics = OrbitalDynamics::from_initial_state(&initial_state);
     sim_results.history.clear();
 }
 
@@ -98,7 +84,13 @@ impl Plugin for SurveyorPhysicsPlugin {
             .add_system(crate::interfaces::recv_actuator_events)
             .add_system(crate::spacecraft::actuator_commands_system.after(crate::interfaces::recv_actuator_events))
             // Run `run_simulation_system` when we are in the `Running` state
-            .add_system(run_simulation_system.run_if(in_state(SimulationState::Running)))
+            .add_systems(
+                (
+                    spacecraft::step_spacecraft_model,
+                    run_simulation_system
+                ).chain()
+                 .in_set(OnUpdate(SimulationState::Running))
+            )
             // Run `initialize_simulation` when we enter the `Running` state
             .add_system(
                 initialize_simulation.in_schedule(OnEnter(SimulationState::Running))
