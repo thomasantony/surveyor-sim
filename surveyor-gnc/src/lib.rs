@@ -25,29 +25,51 @@ use bevy_ecs::schedule::IntoSystemConfig;
 pub struct SurveyorGNC {
     pub entities: DashMap<&'static str, Entity>,
 }
+
+#[derive(SystemSet, Debug, Hash, PartialEq, Eq, Clone)]
+pub enum SurveyorGncSystemSet {
+    Sensors,
+    Navigation,
+    Guidance,
+    Control,
+}
+
 impl Plugin for SurveyorGNC {
     fn build(&self, app: &mut App) {
         app.add_event::<GncCommand>()
-            .add_system(process_gnc_command)
+            .add_system(process_gnc_command.before(SurveyorGncSystemSet::Sensors))
+            // Sensors
             .add_event::<sensors::EphemerisOutput>()
             .add_event::<sensors::IMUInput>()
             .add_event::<sensors::IMUOutput>()
             .add_event::<sensors::StarTrackerOutput>()
             .add_event::<sensors::StarTrackerInput>()
-            .add_system(update_imu.before(update_sensor_aggregator))
-            .add_system(update_star_tracker.before(update_sensor_aggregator))
+            .add_system(update_imu.in_set(SurveyorGncSystemSet::Sensors))
+            .add_system(update_star_tracker.in_set(SurveyorGncSystemSet::Sensors))
+
+            // Navigation
             .add_event::<navigation::SensorData>()
-            .add_system(update_sensor_aggregator)
             .add_event::<navigation::AttitudeEstimatorOutput>()
-            .add_system(update_simple_attitude_estimator.after(update_sensor_aggregator))
+            .add_systems(
+                (update_sensor_aggregator, update_simple_attitude_estimator)
+                    .chain().in_set(SurveyorGncSystemSet::Navigation)
+            )
+
+            // Guidance
             .add_event::<guidance::AttitudeTarget>()
-            .add_system(update_guidance.after(update_simple_attitude_estimator))
+            .add_system(update_guidance.in_set(SurveyorGncSystemSet::Guidance))
+
+            // Control
             .add_event::<control::AttitudeTorqueRequest>()
-            .add_system(update_attitude_controller.after(update_guidance))
             .add_event::<control::RCSControllerInput>()
-            .add_system(update_control_allocator.after(update_attitude_controller))
             .add_event::<control::RCSControllerOutput>()
-            .add_system(update_rcs_controller.after(update_control_allocator));
+            .add_systems((update_attitude_controller, update_control_allocator, update_rcs_controller).chain()
+                .in_set(SurveyorGncSystemSet::Control)
+            );
+
+        app.configure_set(SurveyorGncSystemSet::Sensors.before(SurveyorGncSystemSet::Navigation));
+        app.configure_set(SurveyorGncSystemSet::Navigation.before(SurveyorGncSystemSet::Guidance));
+        app.configure_set(SurveyorGncSystemSet::Guidance.before(SurveyorGncSystemSet::Control));
 
         let traj = app.world.spawn((Name("TrajectoryPhase"), TrajectoryPhase::BeforeRetroBurn,)).id();
         let imu = app.world.spawn((Name("IMU_A"), sensors::IMU, GeometryConfig::default())).id();
