@@ -2,7 +2,7 @@ use enum_as_inner::EnumAsInner;
 
 use crate::{
     config::SubsystemConfig,
-    integrators::NewDynamicSystem,
+    integrators::DynamicSystem,
     spacecraft::{OrbitalDynamicsInputs, SpacecraftDiscreteState}, interfaces::ActuatorEvent,
 };
 use bevy_ecs::prelude::*;
@@ -61,7 +61,7 @@ impl Subsystem {
     }
 }
 
-impl<'a> NewDynamicSystem<'a> for Subsystem {
+impl<'a> DynamicSystem<'a> for Subsystem {
     type DerivativeInputs = ();
     fn get_state(&self) -> &[f64] {
         match self {
@@ -94,14 +94,15 @@ impl<'a> NewDynamicSystem<'a> for Subsystem {
     }
 
     fn get_derivatives(
-        &mut self,
+        &self,
         t: f64,
+        state: &[f64],
         d_state: &mut [f64],
         _inputs: &'a Self::DerivativeInputs,
     ) {
         match self {
             Subsystem::Propulsion(engine_subsystem) => {
-                engine_subsystem.get_derivatives(t, d_state, &mut ());
+                engine_subsystem.get_derivatives(t, state, d_state, &mut ());
             }
             _ => {}
         }

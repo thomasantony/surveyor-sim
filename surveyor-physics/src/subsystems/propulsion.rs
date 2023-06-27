@@ -2,7 +2,7 @@ use bevy_ecs::prelude::*;
 
 use crate::config::EngineSubsystemConfig;
 use crate::{
-    integrators::NewDynamicSystem,
+    integrators::DynamicSystem,
     models::{
         surveyor_engines::{VernierRocket, VernierRocketContinuousInputs},
         ActuatorModel, TVC,
@@ -72,7 +72,7 @@ impl SurveyorPropulsion {
     }
 }
 
-impl<'a> NewDynamicSystem<'a> for SurveyorPropulsion {
+impl<'a> DynamicSystem<'a> for SurveyorPropulsion {
     type DerivativeInputs = ();
     fn get_state(&self) -> &[f64] {
         &[]
@@ -89,8 +89,9 @@ impl<'a> NewDynamicSystem<'a> for SurveyorPropulsion {
     }
 
     fn get_derivatives(
-        &mut self,
+        &self,
         _t: f64,
+        _state: &[f64],
         _d_state: &mut [f64],
         _inputs: &'a Self::DerivativeInputs,
     ) {

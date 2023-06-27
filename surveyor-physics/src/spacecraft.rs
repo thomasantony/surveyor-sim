@@ -31,7 +31,7 @@ impl ContinuousSystemState {
 use crate::universe::Universe;
 use crate::{
     config::SpacecraftConfig,
-    integrators::NewDynamicSystem,
+    integrators::DynamicSystem,
     math::{UnitQuaternion, Vector3},
     subsystems::{Subsystem}, interfaces::{ActuatorEvent},
 };
@@ -190,7 +190,7 @@ pub struct SpacecraftModel;
 
 
 // Need some way of passing in scprops to OrbitalDynamics
-impl<'a> NewDynamicSystem<'a> for OrbitalDynamics {
+impl<'a> DynamicSystem<'a> for OrbitalDynamics {
     type DerivativeInputs = (&'a SpacecraftProperties, &'a OrbitalDynamicsInputs);
     fn get_num_states(&self) -> usize {
         13
@@ -207,13 +207,14 @@ impl<'a> NewDynamicSystem<'a> for OrbitalDynamics {
         self.time
     }
     fn get_derivatives(
-        &mut self,
+        &self,
         t: f64,
+        _state: &[f64],
         d_state: &mut [f64],
         (sc_props, orbital_dynamics_inputs): &Self::DerivativeInputs,
     ) {
         // Compute derivatives
-        let dynamics = self.dynamics(t, (sc_props, orbital_dynamics_inputs));
+        let dynamics: na::Matrix<f64, na::Const<13>, na::Const<1>, na::ArrayStorage<f64, 13, 1>> = self.dynamics(t, (sc_props, orbital_dynamics_inputs));
         d_state.copy_from_slice(dynamics.as_slice());
     }
 }
@@ -286,7 +287,7 @@ fn dydt(t: f64, state: &[f64], universe: &Universe, subsystems: &[&Subsystem], o
     }
 
     let deriv_inputs = (sc_props, &orbital_dynamics_input);
-    orb.get_derivatives(0.0, d_state.as_mut_slice(), &deriv_inputs);
+    orb.get_derivatives(0.0, &state, d_state.as_mut_slice(), &deriv_inputs);
     d_state
 }
 
@@ -296,7 +297,7 @@ use crate::simulation::{SimulationParams, SimulationResults};
 pub fn step_spacecraft_model(
     mut q_universe: Query<&mut Universe>,
     mut q_spacecrafts: Query<(&mut SpacecraftModel, &SimulationTime, &SpacecraftProperties, &mut OrbitalDynamics, &mut SimulationResults, &Children)>,
-    mut q_subsystems: Query<&mut Subsystem>,
+    q_subsystems: Query<&mut Subsystem>,
     sim_params: Res<SimulationParams>)
 {
     let dt = sim_params.dt;
@@ -304,7 +305,7 @@ pub fn step_spacecraft_model(
     let universe = q_universe.single_mut();
 
     // Iterate over all spacecrafts
-    for (spacecraft_model, t, sc_props, mut orb, mut results, children) in q_spacecrafts.iter_mut() {
+    for (_, t, sc_props, mut orb, mut results, children) in q_spacecrafts.iter_mut() {
         let t = t.0;
 
         // Iterate over all subsystems
