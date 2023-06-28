@@ -1,16 +1,21 @@
-let lander_pos = DVec3::new(MOON_RADIUS + 100e3, 0.0, 0.0);
+use bevy::{prelude::*, math::DVec3};
+use big_space::{FloatingOriginSettings, FloatingOrigin};
+
+use crate::planet::MOON_RADIUS;
+
+pub fn spawn_lander(mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    settings: Res<FloatingOriginSettings>)
+{
+    let lander_pos = DVec3::new(MOON_RADIUS + 100e3, 0.0, 0.0);
     let (grid_cell, lander_translation) = settings.translation_to_grid::<i128>(lander_pos);
     // in the SceneBundle
     commands.spawn((SceneBundle {
         scene: asset_server.load("Surveyor/Surveyor-Lander.gltf#Scene0"),
         transform: Transform::from_translation(lander_translation.clone()),
         ..default()
-    }, Aabb::from(Sphere {
-        center: Vec3A::ZERO,
-        radius: 0.5
-    }), grid_cell, Name::new("Lander")));
-
-    let camera_pos = DVec3::new(MOON_RADIUS + 100e3 +10.0, 0.0, 0.0);
-    let (grid_cell, camera_translation) = settings.translation_to_grid::<i128>(camera_pos.clone());
-    let camera_transform = Transform::from_translation(camera_translation)
-                                            .looking_at(lander_translation, Vec3::Y);
+    },
+    grid_cell,
+    Name::new("Lander")));
+    println!("Lander Spawned")
+}

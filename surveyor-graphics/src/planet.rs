@@ -51,7 +51,6 @@ pub fn spawn_celestial_body(
         planet_material,
         planet_grid_cell,
         Name::new(name),
-        FloatingOrigin,
     )
 }
 
@@ -92,29 +91,28 @@ pub fn setup_planet(
         &settings
     ));
 
-    // let mut sphere: Mesh = Mesh::from(shape::UVSphere {
-    //     radius: EARTH_RADIUS as f32,
-    //     sectors: 360,
-    //     stacks: 180,
-    //     ..Default::default()
-    // });
-    // sphere.generate_tangents().unwrap();
-    // let earth_mesh = meshes.add(sphere);
-    // let earth_material = materials.add(StandardMaterial {
-    //     // The base color. See README for source.
-    //     base_color_texture: Some(assets.load(EARTH_ALBEDO_MAP)),
-    //     emissive: Color::rgb_u8(30, 30, 30),
-    //     ..default()
-    // });
-    // let earth_pos = DVec3::new(386000e3, 0.0, 0.0);
-    // commands.spawn(
-    //     spawn_celestial_body(
-    //         "Earth",
-    //          earth_pos,
-    //          earth_mesh,
-    //          earth_material,
-    //          &settings)
-    // );
+    let mut sphere: Mesh = Mesh::from(shape::UVSphere {
+        radius: EARTH_RADIUS as f32,
+        sectors: 360,
+        stacks: 180,
+        ..Default::default()
+    });
+    sphere.generate_tangents().unwrap();
+    let earth_mesh = meshes.add(sphere);
+    let earth_material = materials.add(StandardMaterial {
+        base_color_texture: Some(assets.load(EARTH_ALBEDO_MAP)),
+        emissive: Color::rgb_u8(30, 30, 30),
+        ..default()
+    });
+    let earth_pos = DVec3::new(386000e3, 0.0, 0.0);
+    commands.spawn(
+        spawn_celestial_body(
+            "Earth",
+             earth_pos,
+             earth_mesh,
+             earth_material,
+             &settings)
+    );
 
     // // let sun_matl_handle = materials.add(StandardMaterial {
     // //     base_color: Color::rgb_u8(255, 255, 255),
@@ -122,19 +120,19 @@ pub fn setup_planet(
     // //     ..default()
     // // });
 
-    // // *Really bad* approximate position of the sun
-    // let sun_pos = DVec3::new(-100.0*EARTH_RADIUS, 0.0, -100.0 * EARTH_RADIUS);
-    // let (sun_grid_cell, translation) = settings.translation_to_grid::<GridCellType>(sun_pos);
-    // commands
-    //     .spawn(DirectionalLightBundle {
-    //         transform: Transform::from_translation(translation)
-    //                         .looking_at(Vec3::ZERO, Vec3::Y),
-    //         directional_light: DirectionalLight {
-    //             illuminance: 100_000.0,
-    //             ..default()
-    //         },
-    //         ..default()
-    //     }).insert((sun_grid_cell, FloatingOrigin, Name::new("Sun")));
+    // *Really bad* approximate position of the sun
+    let sun_pos = DVec3::new(100.0*EARTH_RADIUS, 0.0, 100.0 * EARTH_RADIUS);
+    let (sun_grid_cell, translation) = settings.translation_to_grid::<GridCellType>(sun_pos);
+    commands
+        .spawn(DirectionalLightBundle {
+            transform: Transform::from_translation(translation)
+                            .looking_at(Vec3::ZERO, Vec3::Y),
+            directional_light: DirectionalLight {
+                illuminance: 100_000.0,
+                ..default()
+            },
+            ..default()
+        }).insert((sun_grid_cell, Name::new("Sun")));
 }
 
 // /// Work around the fact that the default bevy image loader sets the

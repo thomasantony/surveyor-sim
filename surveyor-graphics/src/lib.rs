@@ -1,10 +1,12 @@
 mod planet;
 mod camera;
+mod lander;
 
 use bevy::{prelude::*};
 use big_space::FloatingOriginPlugin;
 use camera::*;
 use planet::*;
+use lander::*;
 use smooth_bevy_cameras::{controllers::orbit::OrbitCameraPlugin, LookTransformPlugin};
 
 pub type GridCellType = i64;
@@ -21,9 +23,12 @@ impl Plugin for SurveyorGraphicsPlugin{
         .add_plugin(OrbitCameraPlugin::new(true))
         .add_startup_system(spawn_camera)
         .add_system(camera_input_map)
-        // Planets
-        .add_startup_system(setup_planet);
 
+        // Planets
+        .add_startup_system(setup_planet)
+
+        // Spacecraft
+        .add_startup_system(spawn_lander);
         // app.add_startup_system(setup);
     }
 }
