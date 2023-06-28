@@ -11,17 +11,6 @@ pub fn spawn_camera(
     mut commands: Commands,
     settings: Res<FloatingOriginSettings>,
 ) {
-    // let camera_pos = DVec3::new(MOON_RADIUS + 100e3 +10.0, 0.0, 0.0);
-    // let (grid_cell, camera_translation) = settings.translation_to_grid::<GridCellType>(camera_pos.clone());
-    // commands.spawn((
-    //     Camera3dBundle {
-    //         transform: Transform::from_translation(camera_translation),
-    //         ..default()
-    //     },
-    //     grid_cell,
-    //     FloatingOrigin, // the camera is the floating origin (the only one)
-    //     CameraController::default().with_max_speed(1e35), // Built-in camera controller
-    // ));
     let lander_pos = DVec3::new(MOON_RADIUS + 100e3, 0.0, 0.0);
     let (_, lander_translation) = settings.translation_to_grid::<i128>(lander_pos);
 
@@ -51,7 +40,7 @@ OrbitCameraController{
         ))
     .insert(
     LookTransformBundle {
-        transform: LookTransform::new(Vec3::ZERO, Vec3::X, Vec3::Y),
+        transform: LookTransform::new(camera_translation.clone(), lander_translation.clone(), Vec3::Y),
         smoother: Smoother::new(0.9), // Value between 0.0 and 1.0, higher is smoother.
     });
     println!("camera Spawned");

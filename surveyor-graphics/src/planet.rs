@@ -121,7 +121,7 @@ pub fn setup_planet(
     // // });
 
     // *Really bad* approximate position of the sun
-    let sun_pos = DVec3::new(100.0*EARTH_RADIUS, 0.0, 100.0 * EARTH_RADIUS);
+    let sun_pos = DVec3::new(-100.0*EARTH_RADIUS, 0.0, -100.0 * EARTH_RADIUS);
     let (sun_grid_cell, translation) = settings.translation_to_grid::<GridCellType>(sun_pos);
     commands
         .spawn(DirectionalLightBundle {
