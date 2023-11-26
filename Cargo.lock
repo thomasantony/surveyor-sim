@@ -3309,6 +3309,8 @@ dependencies = [
  "bevy",
  "big_space",
  "smooth-bevy-cameras",
+ "surveyor-gnc",
+ "surveyor-physics",
 ]
 
 [[package]]
