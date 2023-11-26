@@ -88,7 +88,7 @@ pub fn run_simulation_system(
         set_sim_state.set(SimulationState::Finished);
         return;
     }
-    log::info!("Sim time: {}", t.0);
+    // log::info!("Sim time: {}", t.0);
 
     t.0 += sim_params.dt;
 }

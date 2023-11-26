@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <InitialState>
     <!-- TODO: Add frame of reference and reference planet here -->
-    <position>6878100,0.0,0.0</position>
-    <velocity>0.0,7660,0.0</velocity>
+    <!-- <position>6878100,0.0,0.0</position> -->
+    <position>1837100,0.0,0.0</position> <!-- 100 km above moon -->
+    <velocity>0.0,1633.22,0.0</velocity>
     <q_i2b>1.0,0.0,0.0,0.0</q_i2b>
-    <omega_b>0.0,0.0,0.0</omega_b>
+    <omega_b>0.01,0.0,0.0</omega_b>
 </InitialState>
