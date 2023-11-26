@@ -1,14 +1,15 @@
 use bevy::{prelude::*, math::DVec3, input::mouse::{MouseWheel, MouseMotion, MouseScrollUnit}};
-use big_space::{FloatingOriginSettings, FloatingOrigin, camera::CameraController};
+use big_space::{FloatingOriginSettings, FloatingOrigin, camera::CameraController, GridCell};
 use smooth_bevy_cameras::{controllers::orbit::{OrbitCameraBundle, OrbitCameraController, ControlEvent}, LookTransformBundle, LookTransform, Smoother};
 
-use crate::{GridCellType, planet::MOON_RADIUS, lander};
+use crate::{GridCellType, planet::MOON_RADIUS, lander::{self, Lander}};
 
 #[derive(Default, Debug, Component)]
 pub struct CameraTarget;
 
 pub fn spawn_camera(
     mut commands: Commands,
+    mut lander_query: Query<(&Lander, &mut GridCell<i128>, &mut Transform)>,
     settings: Res<FloatingOriginSettings>,
 ) {
     let lander_pos = DVec3::new(MOON_RADIUS + 100e3, 0.0, 0.0);

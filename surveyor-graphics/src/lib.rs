@@ -28,7 +28,8 @@ impl Plugin for SurveyorGraphicsPlugin{
         .add_startup_system(setup_planet)
 
         // Spacecraft
-        .add_startup_system(spawn_lander);
+        .add_startup_system(spawn_lander)
+        .add_system(update_lander_pos);
         // app.add_startup_system(setup);
     }
 }
