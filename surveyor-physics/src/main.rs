@@ -12,7 +12,7 @@ use surveyor_physics::spacecraft::{OrbitalDynamicsInputs, SpacecraftModel, Space
 // use bevy::prelude::*;
 use bevy_ecs::prelude::*;
 use hard_xml::XmlRead;
-use bevy_app::IntoSystemAppConfig;
+// use bevy_app::IntoSystemAppConfig;
 
 
 #[cfg(target_arch = "wasm32")]
@@ -40,8 +40,8 @@ pub fn main() {
 
     let gnc = surveyor_gnc::SurveyorGNC::new();
     App::new()
-        .add_plugin(surveyor_physics::SurveyorPhysicsPlugin)
-        .add_plugin(gnc)
+        .add_plugins(surveyor_physics::SurveyorPhysicsPlugin)
+        .add_plugins(gnc)
         .add_system(run_plotting_system.in_schedule(OnExit(surveyor_physics::SimulationState::Running)))
         .add_plugins(MinimalPlugins)
         .add_startup_system(start_sim)

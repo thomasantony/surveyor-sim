@@ -12,7 +12,7 @@ pub enum GuidanceMode {
     Manual,
 }
 
-#[derive(Debug, Clone, Component)]
+#[derive(Debug, Clone, Component, Event)]
 pub enum AttitudeTarget {
     None,
     Attitude(nalgebra::UnitQuaternion<f64>),

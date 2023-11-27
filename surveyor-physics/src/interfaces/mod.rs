@@ -8,10 +8,11 @@
 //     fn set_input(&mut self, input: &SpacecraftDiscreteState);
 // }
 
-use bevy_ecs::prelude::{EventReader, EventWriter};
+use bevy_ecs::prelude::{EventReader, EventWriter, Event};
 
 use crate::subsystems::rcs::RcsCommands;
 
+#[derive(Debug, Clone, Event)]
 pub enum SensorEvent {
     IMU(surveyor_gnc::sensors::IMUInput),
     StarTracker(surveyor_gnc::sensors::StarTrackerInput),
@@ -36,6 +37,7 @@ pub fn send_sensor_events(mut events: EventReader<SensorEvent>,
 
 /// Receive actuator events from the GNC system and send them to the simulation
 /// We convert it into a truth-side type before passing it through
+#[derive(Debug, Clone, Event)]
 pub enum ActuatorEvent {
     RCS(RcsCommands),
     // TVC(surveyor_gnc::control::TVCControllerOutput),

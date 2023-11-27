@@ -24,7 +24,7 @@ use simulation::{SimulationResults, SimulationParams, run_simulation_system};
 use spacecraft::{InitialState, SpacecraftModel, build_spacecraft_entity, OrbitalDynamics};
 use hard_xml::XmlRead;
 use universe::Universe;
-use bevy_ecs::schedule::IntoSystemConfig;
+use bevy_ecs::schedule::IntoSystemConfigs;
 
 // Hardocde the timestep for now
 pub const DT: f64 = 0.1; // s
@@ -76,24 +76,23 @@ impl Plugin for SurveyorPhysicsPlugin {
     fn build(&self, app: &mut App) {
         // Split this up into two systems - one that actually builds the ECS and one that
         // initializes the simulation. The latter can be run anytime we trigger a new simulation
-        app.add_startup_system(build_sim_ecs)
+        app.add_systems(Startup, build_sim_ecs)
             .add_event::<crate::interfaces::SensorEvent>()
             .add_event::<crate::interfaces::ActuatorEvent>()
             .add_state::<SimulationState>()
-            .add_system(crate::interfaces::send_sensor_events)
-            .add_system(crate::interfaces::recv_actuator_events)
-            .add_system(crate::spacecraft::actuator_commands_system.after(crate::interfaces::recv_actuator_events))
+            .add_systems(Update, crate::interfaces::send_sensor_events)
+            .add_systems(Update, crate::interfaces::recv_actuator_events)
+            .add_systems(Update, crate::spacecraft::actuator_commands_system.after(crate::interfaces::recv_actuator_events))
             // Run `run_simulation_system` when we are in the `Running` state
-            .add_systems(
+            .add_systems(Update,
                 (
                     spacecraft::step_spacecraft_model,
                     run_simulation_system
-                ).chain()
-                 .in_set(OnUpdate(SimulationState::Running))
+                ).chain().run_if(in_state(SimulationState::Running))
             )
             // Run `initialize_simulation` when we enter the `Running` state
-            .add_system(
-                initialize_simulation.in_schedule(OnEnter(SimulationState::Running))
+            .add_systems(OnEnter(SimulationState::Running),
+                initialize_simulation
             );
     }
 }

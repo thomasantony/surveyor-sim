@@ -7,7 +7,7 @@ use crate::GeometryConfig;
 pub struct StarTracker;
 
 // TODO: Switch to using entity IDs instead of usize
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Event)]
 pub struct StarTrackerInput {
     pub sensor_id: usize,
     pub q_j20002cf: na::UnitQuaternion<f64>,
@@ -21,7 +21,7 @@ impl Default for StarTrackerInput {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Event)]
 pub struct StarTrackerOutput
 {
     pub q_i2b: na::UnitQuaternion<f64>,
@@ -38,7 +38,7 @@ impl Default for StarTrackerOutput {
 #[derive(Debug, Clone, Component)]
 pub struct IMU;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Event)]
 pub struct IMUInput
 {
     pub sensor_id: usize,
@@ -57,7 +57,7 @@ impl Default for IMUInput {
 
 // TODO:  Add fields to show the time of the measurement being ingested
 // and if it is stale
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Event)]
 pub struct IMUOutput
 {
     pub omega_b: na::Vector3<f64>,
@@ -74,7 +74,7 @@ impl Default for IMUOutput {
 
 /// This is set by an ephemeris estimator, radar sensor or other source
 /// For a start, this component could be set directly from the simulation
-#[derive(Debug, Clone, Component)]
+#[derive(Debug, Clone, Component, Event)]
 pub struct EphemerisOutput
 {
     pub pos_i: na::Vector3<f64>,

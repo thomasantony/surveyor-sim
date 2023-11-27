@@ -5,9 +5,9 @@ edition = "2021"
 description = "A simple GNC flight software implementation using bevy-ecs"
 
 [dependencies]
-bevy = {version = "0.10.1", default-features = false}
-bevy_app = "0.10.1"
-bevy_ecs = "0.10.1"
+bevy = {version = "0.12", default-features = false}
+bevy_app = "0.12"
+bevy_ecs = "0.12"
 chrono = "0.4.26"
 dashmap = "5.4.0"
 log = "0.4.19"

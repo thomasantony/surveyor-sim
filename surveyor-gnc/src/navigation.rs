@@ -13,7 +13,7 @@ pub struct Measurement<T: Default> {
 }
 
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Event)]
 pub struct SensorData {
     pub imus: [Measurement<IMUOutput>; 2],
     pub star_trackers: [Measurement<StarTrackerOutput>; 2],
@@ -27,7 +27,7 @@ impl Default for SensorData {
         }
     }
 }
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Event)]
 pub struct AttitudeEstimatorOutput {
     pub q_i2b: na::UnitQuaternion<f64>,
     pub omega_b: na::Vector3<f64>,

@@ -31,7 +31,7 @@ impl Default for RCSController {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Event)]
 pub struct RCSControllerInput {
     /// Torque vector in body frame
     pub torque_b: na::Vector3<f64>,
@@ -46,7 +46,7 @@ impl Default for RCSControllerInput {
 }
 
 /// Contains the duty cycles of each RCS thruster
-#[derive(Debug, Component, Clone)]
+#[derive(Debug, Component, Clone, Event)]
 pub struct RCSControllerOutput {
     /// Thrust vector in body frame
     pub duty_cycles: Vec<f64>,
@@ -60,7 +60,7 @@ impl Default for RCSControllerOutput {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Event)]
 pub struct AttitudeTorqueRequest {
     pub torque_b: na::Vector3<f64>,
 }

@@ -13,6 +13,8 @@ impl RcsSubsystem {
         Self { thrusters }
     }
 }
+
+#[derive(Debug, Clone)]
 pub struct RcsCommands {
     pub duty_cycles: Vec<f64>,
 }

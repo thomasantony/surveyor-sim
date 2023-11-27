@@ -20,7 +20,7 @@ use dashmap::DashMap;
 
 use bevy_app::{prelude::*};
 use bevy_ecs::prelude::Entity;
-use bevy_ecs::schedule::IntoSystemConfig;
+use bevy_ecs::schedule::IntoSystemConfigs;
 
 pub struct SurveyorGNC {
     pub entities: DashMap<&'static str, Entity>,
@@ -37,39 +37,39 @@ pub enum SurveyorGncSystemSet {
 impl Plugin for SurveyorGNC {
     fn build(&self, app: &mut App) {
         app.add_event::<GncCommand>()
-            .add_system(process_gnc_command.before(SurveyorGncSystemSet::Sensors))
+            .add_systems(Update, process_gnc_command.before(SurveyorGncSystemSet::Sensors))
             // Sensors
             .add_event::<sensors::EphemerisOutput>()
             .add_event::<sensors::IMUInput>()
             .add_event::<sensors::IMUOutput>()
             .add_event::<sensors::StarTrackerOutput>()
             .add_event::<sensors::StarTrackerInput>()
-            .add_system(update_imu.in_set(SurveyorGncSystemSet::Sensors))
-            .add_system(update_star_tracker.in_set(SurveyorGncSystemSet::Sensors))
+            .add_systems(Update, update_imu.in_set(SurveyorGncSystemSet::Sensors))
+            .add_systems(Update, update_star_tracker.in_set(SurveyorGncSystemSet::Sensors))
 
             // Navigation
             .add_event::<navigation::SensorData>()
             .add_event::<navigation::AttitudeEstimatorOutput>()
-            .add_systems(
+            .add_systems(Update,
                 (update_sensor_aggregator, update_simple_attitude_estimator)
                     .chain().in_set(SurveyorGncSystemSet::Navigation)
             )
 
             // Guidance
             .add_event::<guidance::AttitudeTarget>()
-            .add_system(update_guidance.in_set(SurveyorGncSystemSet::Guidance))
+            .add_systems(Update, update_guidance.in_set(SurveyorGncSystemSet::Guidance))
 
             // Control
             .add_event::<control::AttitudeTorqueRequest>()
             .add_event::<control::RCSControllerInput>()
             .add_event::<control::RCSControllerOutput>()
-            .add_systems((update_attitude_controller, update_control_allocator, update_rcs_controller).chain()
+            .add_systems(Update, (update_attitude_controller, update_control_allocator, update_rcs_controller).chain()
                 .in_set(SurveyorGncSystemSet::Control)
             );
 
-        app.configure_set(SurveyorGncSystemSet::Sensors.before(SurveyorGncSystemSet::Navigation));
-        app.configure_set(SurveyorGncSystemSet::Navigation.before(SurveyorGncSystemSet::Guidance));
-        app.configure_set(SurveyorGncSystemSet::Guidance.before(SurveyorGncSystemSet::Control));
+        app.configure_set(Update, SurveyorGncSystemSet::Sensors.before(SurveyorGncSystemSet::Navigation));
+        app.configure_set(Update, SurveyorGncSystemSet::Navigation.before(SurveyorGncSystemSet::Guidance));
+        app.configure_set(Update, SurveyorGncSystemSet::Guidance.before(SurveyorGncSystemSet::Control));
 
         let traj = app.world.spawn((Name("TrajectoryPhase"), TrajectoryPhase::BeforeRetroBurn,)).id();
         let imu = app.world.spawn((Name("IMU_A"), sensors::IMU, GeometryConfig::default())).id();
@@ -122,6 +122,7 @@ impl GeometryConfig {
     }
 }
 
+#[derive(Event)]
 pub enum GncCommand {
     SetGuidanceMode(guidance::GuidanceMode),
 }
