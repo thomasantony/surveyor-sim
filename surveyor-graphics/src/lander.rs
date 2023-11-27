@@ -43,10 +43,9 @@ pub fn update_lander_pos(
 
     if new_grid_cell != *grid_cell {
         *grid_cell = new_grid_cell;
-        transform.translation = new_translation;
     }
+    transform.translation = new_translation;
 
-    // println!("Lander position: {:?}", lander_pos);
     let q = sc.state.fixed_rows::<4>(6);
     let lander_quat: Quat = Quat::from_xyzw(q[0] as f32, q[1] as f32, q[2] as f32, q[3] as f32);
     transform.rotation = lander_quat;

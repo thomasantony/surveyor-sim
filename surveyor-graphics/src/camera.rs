@@ -108,17 +108,14 @@ pub fn sync_camera(
     let lander_pos = lander.state.rows(0, 3);
     // Offset camera by 10m in the direction of the lander
     use surveyor_physics::math::Vector3;
-    let camera_pos = lander_pos;
+    // Position camera to be between the lander and the planet
     let (mut look, mut camera_cell) = camera_query.single_mut();
 
-    let (grid_cell, camera_translation) = settings.translation_to_grid::<GridCellType>(DVec3::new(camera_pos[0]+10.0, camera_pos[1]+10.0, camera_pos[2]+10.0));
-
-    if grid_cell != *camera_cell {
-        *camera_cell = grid_cell;
-    }
-
     let (lander_cell, lander_translation) = settings.translation_to_grid::<GridCellType>(DVec3::new(lander_pos[0], lander_pos[1], lander_pos[2]));
-    look.eye = camera_translation;
-    look.target = lander_translation
 
+    let new_camera_translation = lander_translation + Vec3::new(10.0, 10.0, 10.0);
+    *camera_cell = lander_cell;
+
+    look.eye = new_camera_translation;
+    look.target = lander_translation;
 }

@@ -9,7 +9,8 @@
         </CelestialBody> -->
         <CelestialBody name="Moon">
             <gravity>
-                <mu>4.9028695e12</mu>
+                <!-- <mu>4.9028695e12</mu> -->
+                <mu>0.0</mu>
             </gravity>
         </CelestialBody>
     </UniverseConfig>
