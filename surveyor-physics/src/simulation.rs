@@ -46,7 +46,7 @@ impl Default for SimulationParams {
         Self {
             dt: 1.0 / 100.0,
             t0: 0.0,
-            tf: 100.0,
+            tf: 1000.0,
             initial_state: InitialState::default(), // stopping_condition: None,
         }
     }

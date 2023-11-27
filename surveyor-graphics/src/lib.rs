@@ -20,7 +20,7 @@ impl Plugin for SurveyorGraphicsPlugin{
             // big_space::debug::FloatingOriginDebugPlugin::<GridCellType>::default(),
 
         ))
-        .add_plugins(big_space::camera::CameraControllerPlugin::<GridCellType>::default())
+        // .add_plugins(big_space::camera::CameraControllerPlugin::<GridCellType>::default())
 
         // Camera plugins
         .add_plugins(LookTransformPlugin)
@@ -28,14 +28,15 @@ impl Plugin for SurveyorGraphicsPlugin{
         .add_plugins(OrbitCameraPlugin::new(true))
         .add_systems(Startup, spawn_camera)
         .add_systems(Update, camera_input_map)
-        .add_systems(Update, sync_camera)
 
         // Planets
         .add_systems(Startup, setup_planet)
 
         // Spacecraft
         .add_systems(Startup, spawn_lander)
-        .add_systems(Update, update_lander_pos);
+        .add_systems(Update, update_lander_pos.after(surveyor_physics::simulation::run_simulation_system))
+        .add_systems(Update, sync_camera.after(update_lander_pos))
+        ;
         // app.add_systems(Startup, setup);
     }
 }
