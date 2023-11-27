@@ -10,6 +10,7 @@ bevy = { version = "0.12", features = ["jpeg", "png"]}
 bevy-inspector-egui = "0.18.3"
 # bevy_mod_paramap = "0.3.0"
 big_space = "0.4.0"
-smooth-bevy-cameras = "0.10.0"
+# smooth-bevy-cameras = "0.10.0"
+bevy_panorbit_camera = "0.9.2"
 surveyor-physics = { path = "../surveyor-physics" }
 surveyor-gnc = { path = "../surveyor-gnc" }
