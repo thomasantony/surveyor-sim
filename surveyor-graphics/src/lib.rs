@@ -17,7 +17,7 @@ impl Plugin for SurveyorGraphicsPlugin{
     {
         app.add_plugins(FloatingOriginPlugin::<GridCellType>::default())
         // Camera plugins
-        .add_plugins(big_space::camera::CameraControllerPlugin::<GridCellType>::default())
+        // .add_plugins(big_space::camera::CameraControllerPlugin::<GridCellType>::default())
         .add_plugins(LookTransformPlugin)
         .insert_resource(ClearColor(Color::BLACK))
         .add_plugins(OrbitCameraPlugin::new(true))
@@ -31,6 +31,6 @@ impl Plugin for SurveyorGraphicsPlugin{
         // Spacecraft
         .add_systems(Startup, spawn_lander);
         // .add_systems(Update, update_lander_pos);
-        // app.add_startup_system(setup);
+        // app.add_systems(Startup, setup);
     }
 }

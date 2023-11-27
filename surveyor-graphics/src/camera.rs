@@ -1,7 +1,7 @@
 use bevy::{prelude::*, math::DVec3, input::mouse::{MouseWheel, MouseMotion, MouseScrollUnit}};
 use big_space::{FloatingOriginSettings, FloatingOrigin, camera::CameraController, GridCell};
 use smooth_bevy_cameras::{controllers::orbit::{OrbitCameraBundle, OrbitCameraController, ControlEvent}, LookTransformBundle, LookTransform, Smoother};
-// use surveyor_physics::spacecraft::OrbitalDynamics;
+use surveyor_physics::spacecraft::OrbitalDynamics;
 
 use crate::{GridCellType, planet::MOON_RADIUS, lander::{self, Lander}};
 
@@ -98,26 +98,23 @@ pub fn camera_input_map(
     events.send(ControlEvent::Zoom(scalar));
 }
 
-// pub fn sync_camera(
-//     phy_query: Query<(&OrbitalDynamics)>,
-//     mut camera_query: Query<(&mut LookTransform, &mut GridCell<i128>)>,
-//     settings: Res<FloatingOriginSettings> ) {
+pub fn sync_camera(
+    phy_query: Query<(&OrbitalDynamics)>,
+    mut camera_query: Query<(&mut LookTransform, &mut GridCell<i128>)>,
+    settings: Res<FloatingOriginSettings> ) {
 
-//     let lander = phy_query.single();
+    let lander = phy_query.single();
 
-//     let lander_pos = lander.state.rows(0, 3);
-//     let (_, lander_translation) = settings.translation_to_grid::<i128>(DVec3::new(lander_pos[0], lander_pos[1], lander_pos[2]));
+    let lander_pos = lander.state.rows(0, 3);
+    let (_, lander_translation) = settings.translation_to_grid::<i128>(DVec3::new(lander_pos[0], lander_pos[1], lander_pos[2]));
 
-//     // Offset from lander translation to get camera translation
-//     let camera_offset = Vec3::new(10.0, 0.0, 0.0);
-//     let camera_translation = lander_translation + camera_offset;
-//     let (cell_offset, new_translation) = settings.translation_to_grid(vel_t_next);
+    // Offset from lander translation to get camera translation
+    let camera_offset = Vec3::new(10.0, 0.0, 0.0);
+    let camera_new_translation = lander_translation + camera_offset;
 
-//     let (mut camera_cell, mut cam_transform) = camera_query.single_mut();
-//     *camera_cell += cell_offset;
-//     cam_transform.translation += new_translation;
+    let (mut camera_transform, mut camera_cell) = camera_query.single_mut();
 
-//     let (mut camera_look, _) = camera_query.single_mut();
-
-//     camera_look.target = lander_translation;
-// }
+    // let delta = camera_new_translation - camera_transform.translation;
+    // *camera_cell += cell_offset;
+    // camera_look.translation += new_translation;
+}

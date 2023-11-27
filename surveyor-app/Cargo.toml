@@ -4,8 +4,8 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-bevy = {version = "0.10.1", default-features = false}
-bevy_app = { version = "0.10.1", default-features = false}
+bevy = {version = "0.12", default-features = false}
+bevy_app = { version = "0.12", default-features = false}
 surveyor-gnc = { path = "../surveyor-gnc" }
 console_error_panic_hook = "0.1.7"
 console_log = "1.0.0"

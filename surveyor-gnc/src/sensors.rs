@@ -133,7 +133,7 @@ pub fn update_star_tracker(mut star_tracker_input: EventReader<StarTrackerInput>
 #[cfg(test)]
 mod tests
 {
-    use bevy_app::App;
+    use bevy_app::{App, Update};
     use bevy_ecs::{prelude::Events};
     use crate::{sensors::{IMUOutput, StarTrackerOutput}, Name};
 
@@ -146,8 +146,8 @@ mod tests
             .add_event::<IMUOutput>()
             .add_event::<StarTrackerOutput>()
             .add_event::<StarTrackerInput>()
-            .add_system(update_imu)
-            .add_system(update_star_tracker);
+            .add_systems(Update, update_imu)
+            .add_systems(Update, update_star_tracker);
         app.world.spawn((Name("IMU_A"), IMU, GeometryConfig::default()));
         app.world.spawn((Name("ST_A"), StarTracker, GeometryConfig::default()));
         app

@@ -159,7 +159,7 @@ mod tests {
     fn test_command_handler()
     {
         let mut app = App::new();
-        app.add_simple_outer_schedule().add_plugin(SurveyorGNC::new());
+        app.add_plugins(SurveyorGNC::new());
         app.update();
         {
             let guidance_mode = app.world.query::<&mut guidance::GuidanceMode>().single(&app.world);

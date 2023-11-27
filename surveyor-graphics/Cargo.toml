@@ -11,5 +11,5 @@ bevy = { version = "0.12", features = ["jpeg", "png"]}
 # bevy_mod_paramap = "0.3.0"
 big_space = "0.4.0"
 smooth-bevy-cameras = "0.10.0"
-# surveyor-physics = { path = "../surveyor-physics" }
-# surveyor-gnc = { path = "../surveyor-gnc" }
+surveyor-physics = { path = "../surveyor-physics" }
+surveyor-gnc = { path = "../surveyor-gnc" }
