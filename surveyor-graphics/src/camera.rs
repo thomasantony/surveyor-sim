@@ -10,16 +10,17 @@ pub struct CameraTarget;
 
 pub fn spawn_camera(
     mut commands: Commands,
-    mut lander_query: Query<(&Lander, &mut GridCell<i128>, &mut Transform)>,
+    mut lander_query: Query<(&Lander, &mut GridCell<GridCellType>, &mut Transform)>,
     settings: Res<FloatingOriginSettings>,
 ) {
     let lander_pos = DVec3::new(MOON_RADIUS + 100e3, 0.0, 0.0);
-    let (_, lander_translation) = settings.translation_to_grid::<i128>(lander_pos);
+    let (_, lander_translation) = settings.translation_to_grid::<GridCellType>(lander_pos);
 
     let camera_pos = DVec3::new(MOON_RADIUS + 100e3 +10.0, 0.0, 0.0);
     let (grid_cell, camera_translation) = settings.translation_to_grid::<GridCellType>(camera_pos.clone());
     let camera_transform = Transform::from_translation(camera_translation)
                                             .looking_at(lander_translation, Vec3::Y);
+
 
     commands.spawn((
         Camera3dBundle {
@@ -100,21 +101,24 @@ pub fn camera_input_map(
 
 pub fn sync_camera(
     phy_query: Query<(&OrbitalDynamics)>,
-    mut camera_query: Query<(&mut LookTransform, &mut GridCell<i128>)>,
+    mut camera_query: Query<(&mut LookTransform, &mut GridCell<GridCellType>), With<Camera>>,
     settings: Res<FloatingOriginSettings> ) {
 
     let lander = phy_query.single();
-
     let lander_pos = lander.state.rows(0, 3);
-    let (_, lander_translation) = settings.translation_to_grid::<i128>(DVec3::new(lander_pos[0], lander_pos[1], lander_pos[2]));
+    // Offset camera by 10m in the direction of the lander
+    use surveyor_physics::math::Vector3;
+    let camera_pos = lander_pos;
+    let (mut look, mut camera_cell) = camera_query.single_mut();
 
-    // Offset from lander translation to get camera translation
-    let camera_offset = Vec3::new(10.0, 0.0, 0.0);
-    let camera_new_translation = lander_translation + camera_offset;
+    let (grid_cell, camera_translation) = settings.translation_to_grid::<GridCellType>(DVec3::new(camera_pos[0]+10.0, camera_pos[1]+10.0, camera_pos[2]+10.0));
 
-    let (mut camera_transform, mut camera_cell) = camera_query.single_mut();
+    if grid_cell != *camera_cell {
+        *camera_cell = grid_cell;
+    }
 
-    // let delta = camera_new_translation - camera_transform.translation;
-    // *camera_cell += cell_offset;
-    // camera_look.translation += new_translation;
+    let (lander_cell, lander_translation) = settings.translation_to_grid::<GridCellType>(DVec3::new(lander_pos[0], lander_pos[1], lander_pos[2]));
+    look.eye = camera_translation;
+    look.target = lander_translation
+
 }

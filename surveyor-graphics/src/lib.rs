@@ -15,22 +15,27 @@ pub struct SurveyorGraphicsPlugin;
 impl Plugin for SurveyorGraphicsPlugin{
     fn build(&self, app: &mut App)
     {
-        app.add_plugins(FloatingOriginPlugin::<GridCellType>::default())
-        // Camera plugins
+        app.add_plugins((
+            FloatingOriginPlugin::<GridCellType>::default(),
+            big_space::debug::FloatingOriginDebugPlugin::<GridCellType>::default(),
+
+        ))
         // .add_plugins(big_space::camera::CameraControllerPlugin::<GridCellType>::default())
+
+        // Camera plugins
         .add_plugins(LookTransformPlugin)
         .insert_resource(ClearColor(Color::BLACK))
         .add_plugins(OrbitCameraPlugin::new(true))
         .add_systems(Startup, spawn_camera)
         .add_systems(Update, camera_input_map)
-        // .add_system(sync_camera)
+        .add_systems(Update, sync_camera)
 
         // Planets
         .add_systems(Startup, setup_planet)
 
         // Spacecraft
-        .add_systems(Startup, spawn_lander);
-        // .add_systems(Update, update_lander_pos);
+        .add_systems(Startup, spawn_lander)
+        .add_systems(Update, update_lander_pos);
         // app.add_systems(Startup, setup);
     }
 }

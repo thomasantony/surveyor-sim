@@ -3,6 +3,7 @@ use big_space::{FloatingOriginSettings, FloatingOrigin, GridCell};
 use surveyor_physics::{SimulationTime, spacecraft::{SpacecraftModel, OrbitalDynamics}};
 
 use crate::planet::MOON_RADIUS;
+use crate::{GridCellType};
 
 #[derive(Component)]
 pub struct Lander;
@@ -13,7 +14,7 @@ pub fn spawn_lander(mut commands: Commands,
 {
     let lander_pos = DVec3::new(MOON_RADIUS + 100e3, 0.0, 0.0);
     println!("Lander position: {:?}", lander_pos);
-    let (grid_cell, lander_translation) = settings.translation_to_grid::<i128>(lander_pos);
+    let (grid_cell, lander_translation) = settings.translation_to_grid::<GridCellType>(lander_pos);
     // in the SceneBundle
     commands.spawn((SceneBundle {
         scene: asset_server.load("Surveyor/Surveyor-Lander.gltf#Scene0"),
@@ -27,23 +28,23 @@ pub fn spawn_lander(mut commands: Commands,
 }
 
 pub fn update_lander_pos(
-    mut phy_query: Query<(& SimulationTime, & OrbitalDynamics)>,
-    mut gfx_query: Query<(&mut GridCell<i128>, &mut Transform), With<Lander>>,
+    phy_query: Query<(& SimulationTime, & OrbitalDynamics)>,
+    mut lander_query: Query<(&mut GridCell<GridCellType>, &mut Transform), With<Lander>>,
     settings: Res<FloatingOriginSettings>
 )
 {
     // Get gfx component from query
-    let (_, mut transform) = gfx_query.single_mut();
+    let (mut grid_cell, mut transform) = lander_query.single_mut();
     let (_, sc) = phy_query.single();
 
+    let lander_pos = sc.state.rows(0, 3);
+    let lander_pos: DVec3 = DVec3::new(lander_pos[0], lander_pos[1], lander_pos[2]);
+    let (new_grid_cell, new_translation) = settings.translation_to_grid::<GridCellType>(lander_pos);
 
-    // let lander_pos = sc.state.rows(0, 3);
-    // let lander_pos: DVec3 = DVec3::new(lander_pos[0], lander_pos[1], lander_pos[2]);
-    // let (new_grid_cell, new_translation) = settings.translation_to_grid::<i128>(lander_pos);
-    // if new_grid_cell != *grid_cell {
-    //     *grid_cell = new_grid_cell;
-    //     transform.translation = new_translation;
-    // }
+    if new_grid_cell != *grid_cell {
+        *grid_cell = new_grid_cell;
+        transform.translation = new_translation;
+    }
 
     // println!("Lander position: {:?}", lander_pos);
     let q = sc.state.fixed_rows::<4>(6);
