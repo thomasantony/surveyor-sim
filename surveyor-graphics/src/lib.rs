@@ -17,10 +17,10 @@ impl Plugin for SurveyorGraphicsPlugin{
     {
         app.add_plugins((
             FloatingOriginPlugin::<GridCellType>::default(),
-            big_space::debug::FloatingOriginDebugPlugin::<GridCellType>::default(),
+            // big_space::debug::FloatingOriginDebugPlugin::<GridCellType>::default(),
 
         ))
-        // .add_plugins(big_space::camera::CameraControllerPlugin::<GridCellType>::default())
+        .add_plugins(big_space::camera::CameraControllerPlugin::<GridCellType>::default())
 
         // Camera plugins
         .add_plugins(LookTransformPlugin)
