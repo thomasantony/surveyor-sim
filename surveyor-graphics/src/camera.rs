@@ -1,6 +1,7 @@
 use bevy::{prelude::*, math::DVec3, input::mouse::{MouseWheel, MouseMotion, MouseScrollUnit}};
 use big_space::{FloatingOriginSettings, FloatingOrigin, camera::CameraController, GridCell};
 use smooth_bevy_cameras::{controllers::orbit::{OrbitCameraBundle, OrbitCameraController, ControlEvent}, LookTransformBundle, LookTransform, Smoother};
+// use surveyor_physics::spacecraft::OrbitalDynamics;
 
 use crate::{GridCellType, planet::MOON_RADIUS, lander::{self, Lander}};
 
@@ -97,13 +98,26 @@ pub fn camera_input_map(
     events.send(ControlEvent::Zoom(scalar));
 }
 
-// pub fn sync_camera( player: Query<&Transform, With<CameraTarget>>,
-//     mut camera: Query<(&mut OrbitCamera, &mut Transform), Without<Player>>, ) { let Ok(player) = player.get_single() else { return }; let Ok((mut camera, mut camera_transform)) = camera.get_single_mut() else { return };
+// pub fn sync_camera(
+//     phy_query: Query<(&OrbitalDynamics)>,
+//     mut camera_query: Query<(&mut LookTransform, &mut GridCell<i128>)>,
+//     settings: Res<FloatingOriginSettings> ) {
 
-// let delta = player.translation - camera.focus;
+//     let lander = phy_query.single();
 
-// if delta != Vec3::ZERO {
-//     camera.focus = player.translation;
-//     camera_transform.translation += delta;
-// }
+//     let lander_pos = lander.state.rows(0, 3);
+//     let (_, lander_translation) = settings.translation_to_grid::<i128>(DVec3::new(lander_pos[0], lander_pos[1], lander_pos[2]));
+
+//     // Offset from lander translation to get camera translation
+//     let camera_offset = Vec3::new(10.0, 0.0, 0.0);
+//     let camera_translation = lander_translation + camera_offset;
+//     let (cell_offset, new_translation) = settings.translation_to_grid(vel_t_next);
+
+//     let (mut camera_cell, mut cam_transform) = camera_query.single_mut();
+//     *camera_cell += cell_offset;
+//     cam_transform.translation += new_translation;
+
+//     let (mut camera_look, _) = camera_query.single_mut();
+
+//     camera_look.target = lander_translation;
 // }
