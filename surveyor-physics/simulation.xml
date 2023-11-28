@@ -1,14 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <Config>
+    <SimulationConfig>
+        <StoppingConditions>
+            <MaxDuration>1000.0</MaxDuration>
+            <Collision>
+                <CelestialBody name="Moon"/>
+            </Collision>
+        <StoppingConditions>
+    </SimulationConfig>
     <UniverseConfig>
         <!-- <CelestialBody name="Earth">
             <gravity>
                 <mu>3.986004418e14</mu>
+                <position>3.84400e9,0.0,0.0</position>
             </gravity>
         </CelestialBody> -->
         <CelestialBody name="Moon">
             <gravity>
+                <!-- <position>0.0,0.0,0.0</position> -->
                 <mu>4.9028695e12</mu>
             </gravity>
         </CelestialBody>

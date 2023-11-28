@@ -20,7 +20,7 @@ use std::{f64::consts::PI};
 use bevy_app::prelude::*;
 use bevy_ecs::prelude::*;
 use config::SimulationConfig;
-use simulation::{SimulationResults, SimulationParams, run_simulation_system};
+use simulation::{SimulationResults, SimulationParams, run_simulation_system, SimStoppingCondition};
 use spacecraft::{InitialState, SpacecraftModel, build_spacecraft_entity, OrbitalDynamics};
 use hard_xml::XmlRead;
 use universe::Universe;
@@ -58,7 +58,7 @@ pub fn build_sim_ecs(mut commands: Commands)
     let a: f64 = 6378.14 + 500.0;
     // let period = 2.0 * PI * (a.powi(3) / 398600.0).sqrt();
     let period = 0.05 * PI * (a.powi(3) / 398600.0).sqrt();
-    let sim_params: SimulationParams = SimulationParams::new(DT, 0.0, period, initial_state);
+    let sim_params: SimulationParams = SimulationParams::new(DT, initial_state, vec![SimStoppingCondition::MaxDuration(period)]);
     commands.insert_resource(sim_params);
 }
 

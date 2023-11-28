@@ -1,42 +1,73 @@
+use std::fmt::Formatter;
+use std::str::FromStr;
+
 use crate::{SimulationState, SimulationTime};
 use crate::spacecraft::{
     InitialState, OrbitalDynamics, SpacecraftModel,
 };
 use crate::universe::Universe;
+use hard_xml::XmlRead;
 use nalgebra::{Dyn, U13};
 use bevy_ecs::prelude::*;
 
-// // Enum defining stopping conditions for simulation
-// pub enum SimStoppingCondition {
-//     Time(f64),
-//     Custom(Box<dyn Fn(&OrbitalDynamics) -> bool>),
-// }
-// impl std::fmt::Debug for SimStoppingCondition {
-//     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-//         match self {
-//             SimStoppingCondition::Time(t) => write!(f, "Time({})", t),
-//             SimStoppingCondition::Custom(_) => write!(f, "Custom"),
-//         }
-//     }
-// }
+// Enum defining stopping conditions for simulation
+#[derive(Resource, Clone)]
+// #[xml(tag = "SimStoppingCondition")]
+pub enum SimStoppingCondition {
+    // #[xml(flatten_text="MaxDuration")]
+    MaxDuration(f64),
+    // Custom(Box<dyn Fn(&OrbitalDynamics, &Universe) -> bool + Sync + Send + 'static>),
+}
+
+impl FromStr for SimStoppingCondition {
+    type Err = &'static str;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            // "Custom" => Ok(SimStoppingCondition::Custom(Box::new(|_, _| false))),
+            "MaxDuration" => Ok(SimStoppingCondition::MaxDuration(0.0)),
+            _ => Err("Invalid stopping condition"),
+        }
+    }
+}
+
+impl std::fmt::Debug for SimStoppingCondition {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            SimStoppingCondition::MaxDuration(t) => write!(f, "Time({})", t),
+            // SimStoppingCondition::Custom(_) => write!(f, "Custom"),
+        }
+    }
+}
+
+impl SimStoppingCondition {
+    pub fn check(&self, state: &OrbitalDynamics, universe: &Universe) -> bool {
+        match self {
+            SimStoppingCondition::MaxDuration(t) => {
+                state.time >= *t
+            },
+            // SimStoppingCondition::Custom(f) => f(state, universe),
+        }
+    }
+}
 
 // Struct holding parameters for simulation
 #[derive(Debug, Resource)]
+// #[xml(tag = "SimulationParams")]
 pub struct SimulationParams {
+    // #[xml(default, flatten_text="dt")]
     pub dt: f64,
-    pub t0: f64,
-    pub tf: f64,
+    // #[xml(child = "InitialState")]
     pub initial_state: InitialState,
-    // pub stopping_condition: Option<SimStoppingCondition>,
+    // #[xml(child = "SimStoppingCondition")]
+    pub stopping_conditions: Vec<SimStoppingCondition>,
 }
 impl SimulationParams {
-    pub fn new(dt: f64, t0: f64, tf: f64, initial_state: InitialState) -> Self {
+    pub fn new(dt: f64, initial_state: InitialState, stopping_conditions: Vec<SimStoppingCondition>) -> Self {
         Self {
             dt,
-            t0,
-            tf,
             initial_state,
-            // stopping_condition: None,
+            stopping_conditions,
         }
     }
 }
@@ -45,9 +76,8 @@ impl Default for SimulationParams {
     fn default() -> Self {
         Self {
             dt: 1.0 / 100.0,
-            t0: 0.0,
-            tf: 1000.0,
             initial_state: InitialState::default(), // stopping_condition: None,
+            stopping_conditions: vec![SimStoppingCondition::MaxDuration(100.0)],
         }
     }
 }
@@ -77,13 +107,12 @@ impl SimulationResults {
 // System that updates simulation state and the time after stepping the dynamics
 pub fn run_simulation_system(
     sim_params: Res<SimulationParams>,
-    mut query: Query<(&mut SimulationTime, &mut SpacecraftModel)>,
+    mut query: Query<(&mut SimulationTime, &OrbitalDynamics), With<SpacecraftModel>>,
     mut set_sim_state: ResMut<NextState<SimulationState>>,
 ) {
     // Use query to extract references to the spacecraft model and orbital dynamics inputs
-    let (mut t, _) = query.single_mut();
-
-    if t.0 >= sim_params.tf {
+    let (mut t, state) = query.single_mut();
+    if sim_params.stopping_conditions.iter().any(|c| c.check(&state, &Universe::default())) {
         log::info!("Simulation has finished");
         set_sim_state.set(SimulationState::Finished);
         return;
