@@ -4,9 +4,9 @@
     <SimulationConfig>
         <StoppingConditions>
             <MaxDuration>1000.0</MaxDuration>
-            <Collision>
+            <!-- <Collision>
                 <CelestialBody name="Moon"/>
-            </Collision>
+            </Collision> -->
         <StoppingConditions>
     </SimulationConfig>
     <UniverseConfig>

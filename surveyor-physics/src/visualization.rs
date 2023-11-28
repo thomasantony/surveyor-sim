@@ -166,7 +166,8 @@ pub fn create_plots(results: &SimulationResults, _params: &SimulationParams) {
 // fn run_plotting_system(_entities, sim_params, sim_results): Self::SystemData) {
 pub fn run_plotting_system(
     sim_params: Res<SimulationParams>,
-    sim_results: Query<&SimulationResults>
+    sim_results: Query<&SimulationResults>,
+    // sim_state: Res<SimulationState>,
 ) {
     log::info!("Running plotting system");
     let sim_result = &sim_results.single();
@@ -174,8 +175,8 @@ pub fn run_plotting_system(
     if sim_result.history.len() == 0 {
         return;
     }
-    if sim_result.history[sim_result.history.len() - 1].time < sim_params.tf {
-        return;
-    }
-    create_plots(&sim_result, &sim_params);
+    // if sim_result.history[sim_result.history.len() - 1].time < sim. {
+    //     return;
+    // }
+    // create_plots(&sim_result, &sim_params);
 }
