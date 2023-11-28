@@ -117,7 +117,8 @@ impl Universe {
         self.celestial_bodies.iter().fold(
             SVector::<f64, 3>::zeros(),
             |force, (_body_type, body_model)| {
-                let body_force = body_model.gravity_model.compute_force(x, sc);
+                let rel_pos = x - body_model.position;
+                let body_force = body_model.gravity_model.compute_force(&rel_pos.fixed_rows::<3>(0), sc);
                 force + body_force
             },
         )
