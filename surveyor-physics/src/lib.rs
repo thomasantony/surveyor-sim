@@ -19,7 +19,7 @@ use std::{f64::consts::PI};
 
 use bevy_app::prelude::*;
 use bevy_ecs::prelude::*;
-use config::SimulationConfig;
+use config::SystemConfig;
 use simulation::{SimulationResults, SimulationParams, run_simulation_system, SimStoppingCondition};
 use spacecraft::{InitialState, SpacecraftModel, build_spacecraft_entity, OrbitalDynamics};
 use hard_xml::XmlRead;
@@ -49,17 +49,17 @@ pub fn build_sim_ecs(mut commands: Commands)
     // Create new spacecraft with engine subsystem
     let spacecraft_config_xml = include_str!("../simulation.xml");
 
-    let sim_config = SimulationConfig::from_str(spacecraft_config_xml).unwrap();
+    let config = SystemConfig::from_str(spacecraft_config_xml).unwrap();
 
     // Create new bevy ECS entity for spacecraft
-    build_spacecraft_entity(&mut commands, &sim_config.spacecraft, &initial_state);
-    commands.spawn(Universe::from_config(sim_config.universe));
+    build_spacecraft_entity(&mut commands, &config.spacecraft, &initial_state);
+    commands.spawn(Universe::from_config(config.universe));
 
-    let a: f64 = 6378.14 + 500.0;
-    // let period = 2.0 * PI * (a.powi(3) / 398600.0).sqrt();
-    let period = 0.05 * PI * (a.powi(3) / 398600.0).sqrt();
-    let sim_params: SimulationParams = SimulationParams::new(DT, initial_state, vec![SimStoppingCondition::MaxDuration(period)]);
-    commands.insert_resource(sim_params);
+    // let a: f64 = 6378.14 + 500.0;
+    // // let period = 2.0 * PI * (a.powi(3) / 398600.0).sqrt();
+    // let period = 0.05 * PI * (a.powi(3) / 398600.0).sqrt();
+    // let sim_params: SimulationParams = SimulationParams::new(DT, initial_state, vec![SimStoppingCondition::MaxDuration(period)]);
+    commands.insert_resource(config.simulation);
 }
 
 // System used to initalize the simulation

@@ -11,11 +11,11 @@ use nalgebra::{Dyn, U13};
 use bevy_ecs::prelude::*;
 
 // Enum defining stopping conditions for simulation
-#[derive(Resource, Clone)]
-// #[xml(tag = "SimStoppingCondition")]
+#[derive(Resource, Clone, PartialEq)]
+#[derive(XmlRead)]
 pub enum SimStoppingCondition {
-    // #[xml(flatten_text="MaxDuration")]
-    MaxDuration(f64),
+    #[xml(tag="MaxDuration")]
+    MaxDuration(#[xml(text)] f64)
     // Custom(Box<dyn Fn(&OrbitalDynamics, &Universe) -> bool + Sync + Send + 'static>),
 }
 
@@ -34,7 +34,7 @@ impl FromStr for SimStoppingCondition {
 impl std::fmt::Debug for SimStoppingCondition {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            SimStoppingCondition::MaxDuration(t) => write!(f, "Time({})", t),
+            SimStoppingCondition::MaxDuration(t) => write!(f, "MaxDuration({})", t),
             // SimStoppingCondition::Custom(_) => write!(f, "Custom"),
         }
     }
@@ -52,21 +52,19 @@ impl SimStoppingCondition {
 }
 
 // Struct holding parameters for simulation
-#[derive(Debug, Resource)]
-// #[xml(tag = "SimulationParams")]
+#[derive(Debug, Resource, PartialEq)]
+#[derive(XmlRead)]
+#[xml(tag = "SimulationConfig")]
 pub struct SimulationParams {
-    // #[xml(default, flatten_text="dt")]
+    #[xml(default, flatten_text="StepSize")]
     pub dt: f64,
-    // #[xml(child = "InitialState")]
-    pub initial_state: InitialState,
-    // #[xml(child = "SimStoppingCondition")]
+    #[xml(child="StoppingCondition", child="MaxDuration")]
     pub stopping_conditions: Vec<SimStoppingCondition>,
 }
 impl SimulationParams {
-    pub fn new(dt: f64, initial_state: InitialState, stopping_conditions: Vec<SimStoppingCondition>) -> Self {
+    pub fn new(dt: f64, stopping_conditions: Vec<SimStoppingCondition>) -> Self {
         Self {
             dt,
-            initial_state,
             stopping_conditions,
         }
     }
@@ -76,7 +74,6 @@ impl Default for SimulationParams {
     fn default() -> Self {
         Self {
             dt: 1.0 / 100.0,
-            initial_state: InitialState::default(), // stopping_condition: None,
             stopping_conditions: vec![SimStoppingCondition::MaxDuration(100.0)],
         }
     }

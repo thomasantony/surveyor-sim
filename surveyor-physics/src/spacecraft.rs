@@ -39,7 +39,7 @@ use hard_xml::XmlRead;
 use nalgebra::{DVector, SMatrix, SVector};
 
 
-#[derive(Debug, XmlRead, Clone)]
+#[derive(Debug, XmlRead, Clone, PartialEq)]
 #[xml(tag = "InitialState")]
 pub struct InitialState {
     #[xml(flatten_text = "position")]

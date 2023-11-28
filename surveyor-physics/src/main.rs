@@ -1,6 +1,6 @@
 use bevy_app::App;
 use surveyor_physics::SimulationState;
-use surveyor_physics::config::SimulationConfig;
+use surveyor_physics::config::SystemConfig;
 use surveyor_physics::universe::Universe;
 use nalgebra::SMatrix;
 use std::f64;
@@ -58,7 +58,7 @@ pub fn main() {
     // Parse spacecraft config and initialize spacecraft model object
 
     let spacecraft_config_xml = include_str!("../simulation.xml");
-    let spacecraft_model = SimulationConfig::from_str(spacecraft_config_xml).unwrap();
+    let spacecraft_model = SystemConfig::from_str(spacecraft_config_xml).unwrap();
     println!("{:?}\n", spacecraft_model);
 
     let initial_state_xml = include_str!("../initial_state.xml");
