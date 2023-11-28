@@ -39,7 +39,7 @@ pub enum SimulationState
 }
 
 #[derive(Debug, Clone, Copy, Component, Default)]
-pub struct SimulationTime(f64);
+pub struct SimulationTime(pub f64);
 
 
 pub fn build_sim_ecs(mut commands: Commands)

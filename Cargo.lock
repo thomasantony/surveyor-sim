@@ -511,6 +511,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "bevy-debug-text-overlay"
+version = "7.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "823a658aae970ad62482a9e1793829faa206ca60ef15ddcccd66c0937ec38b58"
+dependencies = [
+ "bevy 0.12.0",
+ "lazy_static",
+]
+
+[[package]]
 name = "bevy-inspector-egui"
 version = "0.18.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4622,6 +4632,7 @@ name = "surveyor-graphics"
 version = "0.1.0"
 dependencies = [
  "bevy 0.12.0",
+ "bevy-debug-text-overlay",
  "bevy-inspector-egui",
  "bevy_panorbit_camera",
  "big_space",

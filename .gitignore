@@ -2,3 +2,5 @@
 .DS_Store
 dist
 *.jpg
+*.meta
+imported_assets
