@@ -1,4 +1,5 @@
-use bevy::{prelude::*, math::DVec3, input::mouse::{MouseWheel, MouseMotion, MouseScrollUnit}};
+use bevy::{prelude::*, math::DVec3, input::mouse::{MouseWheel, MouseMotion, MouseScrollUnit}, render::camera};
+use bevy_panorbit_camera::PanOrbitCamera;
 use big_space::{FloatingOriginSettings, FloatingOrigin, camera::CameraController, GridCell, camera::CameraInput};
 // use smooth_bevy_cameras::{controllers::orbit::{OrbitCameraBundle, OrbitCameraController, ControlEvent}, LookTransformBundle, LookTransform, Smoother};
 use surveyor_physics::spacecraft::OrbitalDynamics;
@@ -103,18 +104,24 @@ pub fn spawn_camera(
 
 pub fn sync_camera(
     phy_query: Query<&OrbitalDynamics>,
-    mut camera_query: Query<(&mut Transform, &mut GridCell<GridCellType>, &CameraRelativePosition), With<Camera>>,
+    mut camera_query: Query<(&mut Transform, &mut GridCell<GridCellType>, &CameraRelativePosition, &mut PanOrbitCamera), With<Camera>>,
     settings: Res<FloatingOriginSettings> ) {
 
     let lander = phy_query.single();
     let lander_pos = lander.state.rows(0, 3);
 
-    let (mut look, mut camera_cell, camera_relpos) = camera_query.single_mut();
+    let (mut camera_transform, mut camera_cell, camera_relpos, mut pano) = camera_query.single_mut();
 
     let (lander_cell, lander_translation) = settings.translation_to_grid::<GridCellType>(DVec3::new(lander_pos[0], lander_pos[1], lander_pos[2]));
 
     let new_camera_translation: Vec3 = lander_translation + camera_relpos.position;
     *camera_cell = lander_cell;
 
-    look.translation = new_camera_translation;
+    camera_transform.translation = new_camera_translation;
+
+    // let pano_delta = lander_translation - pano.target_focus;
+    // pano.target_focus = lander_translation;
+    // pano.target_radius = 10.0;
+    // pano.target_alpha += 0.001;
+
 }
