@@ -14,6 +14,21 @@ fn start_sim(mut set_sim_state: ResMut<NextState<SimulationState>>)
 }
 
 
+#[cfg(target_arch = "wasm32")]
+pub fn main() {
+
+    App::new()
+        .add_plugins(DefaultPlugins.build().disable::<TransformPlugin>())
+        .add_plugins(OverlayPlugin{ font_size: 32.0, ..Default::default() })
+        .add_plugins(SurveyorGraphicsPlugin)
+        .add_plugins(surveyor_physics::SurveyorPhysicsPlugin)
+        .add_plugins(surveyor_gnc::SurveyorGNC::new())
+        .add_systems(Startup, start_sim)
+        .add_systems(Update, show_sim_time)
+        .run();
+}
+
+#[cfg(not(target_arch = "wasm32"))]
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins.build().disable::<TransformPlugin>())
