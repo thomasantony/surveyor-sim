@@ -36,6 +36,10 @@ pub struct CelestialBodyModel {
     pub gravity_model: GravityModel,
     /// Ephemerides data (TODO: Load from JPL Horizons (maybe generate config data from HORIZONS?))
     pub ephemerides: (),
+    /// Radius of the body (TODO: Make this generic to support different body models)
+    pub radius: f64,
+    /// Position
+    pub position: SVector<f64, 3>,
 }
 
 impl FromStr for CelestialBodyType {
@@ -75,6 +79,8 @@ impl Universe {
         let earth = CelestialBodyModel {
             gravity_model: GravityModel::new(MU),
             ephemerides: (),
+            radius: 6378.14,
+            position: SVector::<f64, 3>::zeros(),
         };
         Self {
             celestial_bodies: vec![(CelestialBodyType::Earth, earth)]
@@ -94,6 +100,8 @@ impl Universe {
                     CelestialBodyModel {
                         gravity_model,
                         ephemerides: (),
+                        radius: body_config.radius,
+                        position: body_config.position.0,
                     },
                 )
             })

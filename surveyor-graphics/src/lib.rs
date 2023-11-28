@@ -30,8 +30,6 @@ impl Plugin for SurveyorGraphicsPlugin{
         // .add_plugins(OrbitCameraPlugin::new(true))
         .add_systems(Startup, spawn_camera)
 
-        // .add_systems(Update, camera_input_map)
-
         // Planets
         .add_systems(Startup, setup_planet)
 

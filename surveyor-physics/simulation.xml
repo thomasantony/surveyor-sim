@@ -18,8 +18,9 @@
         </CelestialBody> -->
         <CelestialBody name="Moon">
             <gravity>
-                <!-- <position>0.0,0.0,0.0</position> -->
+                <position>0.0,0.0,0.0</position>
                 <mu>4.9028695e12</mu>
+                <radius>1737400.0</radius>
             </gravity>
         </CelestialBody>
     </UniverseConfig>

@@ -28,6 +28,10 @@ pub struct CelestialBodyConfig {
     pub body_type: CelestialBodyType,
     #[xml(child = "gravity")]
     pub gravity_model: GravityModelConfig,
+    #[xml(flatten_text = "radius")]
+    pub radius: f64,
+    #[xml(flatten_text = "position")]
+    pub position: Vector3,
 }
 
 #[derive(Debug, XmlRead, PartialEq)]
