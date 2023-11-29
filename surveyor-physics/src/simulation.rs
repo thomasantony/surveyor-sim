@@ -1,10 +1,10 @@
 use std::fmt::Formatter;
 use std::ops::{DerefMut, Deref};
-use std::str::FromStr;
+
 
 use crate::{SimulationState, SimulationTime};
 use crate::spacecraft::{
-    InitialState, OrbitalDynamics, SpacecraftModel,
+    OrbitalDynamics, SpacecraftModel,
 };
 use crate::universe::{Universe, Observation};
 use hard_xml::XmlRead;
@@ -64,7 +64,7 @@ impl SimStoppingCondition {
                 let r_mag = r.norm();
                 r_mag < body.radius
             },
-            _ => false,
+            // _ => false,
             // SimStoppingCondition::Custom(f) => f(state, universe),
         }
     }

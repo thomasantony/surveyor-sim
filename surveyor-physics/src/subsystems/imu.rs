@@ -1,6 +1,6 @@
 //! The IMU model on the simulation side
 
-use bevy_ecs::component::Component;
+
 use nalgebra::Vector3;
 
 use crate::spacecraft::SpacecraftDiscreteState;
@@ -58,7 +58,7 @@ impl IMUSubsystem {
         // Store omega and accel from discrete state
         for imu in &mut self.imus.iter_mut() {
             let omega_b = Vector3::from_column_slice(discrete_state.omega_b);
-            imu.omega_cf = imu.q_cf2b.inverse_transform_vector(&omega_b);;
+            imu.omega_cf = imu.q_cf2b.inverse_transform_vector(&omega_b);
             // imu.accel_cf = ...
         }
     }

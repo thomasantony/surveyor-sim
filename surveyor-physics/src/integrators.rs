@@ -1,4 +1,4 @@
-use nalgebra::{DVector, DVectorView, SVector};
+use nalgebra::{SVector};
 
 pub type DynamicsFn<const N: usize, OtherParams> =
     fn(f64, &SVector<f64, N>, &OtherParams) -> SVector<f64, N>;

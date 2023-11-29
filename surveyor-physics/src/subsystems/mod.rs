@@ -29,7 +29,7 @@ impl Subsystem {
             SubsystemConfig::Imu(imu_subsystem_config) => {
                 Subsystem::Imu(imu::IMUSubsystem::from_config(imu_subsystem_config))
             }
-            _ => panic!("Invalid subsystem config"),
+            // _ => panic!("Invalid subsystem config"),
         }
     }
     // Represents a collection of models that make up a subsystem

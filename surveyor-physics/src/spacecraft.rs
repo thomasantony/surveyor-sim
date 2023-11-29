@@ -3,11 +3,12 @@ use na::SVectorView;
 use nalgebra as na;
 use bevy::prelude::*;
 use bevy_ecs::system::Commands;
-use surveyor_gnc::sensors::IMUInput;
+
 
 
 /// A component defining a continuous system that can be stepped over time
 #[derive(Debug, Component)]
+#[allow(dead_code)]
 pub struct ContinuousSystemState {
     /// Indices of the state vector that this system operates on within a larger state vector
     state_vector: na::DVector<f64>,
@@ -268,7 +269,7 @@ pub fn build_spacecraft_entity(commands: &mut Commands, config: &SpacecraftConfi
 
 /// Computes the derivatives of the spacecraft state from the current state and inputs
 /// and all the subsystems
-fn dydt(t: f64, state: &[f64], universe: &Universe, subsystems: &[&Subsystem], orb: &mut OrbitalDynamics, sc_props: &SpacecraftProperties) -> DVector<f64>
+fn dydt(_t: f64, state: &[f64], universe: &Universe, subsystems: &[&Subsystem], orb: &mut OrbitalDynamics, sc_props: &SpacecraftProperties) -> DVector<f64>
 {
     // None of the subsystems have internal continuous states for now
     let mut d_state = DVector::zeros(13);
@@ -333,7 +334,7 @@ pub fn step_spacecraft_model(
 pub fn do_discrete_update(mut q_spacecrafts: Query<(&mut SpacecraftModel, &SimulationTime, &OrbitalDynamics, &Children)>,
     mut q_subsystems: Query<&mut Subsystem>)
 {
-    for (spacecraft_model, t, orbital_dynamics, children) in q_spacecrafts.iter_mut() {
+    for (_spacecraft_model, t, orbital_dynamics, children) in q_spacecrafts.iter_mut() {
         let t = t.0;
         let spacecraft_discrete_state =
             SpacecraftDiscreteState::new(t, &orbital_dynamics.state);

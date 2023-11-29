@@ -15,12 +15,12 @@ pub mod math;
 
 pub mod interfaces;
 
-use std::{f64::consts::PI};
+
 
 use bevy_app::prelude::*;
 use bevy_ecs::prelude::*;
 use config::SystemConfig;
-use simulation::{SimulationResults, SimulationParams, run_simulation_system, SimStoppingCondition};
+use simulation::{SimulationResults, run_simulation_system};
 use spacecraft::{InitialState, SpacecraftModel, build_spacecraft_entity, OrbitalDynamics, do_discrete_update};
 use hard_xml::XmlRead;
 use universe::Universe;
