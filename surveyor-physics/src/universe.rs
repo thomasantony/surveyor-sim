@@ -123,4 +123,27 @@ impl Universe {
             },
         )
     }
+
+    pub fn observe(&self) -> Observation {
+        Observation::new(self)
+    }
+}
+
+// Struct representing an observation of the state of all bodies in the universe
+pub struct Observation<'a>{
+    pub celestial_bodies: HashMap<CelestialBodyType, &'a CelestialBodyModel>,
+}
+impl Observation<'_>{
+    pub fn new<'a>(universe: &'a Universe) -> Self {
+        Self {
+            celestial_bodies: universe.celestial_bodies.iter().map(|(body_type, body_model)| (*body_type, body_model)).collect(),
+        }
+    }
+    pub fn get_body(&self, body_type: CelestialBodyType) -> Option<&CelestialBodyModel> {
+        self.celestial_bodies.get(&body_type).copied()
+    }
+
+    pub fn get_body_by_name(&self, name: &str) -> Option<&CelestialBodyModel> {
+        CelestialBodyType::from_str(name).ok().and_then(|body_type| self.get_body(body_type))
+    }
 }
