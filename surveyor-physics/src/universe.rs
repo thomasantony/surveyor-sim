@@ -42,6 +42,14 @@ pub struct CelestialBodyModel {
     pub position: SVector<f64, 3>,
 }
 
+
+/// Celestial body type
+#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
+pub enum CelestialBodyType {
+    Sun,
+    Earth,
+    Moon,
+}
 impl FromStr for CelestialBodyType {
     type Err = &'static str;
 
@@ -53,14 +61,6 @@ impl FromStr for CelestialBodyType {
             _ => Err("Celestial body not supported"),
         }
     }
-}
-
-/// Celestial body
-#[derive(Debug, PartialEq, Eq, Hash)]
-pub enum CelestialBodyType {
-    Sun,
-    Earth,
-    Moon,
 }
 
 #[derive(Debug, Component)]
@@ -133,8 +133,8 @@ impl Universe {
 pub struct Observation<'a>{
     pub celestial_bodies: HashMap<CelestialBodyType, &'a CelestialBodyModel>,
 }
-impl Observation<'_>{
-    pub fn new<'a>(universe: &'a Universe) -> Self {
+impl<'a> Observation<'a>{
+    pub fn new(universe: &'a Universe) -> Self {
         Self {
             celestial_bodies: universe.celestial_bodies.iter().map(|(body_type, body_model)| (*body_type, body_model)).collect(),
         }

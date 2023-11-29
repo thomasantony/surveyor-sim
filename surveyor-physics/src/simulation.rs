@@ -6,7 +6,7 @@ use crate::{SimulationState, SimulationTime};
 use crate::spacecraft::{
     InitialState, OrbitalDynamics, SpacecraftModel,
 };
-use crate::universe::Universe;
+use crate::universe::{Universe, Observation};
 use hard_xml::XmlRead;
 use nalgebra::{Dyn, U13};
 use bevy_ecs::prelude::*;
@@ -52,10 +52,17 @@ impl std::fmt::Debug for SimStoppingCondition {
 }
 
 impl SimStoppingCondition {
-    pub fn check(&self, state: &OrbitalDynamics, universe: &Universe) -> bool {
+    pub fn check(&self, state: &OrbitalDynamics, observation: &Observation) -> bool {
         match self {
             SimStoppingCondition::MaxDuration(t) => {
                 state.time >= *t
+            },
+            SimStoppingCondition::CollisionWith(body) => {
+                let body = observation.get_body_by_name(&body).unwrap();
+                let sc_pos = state.state.fixed_rows::<3>(0);
+                let r = sc_pos - body.position;
+                let r_mag = r.norm();
+                r_mag < body.radius
             },
             _ => false,
             // SimStoppingCondition::Custom(f) => f(state, universe),
@@ -117,11 +124,14 @@ impl SimulationResults {
 pub fn run_simulation_system(
     sim_params: Res<SimulationParams>,
     mut query: Query<(&mut SimulationTime, &OrbitalDynamics), With<SpacecraftModel>>,
+    universe_query: Query<&Universe>,
     mut set_sim_state: ResMut<NextState<SimulationState>>,
 ) {
+    let universe = universe_query.single();
+    let obs = Observation::new(&universe);
     // Use query to extract references to the spacecraft model and orbital dynamics inputs
     let (mut t, state) = query.single_mut();
-    if sim_params.stopping_conditions.iter().any(|c| c.check(&state, &Universe::default())) {
+    if sim_params.stopping_conditions.iter().any(|c| c.check(&state, &obs)) {
         log::info!("Simulation has finished");
         set_sim_state.set(SimulationState::Finished);
         return;
