@@ -1,6 +1,6 @@
 use bevy::{prelude::*, math::DVec3};
-use big_space::{FloatingOriginSettings, FloatingOrigin, GridCell};
-use surveyor_physics::{SimulationTime, spacecraft::{SpacecraftModel, OrbitalDynamics}};
+use big_space::{FloatingOriginSettings, GridCell};
+use surveyor_physics::{SimulationTime, spacecraft::{OrbitalDynamics}};
 
 use crate::planet::MOON_RADIUS;
 use crate::{GridCellType};

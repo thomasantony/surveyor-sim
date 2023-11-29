@@ -1,8 +1,8 @@
 use bevy::{{prelude::*}, math::{DVec3}};
-use bevy::ecs::system::EntityCommands;
+
 use bevy::math::EulerRot::XYZ;
 // use bevy_mod_paramap::*;
-use big_space::{FloatingOriginSettings, FloatingOrigin};
+use big_space::{FloatingOriginSettings};
 
 
 pub const MOON_RADIUS: f64 = 1737.1e3; // meters
@@ -12,14 +12,15 @@ use std::f32::consts::TAU;
 
 use crate::GridCellType;
 
-const EARTH_NORMAL_MAP: &str = "textures/earth/normal_map.jpg";
-const EARTH_HEIGHT_MAP: &str = "textures/earth/elevation_surface.jpg";
-const EARTH_ROUGH_MAP: &str = "textures/earth/metallic_roughness.png";
 const EARTH_ALBEDO_MAP: &str = "textures/earth/base_color.jpg";
-const EARTH_EMI_MAP: &str = "textures/earth/emissive.jpg";
-const MOON_NORMAL_MAP: &str = "textures/moon/normal_map.jpg";
-const MOON_HEIGHT_MAP: &str = "textures/moon/elevation_surface.jpg";
+// const EARTH_NORMAL_MAP: &str = "textures/earth/normal_map.jpg";
+// const EARTH_HEIGHT_MAP: &str = "textures/earth/elevation_surface.jpg";
+// const EARTH_ROUGH_MAP: &str = "textures/earth/metallic_roughness.png";
+// const EARTH_EMI_MAP: &str = "textures/earth/emissive.jpg";
+
 const MOON_ALBEDO_MAP: &str = "textures/moon/base_color.jpg";
+// const MOON_NORMAL_MAP: &str = "textures/moon/normal_map.jpg";
+// const MOON_HEIGHT_MAP: &str = "textures/moon/elevation_surface.jpg";
 
 /// Store handle of the earth normal to later modify its format
 /// in [`update_normal`].

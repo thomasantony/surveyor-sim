@@ -1,10 +1,10 @@
-use bevy::{prelude::*, math::DVec3, input::mouse::{MouseWheel, MouseMotion, MouseScrollUnit}, render::camera};
+use bevy::{prelude::*, math::DVec3};
 use bevy_panorbit_camera::PanOrbitCamera;
-use big_space::{FloatingOriginSettings, FloatingOrigin, camera::CameraController, GridCell, camera::CameraInput};
+use big_space::{FloatingOriginSettings, FloatingOrigin, GridCell};
 // use smooth_bevy_cameras::{controllers::orbit::{OrbitCameraBundle, OrbitCameraController, ControlEvent}, LookTransformBundle, LookTransform, Smoother};
 use surveyor_physics::spacecraft::OrbitalDynamics;
 
-use crate::{GridCellType, planet::MOON_RADIUS, lander::{self, Lander}};
+use crate::{GridCellType, planet::MOON_RADIUS, lander::{Lander}};
 
 #[derive(Default, Debug, Component)]
 pub struct CameraRelativePosition {
@@ -13,7 +13,7 @@ pub struct CameraRelativePosition {
 
 pub fn spawn_camera(
     mut commands: Commands,
-    mut lander_query: Query<(&Lander, &mut GridCell<GridCellType>, &mut Transform)>,
+    _lander_query: Query<(&Lander, &mut GridCell<GridCellType>, &mut Transform)>,
     settings: Res<FloatingOriginSettings>,
 ) {
     let lander_pos = DVec3::new(MOON_RADIUS + 100e3, 0.0, 0.0);
@@ -60,7 +60,7 @@ pub fn sync_camera(
     let lander = phy_query.single();
     let lander_pos = lander.state.rows(0, 3);
 
-    let (mut camera_transform, mut camera_cell, camera_relpos, mut pano) = camera_query.single_mut();
+    let (mut camera_transform, mut camera_cell, camera_relpos, _pano) = camera_query.single_mut();
 
     let (lander_cell, lander_translation) = settings.translation_to_grid::<GridCellType>(DVec3::new(lander_pos[0], lander_pos[1], lander_pos[2]));
 
