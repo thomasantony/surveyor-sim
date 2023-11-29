@@ -1,5 +1,5 @@
 use surveyor_graphics::SurveyorGraphicsPlugin;
-use bevy::{prelude::*};
+use bevy::prelude::*;
 use surveyor_physics::SimulationState;
 use bevy_debug_text_overlay::{screen_print, OverlayPlugin};
 
@@ -30,12 +30,14 @@ pub fn main() {
         .run();
 }
 
+
 #[cfg(not(target_arch = "wasm32"))]
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins.build().disable::<TransformPlugin>())
         .add_plugins(OverlayPlugin{ font_size: 32.0, ..Default::default() })
         .add_plugins(SurveyorGraphicsPlugin)
+        // .add_plugins(bevy_inspector_egui::quick::WorldInspectorPlugin::new())
         .add_plugins(surveyor_physics::SurveyorPhysicsPlugin)
         .add_plugins(surveyor_gnc::SurveyorGNC::new())
         .add_systems(Startup, start_sim)

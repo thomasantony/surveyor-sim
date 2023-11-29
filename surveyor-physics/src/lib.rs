@@ -19,10 +19,12 @@ pub mod interfaces;
 
 use bevy_app::prelude::*;
 use bevy_ecs::prelude::*;
+use bevy_enum_filter::prelude::AddEnumFilter;
 use config::SystemConfig;
 use simulation::{SimulationResults, run_simulation_system};
 use spacecraft::{InitialState, SpacecraftModel, build_spacecraft_entity, OrbitalDynamics, do_discrete_update};
 use hard_xml::XmlRead;
+use subsystems::Subsystem;
 use universe::Universe;
 use bevy_ecs::schedule::IntoSystemConfigs;
 
@@ -77,6 +79,7 @@ impl Plugin for SurveyorPhysicsPlugin {
         // Split this up into two systems - one that actually builds the ECS and one that
         // initializes the simulation. The latter can be run anytime we trigger a new simulation
         app.add_systems(Startup, build_sim_ecs)
+            .add_enum_filter::<Subsystem>()
             .add_state::<SimulationState>()
             // Run `run_simulation_system` when we are in the `Running` state
             .add_systems(Update,

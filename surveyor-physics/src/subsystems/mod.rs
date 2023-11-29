@@ -6,11 +6,12 @@ use crate::{
     spacecraft::{OrbitalDynamicsInputs, SpacecraftDiscreteState}
 };
 use bevy_ecs::prelude::*;
+use bevy_enum_filter::prelude::*;
 pub mod propulsion;
 pub mod rcs;
 pub mod imu;
 
-#[derive(Debug, EnumAsInner, Component)]
+#[derive(Debug, EnumAsInner, Component, EnumFilter)]
 pub enum Subsystem {
     Propulsion(propulsion::SurveyorPropulsion),
     Rcs(rcs::RcsSubsystem),
