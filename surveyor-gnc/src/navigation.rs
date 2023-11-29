@@ -49,7 +49,7 @@ pub fn update_sensor_aggregator(mut imu_query: EventReader<IMUOutput>,
     // Assume there is only a single sensor data entity
     let mut sensor_data = SensorData::default();
     // Iterate over all imu outputs and add them to the sensor data
-    for (imu_idx, imu_output) in imu_query.iter().enumerate() {
+    for (imu_idx, imu_output) in imu_query.read().enumerate() {
         let meas = Measurement {
             value: imu_output.clone(),
             time: chrono::Utc::now(),
@@ -58,7 +58,7 @@ pub fn update_sensor_aggregator(mut imu_query: EventReader<IMUOutput>,
         sensor_data.imus[imu_idx] = meas;
     }
     // Iterate over all star tracker outputs and add them to the sensor data
-    for (st_idx, star_tracker_output) in str_query.iter().enumerate() {
+    for (st_idx, star_tracker_output) in str_query.read().enumerate() {
         let meas = Measurement {
             value: star_tracker_output.clone(),
             time: chrono::Utc::now(),
@@ -74,7 +74,7 @@ pub fn update_sensor_aggregator(mut imu_query: EventReader<IMUOutput>,
 pub fn update_simple_attitude_estimator(mut sensor_data_reader: EventReader<SensorData>,
                                         mut attitude_estimate_writer: EventWriter<AttitudeEstimatorOutput>) {
     let mut attitude_estimator_output = AttitudeEstimatorOutput::default();
-    if let Some(sensor_data) = sensor_data_reader.iter().last()
+    if let Some(sensor_data) = sensor_data_reader.read().last()
     {
         let imu = sensor_data.imus[0].value.clone();
         let star_tracker = sensor_data.star_trackers[0].value.clone();

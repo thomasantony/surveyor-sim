@@ -1,4 +1,4 @@
-use std::default;
+
 
 use bevy_ecs::prelude::*;
 use nalgebra as na;
@@ -89,7 +89,7 @@ pub fn update_attitude_controller(
     mut torque_request_query: EventWriter<AttitudeTorqueRequest>
 )
 {
-    let attitude_target = attitude_target_reader.iter().last().unwrap_or(&AttitudeTarget::None);
+    let attitude_target = attitude_target_reader.read().last().unwrap_or(&AttitudeTarget::None);
     let torque_request = match attitude_target {
         AttitudeTarget::None => {
             AttitudeTorqueRequest::default()
@@ -115,7 +115,7 @@ pub fn update_control_allocator(
 {
     // The control allocator gets configured elsewhere
     let control_allocator = control_allocator_query.single();
-    torque_request_reader.iter().last().map(
+    torque_request_reader.read().last().map(
         |torque_request|{
             if control_allocator.use_rcs {
                 // Pass through the torque request to the RCS controller
@@ -143,7 +143,7 @@ pub fn update_rcs_controller(
     mut rcs_output_writer: EventWriter<RCSControllerOutput>,
 ) {
     let (rcs_controller, mut output) = query.single_mut();
-    if let Some(rcs_controller_input) = rcs_controller_input_reader.iter().last()
+    if let Some(rcs_controller_input) = rcs_controller_input_reader.read().last()
     {
         let torque_rcs = rcs_controller.distribution_matrix_inv.clone() * rcs_controller_input.torque_b;
         // Compute duty cycles and assign them to the output

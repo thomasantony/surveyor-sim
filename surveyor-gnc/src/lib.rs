@@ -67,9 +67,9 @@ impl Plugin for SurveyorGNC {
                 .in_set(SurveyorGncSystemSet::Control)
             );
 
-        app.configure_set(Update, SurveyorGncSystemSet::Sensors.before(SurveyorGncSystemSet::Navigation));
-        app.configure_set(Update, SurveyorGncSystemSet::Navigation.before(SurveyorGncSystemSet::Guidance));
-        app.configure_set(Update, SurveyorGncSystemSet::Guidance.before(SurveyorGncSystemSet::Control));
+        app.configure_sets(Update, SurveyorGncSystemSet::Sensors.before(SurveyorGncSystemSet::Navigation));
+        app.configure_sets(Update, SurveyorGncSystemSet::Navigation.before(SurveyorGncSystemSet::Guidance));
+        app.configure_sets(Update, SurveyorGncSystemSet::Guidance.before(SurveyorGncSystemSet::Control));
 
         let traj = app.world.spawn((Name("TrajectoryPhase"), TrajectoryPhase::BeforeRetroBurn,)).id();
         let imu_a = app.world.spawn((Name("IMU_A"), sensors::IMU, GeometryConfig::default())).id();
@@ -144,7 +144,7 @@ pub fn process_gnc_command(mut command: EventReader<GncCommand>,
                            mut guidance_query: Query<&mut guidance::GuidanceMode>)
 {
     let mut guidance_mode = guidance_query.single_mut();
-    for command in command.iter() {
+    for command in command.read() {
         match command {
             GncCommand::SetGuidanceMode(new_mode) => {
                 *guidance_mode = new_mode.clone();
