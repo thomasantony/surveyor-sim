@@ -1,6 +1,7 @@
 use bevy_ecs::prelude::*;
 
 use crate::config::EngineSubsystemConfig;
+use crate::spacecraft::SpacecraftDiscreteState;
 use crate::{
     integrators::DynamicSystem,
     models::{
@@ -42,7 +43,7 @@ pub struct EngineCommands {
 }
 
 impl SurveyorPropulsion {
-    pub fn update_discrete(&mut self, dt: f64) {
+    pub fn update_discrete(&mut self, dt: f64, _discrete_state: &SpacecraftDiscreteState) {
         self.tvc_a.update_discrete(dt, &());
         self.vernier_a.update_discrete(dt, &());
         self.vernier_b.update_discrete(dt, &());

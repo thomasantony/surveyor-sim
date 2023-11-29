@@ -1,4 +1,4 @@
-use crate::{config::RcsSubsystemConfig, models::rcs::RcsThruster};
+use crate::{config::RcsSubsystemConfig, models::rcs::RcsThruster, spacecraft::SpacecraftDiscreteState};
 
 #[derive(Debug)]
 pub struct RcsSubsystem {
@@ -31,6 +31,6 @@ impl RcsSubsystem {
             thruster.update_dynamics(_outputs);
         }
     }
-    pub fn update_discrete(&mut self, _dt: f64) {}
+    pub fn update_discrete(&mut self, _dt: f64, _discrete_state: &SpacecraftDiscreteState) {}
     pub fn update_continuous(&mut self, _dt: f64) {}
 }

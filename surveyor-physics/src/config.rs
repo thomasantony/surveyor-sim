@@ -92,7 +92,7 @@ pub struct RcsSubsystemConfig {
 #[xml(tag = "ImuSubsystem")]
 pub struct ImuSubsystemConfig {
     #[xml(child = "thruster")]
-    pub thrusters: Vec<ImuConfig>,
+    pub sensors: Vec<ImuConfig>,
 }
 
 #[derive(Debug, XmlRead, PartialEq, Clone)]

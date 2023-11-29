@@ -3,16 +3,18 @@ use enum_as_inner::EnumAsInner;
 use crate::{
     config::SubsystemConfig,
     integrators::DynamicSystem,
-    spacecraft::{OrbitalDynamicsInputs, SpacecraftDiscreteState}, interfaces::ActuatorEvent,
+    spacecraft::{OrbitalDynamicsInputs, SpacecraftDiscreteState}, interfaces::{ActuatorEvent, SensorEvent},
 };
 use bevy_ecs::prelude::*;
 pub mod propulsion;
 pub mod rcs;
+pub mod imu;
 
 #[derive(Debug, EnumAsInner, Component)]
 pub enum Subsystem {
     Propulsion(propulsion::SurveyorPropulsion),
     Rcs(rcs::RcsSubsystem),
+    Imu(imu::IMUSubsystem),
 }
 
 impl Subsystem {
@@ -28,15 +30,20 @@ impl Subsystem {
         }
     }
     // Represents a collection of models that make up a subsystem
-    pub fn update_discrete(&mut self, dt: f64, _discrete_state: &SpacecraftDiscreteState) {
+    pub fn update_discrete(&mut self, dt: f64, discrete_state: &SpacecraftDiscreteState,
+                            sensor_event_writer: &mut EventWriter<SensorEvent>) {
         match self {
             Subsystem::Propulsion(engine_subsystem) => {
                 // Create discrete input for propulsion subsystem using SpacecraftDiscreteState
-                engine_subsystem.update_discrete(dt);
+                engine_subsystem.update_discrete(dt, discrete_state);
             }
             Subsystem::Rcs(rcs_subsystem) => {
-                rcs_subsystem.update_discrete(dt);
+                rcs_subsystem.update_discrete(dt, discrete_state);
             }
+            Subsystem::Imu(imu_subsystem) => {
+                imu_subsystem.update_discrete(dt, discrete_state);
+            }
+
         }
     }
     pub fn update_continuous(&mut self, dt: f64) {
@@ -47,6 +54,7 @@ impl Subsystem {
             Subsystem::Rcs(rcs_subsystem) => {
                 rcs_subsystem.update_continuous(dt);
             }
+            Subsystem::Imu(_) => {}
         }
     }
     pub fn update_dynamics(&self, outputs: &mut OrbitalDynamicsInputs) {
@@ -57,6 +65,7 @@ impl Subsystem {
             Subsystem::Rcs(rcs_subsystem) => {
                 rcs_subsystem.update_dynamics(outputs);
             }
+            Subsystem::Imu(_) => {}
         }
     }
 }

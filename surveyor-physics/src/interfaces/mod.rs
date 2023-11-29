@@ -18,6 +18,7 @@ pub enum SensorEvent {
     StarTracker(surveyor_gnc::sensors::StarTrackerInput),
 }
 
+
 /// Send sensor events from the simulation to the GNC system
 pub fn send_sensor_events_to_gnc(mut events: EventReader<SensorEvent>,
     mut imu_input: EventWriter<surveyor_gnc::sensors::IMUInput>,
