@@ -1,5 +1,6 @@
 //! The IMU model on the simulation side
 
+use bevy_ecs::component::Component;
 use nalgebra::Vector3;
 
 use crate::spacecraft::SpacecraftDiscreteState;
@@ -20,6 +21,18 @@ impl IMUSensor {
             accel_cf: Vector3::zeros(),
         }
     }
+    pub fn get_model_output(&self) -> IMUSensorOutput {
+        IMUSensorOutput {
+            omega_cf: self.omega_cf,
+            accel_cf: self.accel_cf,
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct IMUSensorOutput {
+    pub omega_cf: Vector3<f64>,
+    pub accel_cf: Vector3<f64>,
 }
 
 #[derive(Debug)]

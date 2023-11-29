@@ -3,7 +3,7 @@ use enum_as_inner::EnumAsInner;
 use crate::{
     config::SubsystemConfig,
     integrators::DynamicSystem,
-    spacecraft::{OrbitalDynamicsInputs, SpacecraftDiscreteState}, interfaces::{ActuatorEvent, SensorEvent},
+    spacecraft::{OrbitalDynamicsInputs, SpacecraftDiscreteState}
 };
 use bevy_ecs::prelude::*;
 pub mod propulsion;
@@ -30,8 +30,7 @@ impl Subsystem {
         }
     }
     // Represents a collection of models that make up a subsystem
-    pub fn update_discrete(&mut self, dt: f64, discrete_state: &SpacecraftDiscreteState,
-                            sensor_event_writer: &mut EventWriter<SensorEvent>) {
+    pub fn update_discrete(&mut self, dt: f64, discrete_state: &SpacecraftDiscreteState) {
         match self {
             Subsystem::Propulsion(engine_subsystem) => {
                 // Create discrete input for propulsion subsystem using SpacecraftDiscreteState

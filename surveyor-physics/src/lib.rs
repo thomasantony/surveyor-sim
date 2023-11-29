@@ -21,7 +21,7 @@ use bevy_app::prelude::*;
 use bevy_ecs::prelude::*;
 use config::SystemConfig;
 use simulation::{SimulationResults, SimulationParams, run_simulation_system, SimStoppingCondition};
-use spacecraft::{InitialState, SpacecraftModel, build_spacecraft_entity, OrbitalDynamics};
+use spacecraft::{InitialState, SpacecraftModel, build_spacecraft_entity, OrbitalDynamics, do_discrete_update};
 use hard_xml::XmlRead;
 use universe::Universe;
 use bevy_ecs::schedule::IntoSystemConfigs;
@@ -77,18 +77,22 @@ impl Plugin for SurveyorPhysicsPlugin {
         // Split this up into two systems - one that actually builds the ECS and one that
         // initializes the simulation. The latter can be run anytime we trigger a new simulation
         app.add_systems(Startup, build_sim_ecs)
-            .add_event::<crate::interfaces::SensorEvent>()
-            .add_event::<crate::interfaces::ActuatorEvent>()
             .add_state::<SimulationState>()
-            .add_systems(Update, crate::interfaces::send_sensor_events_to_gnc)
-            .add_systems(Update, crate::interfaces::recv_actuator_events_from_gnc)
-            .add_systems(Update, crate::spacecraft::actuator_commands_system.after(crate::interfaces::recv_actuator_events_from_gnc))
             // Run `run_simulation_system` when we are in the `Running` state
             .add_systems(Update,
                 (
                     spacecraft::step_spacecraft_model,
-                    run_simulation_system
+                    do_discrete_update,
+                    run_simulation_system,
                 ).chain().run_if(in_state(SimulationState::Running))
+            )
+            // Pass sensor data to GNC after all the models have been updated
+            // and receive actuator events from GNC to be used in next update
+            .add_systems(Update,
+                (
+                    crate::interfaces::imu_event_generator,
+                    crate::interfaces::rcs_event_receiver
+                ).chain().after(do_discrete_update)
             )
             // Run `initialize_simulation` when we enter the `Running` state
             .add_systems(OnEnter(SimulationState::Running),

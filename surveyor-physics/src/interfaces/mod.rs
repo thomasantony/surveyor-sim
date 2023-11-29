@@ -8,9 +8,11 @@
 //     fn set_input(&mut self, input: &SpacecraftDiscreteState);
 // }
 
-use bevy_ecs::prelude::{EventReader, EventWriter, Event};
+use bevy::hierarchy::Children;
+use bevy_ecs::prelude::*;
+use surveyor_gnc::sensors::IMUInput;
 
-use crate::subsystems::rcs::RcsCommands;
+use crate::{subsystems::{rcs::{RcsCommands, RcsSubsystem}, imu::IMUSensor, Subsystem}, spacecraft::SpacecraftModel};
 
 #[derive(Debug, Clone, Event)]
 pub enum SensorEvent {
@@ -18,20 +20,25 @@ pub enum SensorEvent {
     StarTracker(surveyor_gnc::sensors::StarTrackerInput),
 }
 
-
-/// Send sensor events from the simulation to the GNC system
-pub fn send_sensor_events_to_gnc(mut events: EventReader<SensorEvent>,
-    mut imu_input: EventWriter<surveyor_gnc::sensors::IMUInput>,
-    mut star_tracker_input: EventWriter<surveyor_gnc::sensors::StarTrackerInput>,
-) {
-    for event in events.iter() {
-        match event {
-            SensorEvent::IMU(input) => {
-                imu_input.send(input.clone());
+/// Conversion from truth-side data to GNC-side events
+pub fn imu_event_generator(
+    mut sc_query: Query<(&SpacecraftModel, &Children)>,
+    mut q_imu: Query<&Subsystem>,
+    mut imu_input_events: EventWriter<surveyor_gnc::sensors::IMUInput>)
+{
+    let (_, children) = sc_query.single_mut();
+    for subsystem_id in children.iter() {
+        let subsystem = q_imu.get_mut(*subsystem_id).unwrap();
+        match subsystem {
+            // Send RCS commands to the RCS subsystem
+            Subsystem::Imu(imu_subsystem) => {
+                for (idx, sensor) in imu_subsystem.imus.iter().enumerate() {
+                    let imu_data = sensor.get_model_output();
+                    let imu_input = IMUInput::new(idx, imu_data.omega_cf, imu_data.accel_cf);
+                    imu_input_events.send(imu_input);
+                }
             }
-            SensorEvent::StarTracker(input) => {
-                star_tracker_input.send(input.clone());
-            }
+            _ => {}
         }
     }
 }
@@ -52,12 +59,21 @@ impl From<&surveyor_gnc::control::RCSControllerOutput> for RcsCommands {
     }
 }
 
-pub fn recv_actuator_events_from_gnc(
-    mut event_writer: EventWriter<ActuatorEvent>,
+pub fn rcs_event_receiver(
     mut rcs_commands: EventReader<surveyor_gnc::control::RCSControllerOutput>,
+    mut q_rcs: Query<&mut Subsystem>,
+
 ) {
     // If there are multiple events, only process the last one
-    if let Some(event) = rcs_commands.iter().last() {
-        event_writer.send(ActuatorEvent::RCS(event.into()));
+    if let Some(event) = rcs_commands.read().last() {
+        for  subsystem in q_rcs.iter_mut() {
+            match subsystem.into_inner() {
+                Subsystem::Rcs(rcs_subsystem) => {
+                    rcs_subsystem.handle_commands(&RcsCommands::from(event));
+                    break;
+                }
+                _ => {}
+            }
+        }
     }
 }

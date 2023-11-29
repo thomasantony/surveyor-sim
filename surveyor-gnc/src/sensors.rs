@@ -45,6 +45,15 @@ pub struct IMUInput
     pub omega_cf: na::Vector3<f64>,
     pub acc_cf: na::Vector3<f64>
 }
+impl IMUInput {
+    pub fn new(sensor_id: usize, omega_cf: na::Vector3<f64>, acc_cf: na::Vector3<f64>) -> Self {
+        Self {
+            sensor_id,
+            omega_cf,
+            acc_cf,
+        }
+    }
+}
 impl Default for IMUInput {
     fn default() -> Self {
         Self {

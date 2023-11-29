@@ -3,6 +3,7 @@ use na::SVectorView;
 use nalgebra as na;
 use bevy::prelude::*;
 use bevy_ecs::system::Commands;
+use surveyor_gnc::sensors::IMUInput;
 
 
 /// A component defining a continuous system that can be stepped over time
@@ -27,13 +28,12 @@ impl ContinuousSystemState {
 }
 
 
-
+use crate::subsystems::Subsystem;
 use crate::universe::Universe;
 use crate::{
     config::SpacecraftConfig,
     integrators::DynamicSystem,
     math::{UnitQuaternion, Vector3},
-    subsystems::{Subsystem}, interfaces::{ActuatorEvent},
 };
 use hard_xml::XmlRead;
 use nalgebra::{DVector, SMatrix, SVector};
@@ -341,32 +341,6 @@ pub fn do_discrete_update(mut q_spacecrafts: Query<(&mut SpacecraftModel, &Simul
         for child in children.iter() {
             let mut subsystem = q_subsystems.get_mut(*child).unwrap();
             subsystem.update_discrete(t, &spacecraft_discrete_state);
-        }
-    }
-}
-
-pub fn actuator_commands_system(mut q_spacecraft: Query<(&mut SpacecraftModel, &Children)>,
-    mut q_subsystems: Query<&mut Subsystem>,
-    mut events: EventReader<ActuatorEvent>)
-{
-
-    let (_, children) = q_spacecraft.single_mut();
-
-    for subsystem_id in children.iter() {
-        let subsystem = q_subsystems.get_mut(*subsystem_id).unwrap();
-        match subsystem.into_inner() {
-            // Send RCS commands to the RCS subsystem
-            Subsystem::Rcs(rcs_subsystem) => {
-                for event in events.read() {
-                    match event {
-                        ActuatorEvent::RCS(ref rcs_command) => {
-                            rcs_subsystem.handle_commands(rcs_command);
-                        }
-                        _ => {}
-                    }
-                }
-            }
-            _ => {}
         }
     }
 }
