@@ -57,7 +57,7 @@ pub struct SpacecraftConfig {
         child = "Subsystems",
         child = "EngineSubsystem",
         child = "RcsSubsystem",
-        // child = "ImuSubsystem"
+        child = "ImuSubsystem"
     )]
     pub subsystems: Vec<SubsystemConfig>,
 }
@@ -91,7 +91,7 @@ pub struct RcsSubsystemConfig {
 #[derive(Debug, XmlRead, PartialEq)]
 #[xml(tag = "ImuSubsystem")]
 pub struct ImuSubsystemConfig {
-    #[xml(child = "thruster")]
+    #[xml(child = "Imu")]
     pub sensors: Vec<ImuConfig>,
 }
 
@@ -140,7 +140,7 @@ pub struct GeometryParams {
 }
 
 #[derive(Debug, XmlRead, Clone, PartialEq)]
-#[xml(tag = "imu")]
+#[xml(tag = "Imu")]
 pub struct ImuConfig {
     #[xml(child = "geometry")]
     pub geometry: GeometryParams,

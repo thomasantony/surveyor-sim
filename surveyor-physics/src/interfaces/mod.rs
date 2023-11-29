@@ -12,7 +12,7 @@ use bevy::hierarchy::Children;
 use bevy_ecs::prelude::*;
 use surveyor_gnc::sensors::IMUInput;
 
-use crate::{subsystems::{rcs::{RcsCommands, RcsSubsystem}, imu::IMUSensor, Subsystem}, spacecraft::SpacecraftModel};
+use crate::{subsystems::{rcs::RcsCommands, Subsystem}, spacecraft::SpacecraftModel};
 
 #[derive(Debug, Clone, Event)]
 pub enum SensorEvent {

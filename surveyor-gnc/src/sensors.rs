@@ -1,3 +1,4 @@
+use bevy_debug_text_overlay::screen_print;
 use bevy_ecs::prelude::*;
 use nalgebra as na;
 
@@ -106,7 +107,7 @@ pub fn update_imu(mut imu_input: EventReader<IMUInput>,  mut query: Query<(&IMU,
     // assign it to the IMU output
 
     // Get IMU and geometry by sensor id
-    imu_input.iter().last().map(|imu_input|
+    imu_input.read().last().map(|imu_input|
     {
         if let Some((_, geometry)) = query.iter_mut().nth(imu_input.sensor_id)
         {
@@ -114,7 +115,6 @@ pub fn update_imu(mut imu_input: EventReader<IMUInput>,  mut query: Query<(&IMU,
                 omega_b: geometry.q_cf2b * imu_input.omega_cf,
                 acc_b: geometry.q_cf2b * imu_input.acc_cf,
             };
-            println!("Got imu input: {:?}", imu_input);
             output.send(imu_output);
         }else{
             log::error!("IMU sensor id {} not found", imu_input.sensor_id);
@@ -124,7 +124,7 @@ pub fn update_imu(mut imu_input: EventReader<IMUInput>,  mut query: Query<(&IMU,
 
 pub fn update_star_tracker(mut star_tracker_input: EventReader<StarTrackerInput>,
                            mut query: Query<(&StarTracker, &GeometryConfig)>, mut output: EventWriter<StarTrackerOutput>) {
-    star_tracker_input.iter().last().map(| star_tracker_input|{
+    star_tracker_input.read().last().map(| star_tracker_input|{
         // Get star tracker and geometry by sensor id
         if let Some((_, geometry,
                 )) = query.iter_mut().nth(star_tracker_input.sensor_id)

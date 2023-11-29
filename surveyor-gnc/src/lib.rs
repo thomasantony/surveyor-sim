@@ -72,14 +72,16 @@ impl Plugin for SurveyorGNC {
         app.configure_set(Update, SurveyorGncSystemSet::Guidance.before(SurveyorGncSystemSet::Control));
 
         let traj = app.world.spawn((Name("TrajectoryPhase"), TrajectoryPhase::BeforeRetroBurn,)).id();
-        let imu = app.world.spawn((Name("IMU_A"), sensors::IMU, GeometryConfig::default())).id();
+        let imu_a = app.world.spawn((Name("IMU_A"), sensors::IMU, GeometryConfig::default())).id();
+        let imu_b = app.world.spawn((Name("IMU_B"), sensors::IMU, GeometryConfig::default())).id();
         let star_tracker = app.world.spawn((Name("ST_A"), sensors::StarTracker, GeometryConfig::default())).id();
         let guidance = app.world.spawn((Name("SurveyorGNCMode"), guidance::GuidanceMode::Idle)).id();
         let control_allocator = app.world.spawn((Name("ControlAllocator"), control::ControlAllocator::default())).id();
         let rcs_controller = app.world.spawn((Name("RCSController"), control::RCSController::default(), control::RCSControllerOutput::default())).id();
 
         self.entities.insert("TrajectoryPhase", traj);
-        self.entities.insert("IMU_A", imu);
+        self.entities.insert("IMU_A", imu_a);
+        self.entities.insert("IMU_B", imu_b);
         self.entities.insert("ST_A", star_tracker);
         self.entities.insert("Guidance", guidance);
         self.entities.insert("ControlAllocator", control_allocator);

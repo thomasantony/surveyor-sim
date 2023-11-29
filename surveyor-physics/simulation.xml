@@ -27,6 +27,20 @@
     <SpacecraftConfig>
         <FSW>
         </FSW>
+        <ImuSubsystem>
+            <Imu name="A">
+                <geometry>
+                    <q_cf2b>[1.0, 0.0, 0.0, 0.0]</q_cf2b>
+                    <cf_offset_com_b>[0.0, 0.0, 0.0]</cf_offset_com_b>
+                </geometry>
+            </Imu>
+            <Imu name="B">
+                <geometry>
+                    <q_cf2b>[0.0, 0.0, 0.0, 1.0]</q_cf2b>
+                    <cf_offset_com_b>[0.0, 0.0, 0.0]</cf_offset_com_b>
+                </geometry>
+            </Imu>
+        </ImuSubsystem>
         <RcsSubsystem>
             <thruster type="RCS" name="roll1">
                 <min_thrust>0.0</min_thrust>

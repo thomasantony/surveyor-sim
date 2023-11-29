@@ -25,6 +25,9 @@ impl Subsystem {
             ),
             SubsystemConfig::Rcs(rcs_subsystem_config) => {
                 Subsystem::Rcs(rcs::RcsSubsystem::from_config(rcs_subsystem_config))
+            },
+            SubsystemConfig::Imu(imu_subsystem_config) => {
+                Subsystem::Imu(imu::IMUSubsystem::from_config(imu_subsystem_config))
             }
             _ => panic!("Invalid subsystem config"),
         }
