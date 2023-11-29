@@ -1,13 +1,24 @@
+use std::default;
+
 use bevy_ecs::prelude::*;
 use nalgebra as na;
 
 use crate::guidance::AttitudeTarget;
 
-#[derive(Debug, Component, Default)]
+#[derive(Debug, Component)]
 pub struct ControlAllocator{
     pub use_diff_thrust: bool,
     pub use_rcs: bool,
     pub use_tvc: bool,
+}
+impl Default for ControlAllocator {
+    fn default() -> Self {
+        Self {
+            use_diff_thrust: false,
+            use_rcs: true,
+            use_tvc: false,
+        }
+    }
 }
 
 #[derive(Debug, Component)]
@@ -25,8 +36,8 @@ impl Default for RCSController {
     fn default() -> Self {
         // TODO: Get rid of this and configure using a config struct
         Self {
-            distribution_matrix_inv: na::MatrixXx3::zeros(3),
-            max_thrusts: Vec::new(),
+            distribution_matrix_inv: na::MatrixXx3::identity(3),
+            max_thrusts: vec![1.0, 1.0, 1.0]
         }
     }
 }
@@ -85,7 +96,8 @@ pub fn update_attitude_controller(
         },
         AttitudeTarget::Attitude(_q_i2b) => {
             // Implement quaternion feedback control
-            todo!("Not implemented yet");
+            AttitudeTorqueRequest::default()
+            // todo!("Not implemented yet");
         }
         AttitudeTarget::BodyRate(_omega_b) => {
             // Implement body rate feedback control
@@ -120,7 +132,6 @@ pub fn update_control_allocator(
                 // Pass through the torque request to the differential thrust allocator
                 todo!("Not implemented yet");
             }
-
         }
     );
 
@@ -129,6 +140,7 @@ pub fn update_control_allocator(
 pub fn update_rcs_controller(
     mut rcs_controller_input_reader: EventReader<RCSControllerInput>,
     mut query: Query<(&RCSController, &mut RCSControllerOutput)>,
+    mut rcs_output_writer: EventWriter<RCSControllerOutput>,
 ) {
     let (rcs_controller, mut output) = query.single_mut();
     if let Some(rcs_controller_input) = rcs_controller_input_reader.iter().last()
@@ -141,6 +153,8 @@ pub fn update_rcs_controller(
             let duty_cycle = (thrust.abs() / max_thrust).clamp(0., 1.);
             duty_cycles.push(duty_cycle);
         }
+        duty_cycles[0] = 0.01;
         output.duty_cycles = duty_cycles;
+        rcs_output_writer.send(output.clone());
     }
 }

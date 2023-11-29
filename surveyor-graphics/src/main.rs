@@ -8,9 +8,11 @@ fn show_sim_time(phy_query: Query<& surveyor_physics::SimulationTime>) {
     screen_print!("Sim Time: {:.2}", time.0);
 }
 
-fn start_sim(mut set_sim_state: ResMut<NextState<SimulationState>>)
+fn start_sim(mut set_sim_state: ResMut<NextState<SimulationState>>,
+            mut command_writer: EventWriter<surveyor_gnc::GncCommand>)
 {
     set_sim_state.set(SimulationState::Running);
+    command_writer.send(surveyor_gnc::GncCommand::SetGuidanceMode(surveyor_gnc::guidance::GuidanceMode::Manual));
 }
 
 

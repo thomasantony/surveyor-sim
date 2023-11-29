@@ -37,7 +37,6 @@ pub fn update_idle_mode(mut attitude_target_writer: EventWriter<AttitudeTarget>)
 }
 
 pub fn update_manual_mode(mut attitude_target_writer: EventWriter<AttitudeTarget>) {
-    attitude_target_writer.send(AttitudeTarget::None);
-    // TODO: Use user input to set the attitude target
-    // todo!();
+    // attitude_target_writer.send(AttitudeTarget::None);
+    attitude_target_writer.send(AttitudeTarget::Attitude(nalgebra::UnitQuaternion::from_euler_angles(0.1, 0.0, 0.0)));
 }

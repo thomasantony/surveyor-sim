@@ -261,7 +261,7 @@ pub fn build_spacecraft_entity(commands: &mut Commands, config: &SpacecraftConfi
     // commands.entity(spacecraft_ent).push_children(&[orbital_dynamics]);
     commands.entity(spacecraft_ent).with_children(|parent| {
         config.subsystems.iter().for_each(|subsystem_config| {
-            parent.spawn((Subsystem::from_config(subsystem_config)));
+            parent.spawn((Subsystem::from_config(subsystem_config), Name::new(subsystem_config.to_string())));
         });
     });
 }
@@ -350,17 +350,23 @@ pub fn actuator_commands_system(mut q_spacecraft: Query<(&mut SpacecraftModel, &
     mut events: EventReader<ActuatorEvent>)
 {
 
-    let (spacecraft, children) = q_spacecraft.single_mut();
-    // Need to query subsystems by name
-    // For that I need to add a name component to subsystems
-    // for event in events.iter() {
-    // for child in children.iter() {
-    //     let mut subsystem = q_subsystems.get_mut(*child).unwrap();
-    //     match commands {
-    //         ActuatorEvent::RCS(rcs_command) => {
-    //             self.subsystems.get_mut("RCS").unwrap().as_rcs_mut().unwrap().handle_commands(rcs_command);
-    //         }
-    //     }
-    // }
-    // }
+    let (_, children) = q_spacecraft.single_mut();
+
+    for subsystem_id in children.iter() {
+        let subsystem = q_subsystems.get_mut(*subsystem_id).unwrap();
+        match subsystem.into_inner() {
+            // Send RCS commands to the RCS subsystem
+            Subsystem::Rcs(rcs_subsystem) => {
+                for event in events.read() {
+                    match event {
+                        ActuatorEvent::RCS(ref rcs_command) => {
+                            rcs_subsystem.handle_commands(rcs_command);
+                        }
+                        _ => {}
+                    }
+                }
+            }
+            _ => {}
+        }
+    }
 }

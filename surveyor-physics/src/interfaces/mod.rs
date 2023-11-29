@@ -19,7 +19,7 @@ pub enum SensorEvent {
 }
 
 /// Send sensor events from the simulation to the GNC system
-pub fn send_sensor_events(mut events: EventReader<SensorEvent>,
+pub fn send_sensor_events_to_gnc(mut events: EventReader<SensorEvent>,
     mut imu_input: EventWriter<surveyor_gnc::sensors::IMUInput>,
     mut star_tracker_input: EventWriter<surveyor_gnc::sensors::StarTrackerInput>,
 ) {
@@ -51,7 +51,7 @@ impl From<&surveyor_gnc::control::RCSControllerOutput> for RcsCommands {
     }
 }
 
-pub fn recv_actuator_events(
+pub fn recv_actuator_events_from_gnc(
     mut event_writer: EventWriter<ActuatorEvent>,
     mut rcs_commands: EventReader<surveyor_gnc::control::RCSControllerOutput>,
 ) {

@@ -80,9 +80,9 @@ impl Plugin for SurveyorPhysicsPlugin {
             .add_event::<crate::interfaces::SensorEvent>()
             .add_event::<crate::interfaces::ActuatorEvent>()
             .add_state::<SimulationState>()
-            .add_systems(Update, crate::interfaces::send_sensor_events)
-            .add_systems(Update, crate::interfaces::recv_actuator_events)
-            .add_systems(Update, crate::spacecraft::actuator_commands_system.after(crate::interfaces::recv_actuator_events))
+            .add_systems(Update, crate::interfaces::send_sensor_events_to_gnc)
+            .add_systems(Update, crate::interfaces::recv_actuator_events_from_gnc)
+            .add_systems(Update, crate::spacecraft::actuator_commands_system.after(crate::interfaces::recv_actuator_events_from_gnc))
             // Run `run_simulation_system` when we are in the `Running` state
             .add_systems(Update,
                 (
