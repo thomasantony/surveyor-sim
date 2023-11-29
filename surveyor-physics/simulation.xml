@@ -2,7 +2,10 @@
 
 <Config>
     <SimulationConfig>
-        <MaxDuration>1000.0</MaxDuration>
+        <StoppingConditions>
+            <MaxDuration>1000.0</MaxDuration>
+            <CollisionWith>Moon</CollisionWith>
+        </StoppingConditions>
         <Integrator>RungeKutta4</Integrator>
         <StepSize>0.1</StepSize>
     </SimulationConfig>

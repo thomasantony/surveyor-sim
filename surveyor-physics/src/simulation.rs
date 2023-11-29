@@ -1,4 +1,5 @@
 use std::fmt::Formatter;
+use std::ops::{DerefMut, Deref};
 use std::str::FromStr;
 
 use crate::{SimulationState, SimulationTime};
@@ -15,19 +16,28 @@ use bevy_ecs::prelude::*;
 #[derive(XmlRead)]
 pub enum SimStoppingCondition {
     #[xml(tag="MaxDuration")]
-    MaxDuration(#[xml(text)] f64)
+    MaxDuration(#[xml(text)] f64),
+    #[xml(tag="CollisionWith")]
+    CollisionWith(#[xml(text)] String),
     // Custom(Box<dyn Fn(&OrbitalDynamics, &Universe) -> bool + Sync + Send + 'static>),
 }
 
-impl FromStr for SimStoppingCondition {
-    type Err = &'static str;
+#[derive(Debug, Resource, Clone, PartialEq)]
+#[derive(XmlRead)]
+#[xml(tag="StoppingConditions")]
+pub struct StoppingConditionVec(
+    #[xml(child="MaxDuration", child="CollisionWith")] pub Vec<SimStoppingCondition>
+);
+impl Deref for StoppingConditionVec {
+    type Target = Vec<SimStoppingCondition>;
 
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            // "Custom" => Ok(SimStoppingCondition::Custom(Box::new(|_, _| false))),
-            "MaxDuration" => Ok(SimStoppingCondition::MaxDuration(0.0)),
-            _ => Err("Invalid stopping condition"),
-        }
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+impl DerefMut for StoppingConditionVec {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
     }
 }
 
@@ -35,6 +45,7 @@ impl std::fmt::Debug for SimStoppingCondition {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
             SimStoppingCondition::MaxDuration(t) => write!(f, "MaxDuration({})", t),
+            SimStoppingCondition::CollisionWith(body) => write!(f, "CollisionWith({})", body),
             // SimStoppingCondition::Custom(_) => write!(f, "Custom"),
         }
     }
@@ -46,6 +57,7 @@ impl SimStoppingCondition {
             SimStoppingCondition::MaxDuration(t) => {
                 state.time >= *t
             },
+            _ => false,
             // SimStoppingCondition::Custom(f) => f(state, universe),
         }
     }
@@ -58,14 +70,14 @@ impl SimStoppingCondition {
 pub struct SimulationParams {
     #[xml(default, flatten_text="StepSize")]
     pub dt: f64,
-    #[xml(child="StoppingCondition", child="MaxDuration")]
-    pub stopping_conditions: Vec<SimStoppingCondition>,
+    #[xml(child="StoppingConditions")]
+    pub stopping_conditions: StoppingConditionVec,
 }
 impl SimulationParams {
     pub fn new(dt: f64, stopping_conditions: Vec<SimStoppingCondition>) -> Self {
         Self {
             dt,
-            stopping_conditions,
+            stopping_conditions: StoppingConditionVec(stopping_conditions),
         }
     }
 }
@@ -74,7 +86,7 @@ impl Default for SimulationParams {
     fn default() -> Self {
         Self {
             dt: 1.0 / 100.0,
-            stopping_conditions: vec![SimStoppingCondition::MaxDuration(100.0)],
+            stopping_conditions: StoppingConditionVec(vec![SimStoppingCondition::MaxDuration(100.0)]),
         }
     }
 }
