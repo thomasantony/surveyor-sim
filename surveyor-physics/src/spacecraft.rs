@@ -69,11 +69,12 @@ impl Default for InitialState {
 pub struct OrbitalDynamics {
     // State includes position, velocity, quaternion, and angular velocity
     pub state: SVector<f64, 13>,
+    pub prev_state: SVector<f64, 13>,
     pub time: f64,
 }
 impl OrbitalDynamics {
     pub fn new(t: f64, state: SVector<f64, 13>) -> Self {
-        Self { state, time: t }
+        Self { state, time: t, prev_state: SVector::<f64, 13>::zeros() }
     }
     pub fn from_initial_state(initial_state: &InitialState) -> Self {
         let y0 = SVector::<f64, 13>::from_vec(vec![
@@ -93,6 +94,7 @@ impl OrbitalDynamics {
         ]);
         Self {
             state: y0,
+            prev_state: SVector::<f64, 13>::zeros(),
             time: 0.0,
         }
     }
@@ -201,6 +203,7 @@ impl<'a> DynamicSystem<'a> for OrbitalDynamics {
         self.state.as_slice()
     }
     fn set_state(&mut self, t: f64, state: &[f64]) {
+        self.prev_state = self.state.clone();
         self.state.copy_from_slice(state);
         self.time = t;
     }
