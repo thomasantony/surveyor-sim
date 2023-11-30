@@ -16,13 +16,12 @@ pub mod math;
 pub mod interfaces;
 
 
-
 use bevy_app::prelude::*;
 use bevy_ecs::prelude::*;
 use bevy_enum_filter::prelude::AddEnumFilter;
 use config::SystemConfig;
-use simulation::{SimulationResults, run_simulation_system};
-use spacecraft::{InitialState, SpacecraftModel, build_spacecraft_entity, OrbitalDynamics, do_discrete_update};
+use simulation::{initialize_simulation, tick_sim_clock, update_simulation_state_and_time, simulation_should_step};
+use spacecraft::{InitialState, build_spacecraft_entity, do_discrete_update};
 use hard_xml::XmlRead;
 use subsystems::Subsystem;
 use universe::Universe;
@@ -64,14 +63,6 @@ pub fn build_sim_ecs(mut commands: Commands)
     commands.insert_resource(config.simulation);
 }
 
-// System used to initalize the simulation
-fn initialize_simulation(mut query: Query<(&SpacecraftModel, &mut OrbitalDynamics, &mut SimulationResults)>)
-{
-    let initial_state: InitialState = InitialState::from_str(include_str!("../initial_state.xml")).unwrap();
-    let (_, mut orbital_dynamics, mut sim_results) = query.single_mut();
-    *orbital_dynamics = OrbitalDynamics::from_initial_state(&initial_state);
-    sim_results.history.clear();
-}
 
 pub struct SurveyorPhysicsPlugin;
 impl Plugin for SurveyorPhysicsPlugin {
@@ -81,13 +72,17 @@ impl Plugin for SurveyorPhysicsPlugin {
         app.add_systems(Startup, build_sim_ecs)
             .add_enum_filter::<Subsystem>()
             .add_state::<SimulationState>()
-            // Run `run_simulation_system` when we are in the `Running` state
+
+            // Run simulation when we are in the `Running` state
+            .add_systems(Update,
+                tick_sim_clock.run_if(in_state(SimulationState::Running))
+            )
             .add_systems(Update,
                 (
                     spacecraft::step_spacecraft_model,
                     do_discrete_update,
-                    run_simulation_system,
-                ).chain().run_if(in_state(SimulationState::Running))
+                    update_simulation_state_and_time,
+                ).chain().run_if(in_state(SimulationState::Running).and_then(simulation_should_step))
             )
             // Pass sensor data to GNC after all the models have been updated
             // and receive actuator events from GNC to be used in next update
@@ -97,6 +92,7 @@ impl Plugin for SurveyorPhysicsPlugin {
                     crate::interfaces::rcs_event_receiver
                 ).chain().after(do_discrete_update)
             )
+            // Add a Timer that keeps track of time since the simulation started
             // Run `initialize_simulation` when we enter the `Running` state
             .add_systems(OnEnter(SimulationState::Running),
                 initialize_simulation

@@ -7,9 +7,11 @@ use crate::spacecraft::{
     OrbitalDynamics, SpacecraftModel,
 };
 use crate::universe::{Universe, Observation};
+use crate::InitialState;
 use hard_xml::XmlRead;
 use nalgebra::{Dyn, U13};
 use bevy_ecs::prelude::*;
+use bevy::time::{Time, Timer, TimerMode};
 
 // Enum defining stopping conditions for simulation
 #[derive(Resource, Clone, PartialEq)]
@@ -120,8 +122,44 @@ impl SimulationResults {
     }
 }
 
+#[derive(Component)]
+pub struct SimClock {
+    timer: Timer,
+    pub dt: f32
+}
+impl SimClock {
+    pub fn new(dt: f32) -> Self {
+        Self {
+            timer: Timer::from_seconds(dt as f32, TimerMode::Repeating),
+            dt,
+        }
+    }
+}
+impl Deref for SimClock {
+    type Target = Timer;
+
+    fn deref(&self) -> &Self::Target {
+        &self.timer
+    }
+}
+impl DerefMut for SimClock {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.timer
+    }
+}
+
+// System used to initalize the simulation
+pub fn initialize_simulation(mut query: Query<(&SpacecraftModel, &mut OrbitalDynamics, &mut SimulationResults, &mut SimClock)>)
+{
+    let initial_state: InitialState = InitialState::from_str(include_str!("../initial_state.xml")).unwrap();
+    let (_, mut orbital_dynamics, mut sim_results, mut timer) = query.single_mut();
+    *orbital_dynamics = OrbitalDynamics::from_initial_state(&initial_state);
+    sim_results.history.clear();
+    timer.reset();
+}
+
 // System that updates simulation state and the time after stepping the dynamics
-pub fn run_simulation_system(
+pub fn update_simulation_state_and_time(
     sim_params: Res<SimulationParams>,
     mut query: Query<(&mut SimulationTime, &OrbitalDynamics), With<SpacecraftModel>>,
     universe_query: Query<&Universe>,
@@ -139,4 +177,16 @@ pub fn run_simulation_system(
     // log::info!("Sim time: {}", t.0);
 
     t.0 += sim_params.dt;
+}
+pub fn tick_sim_clock(time: Res<Time>, mut query: Query<&mut SimClock, With<SpacecraftModel>>) {
+    let mut timer = query.single_mut();
+    timer.tick(time.delta());
+}
+
+// We will step the simulation only when the timer has finished
+pub fn simulation_should_step(
+    q_timer: Query<&SimClock, With<SpacecraftModel>>,
+) -> bool {
+    let timer = q_timer.single();
+    timer.just_finished()
 }

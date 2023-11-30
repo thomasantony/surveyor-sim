@@ -35,6 +35,7 @@ use crate::{
     config::SpacecraftConfig,
     integrators::DynamicSystem,
     math::{UnitQuaternion, Vector3},
+    simulation::SimClock,
 };
 use hard_xml::XmlRead;
 use nalgebra::{DVector, SMatrix, SVector};
@@ -257,6 +258,7 @@ pub fn build_spacecraft_entity(commands: &mut Commands, config: &SpacecraftConfi
         ),
         SpacecraftModel,
         SimulationResults::default(),
+        SimClock::new(0.1),
     )).id();
 
     // commands.entity(spacecraft_ent).push_children(&[orbital_dynamics]);

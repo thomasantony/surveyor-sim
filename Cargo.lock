@@ -3946,6 +3946,7 @@ version = "0.1.0"
 dependencies = [
  "approx",
  "bevy",
+ "bevy-debug-text-overlay",
  "bevy_app",
  "bevy_ecs",
  "bevy_enum_filter",

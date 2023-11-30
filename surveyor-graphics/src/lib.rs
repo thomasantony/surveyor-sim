@@ -8,6 +8,7 @@ use big_space::FloatingOriginPlugin;
 use camera::*;
 use planet::*;
 use lander::*;
+
 // use smooth_bevy_cameras::{controllers::orbit::OrbitCameraPlugin, LookTransformPlugin};
 
 pub type GridCellType = i64;
@@ -35,7 +36,7 @@ impl Plugin for SurveyorGraphicsPlugin{
 
         // Spacecraft
         .add_systems(Startup, spawn_lander)
-        .add_systems(Update, update_lander_pos.after(surveyor_physics::simulation::run_simulation_system))
+        .add_systems(Update, update_lander_pos.after(surveyor_physics::simulation::update_simulation_state_and_time))
         .add_systems(Update, sync_camera.after(update_lander_pos))
         ;
         // app.add_systems(Startup, setup);
