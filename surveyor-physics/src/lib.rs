@@ -19,8 +19,8 @@ pub mod interfaces;
 use bevy_app::prelude::*;
 use bevy_ecs::prelude::*;
 use bevy_enum_filter::prelude::AddEnumFilter;
-use config::SystemConfig;
-use simulation::{initialize_simulation, tick_sim_clock, update_simulation_state_and_time, simulation_should_step};
+use config::Config;
+use simulation::{initialize_simulation, tick_sim_clock, update_simulation_state_and_time, simulation_should_step, SimClock};
 use spacecraft::{InitialState, build_spacecraft_entity, do_discrete_update};
 use hard_xml::XmlRead;
 use subsystems::Subsystem;
@@ -50,16 +50,12 @@ pub fn build_sim_ecs(mut commands: Commands)
     // Create new spacecraft with engine subsystem
     let spacecraft_config_xml = include_str!("../simulation.xml");
 
-    let config = SystemConfig::from_str(spacecraft_config_xml).unwrap();
+    let config = Config::from_str(spacecraft_config_xml).unwrap();
 
     // Create new bevy ECS entity for spacecraft
-    build_spacecraft_entity(&mut commands, &config.spacecraft, &initial_state);
+    build_spacecraft_entity(&mut commands, &config, &initial_state);
     commands.spawn(Universe::from_config(config.universe));
-
-    // let a: f64 = 6378.14 + 500.0;
-    // // let period = 2.0 * PI * (a.powi(3) / 398600.0).sqrt();
-    // let period = 0.05 * PI * (a.powi(3) / 398600.0).sqrt();
-    // let sim_params: SimulationParams = SimulationParams::new(DT, initial_state, vec![SimStoppingCondition::MaxDuration(period)]);
+    commands.spawn(SimClock::new((config.simulation.dt/config.simulation.time_acceleration) as f32));
     commands.insert_resource(config.simulation);
 }
 

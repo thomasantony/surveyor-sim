@@ -2,9 +2,9 @@ use bevy::{prelude::*, math::DVec3};
 use bevy_panorbit_camera::PanOrbitCamera;
 use big_space::{FloatingOriginSettings, FloatingOrigin, GridCell};
 // use smooth_bevy_cameras::{controllers::orbit::{OrbitCameraBundle, OrbitCameraController, ControlEvent}, LookTransformBundle, LookTransform, Smoother};
-use surveyor_physics::spacecraft::OrbitalDynamics;
 
-use crate::{GridCellType, planet::MOON_RADIUS, lander::{Lander}};
+
+use crate::{GridCellType, planet::MOON_RADIUS, lander::{Lander, LanderStateUpdate}};
 
 #[derive(Default, Debug, Component)]
 pub struct CameraRelativePosition {
@@ -52,26 +52,26 @@ pub fn spawn_camera(
     println!("camera Spawned");
 }
 
+// Receives the lander state update event and updates the graphics
 pub fn sync_camera(
-    phy_query: Query<&OrbitalDynamics>,
+    mut lander_state: EventReader<LanderStateUpdate>,
     mut camera_query: Query<(&mut Transform, &mut GridCell<GridCellType>, &CameraRelativePosition, &mut PanOrbitCamera), With<Camera>>,
-    settings: Res<FloatingOriginSettings> ) {
+    settings: Res<FloatingOriginSettings> )
+{
+    if let Some(lander_state) = lander_state.read().last() {
+        let (mut camera_transform, mut camera_cell, camera_relpos, _pano) = camera_query.single_mut();
 
-    let lander = phy_query.single();
-    let lander_pos = lander.state.rows(0, 3);
+        let lander_pos = lander_state.pos;
+        let (lander_cell, lander_translation) = settings.translation_to_grid::<GridCellType>(lander_pos);
 
-    let (mut camera_transform, mut camera_cell, camera_relpos, _pano) = camera_query.single_mut();
+        let new_camera_translation: Vec3 = lander_translation + camera_relpos.position;
+        *camera_cell = lander_cell;
+        camera_transform.translation = new_camera_translation;
 
-    let (lander_cell, lander_translation) = settings.translation_to_grid::<GridCellType>(DVec3::new(lander_pos[0], lander_pos[1], lander_pos[2]));
-
-    let new_camera_translation: Vec3 = lander_translation + camera_relpos.position;
-    *camera_cell = lander_cell;
-
-    camera_transform.translation = new_camera_translation;
-
-    // let pano_delta = lander_translation - pano.target_focus;
-    // pano.target_focus = lander_translation;
-    // pano.target_radius = 10.0;
-    // pano.target_alpha += 0.001;
+        // let pano_delta = lander_translation - pano.target_focus;
+        // pano.target_focus = lander_translation;
+        // pano.target_radius = 10.0;
+        // pano.target_alpha += 0.001;
+    }
 
 }

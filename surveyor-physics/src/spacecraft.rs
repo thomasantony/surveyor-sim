@@ -29,13 +29,12 @@ impl ContinuousSystemState {
 }
 
 
+use crate::config::Config;
 use crate::subsystems::Subsystem;
 use crate::universe::Universe;
 use crate::{
-    config::SpacecraftConfig,
     integrators::DynamicSystem,
     math::{UnitQuaternion, Vector3},
-    simulation::SimClock,
 };
 use hard_xml::XmlRead;
 use nalgebra::{DVector, SMatrix, SVector};
@@ -251,7 +250,7 @@ impl<'a> SpacecraftDiscreteState<'a> {
 // Queries for the size of all continuous systems and creates a new strate vector component that
 // holds all the states for all the continuous systems in a single vector
 
-pub fn build_spacecraft_entity(commands: &mut Commands, config: &SpacecraftConfig, initial_state: &InitialState) {
+pub fn build_spacecraft_entity(commands: &mut Commands, config: &Config, initial_state: &InitialState) {
     let spacecraft_ent = commands.spawn((
         SimulationTime(0.0),
         OrbitalDynamics::from_initial_state(&initial_state),
@@ -261,12 +260,11 @@ pub fn build_spacecraft_entity(commands: &mut Commands, config: &SpacecraftConfi
         ),
         SpacecraftModel,
         SimulationResults::default(),
-        SimClock::new(0.1),
     )).id();
 
     // commands.entity(spacecraft_ent).push_children(&[orbital_dynamics]);
     commands.entity(spacecraft_ent).with_children(|parent| {
-        config.subsystems.iter().for_each(|subsystem_config| {
+        config.spacecraft.subsystems.iter().for_each(|subsystem_config| {
             parent.spawn((Subsystem::from_config(subsystem_config), Name::new(subsystem_config.to_string())));
         });
     });

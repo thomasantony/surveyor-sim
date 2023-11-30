@@ -8,6 +8,7 @@
         </StoppingConditions>
         <Integrator>RungeKutta4</Integrator>
         <StepSize>0.1</StepSize>
+        <TimeAccel>1.0</TimeAccel>
     </SimulationConfig>
     <UniverseConfig>
         <!-- <CelestialBody name="Earth">

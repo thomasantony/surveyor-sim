@@ -81,11 +81,15 @@ pub struct SimulationParams {
     pub dt: f64,
     #[xml(child="StoppingConditions")]
     pub stopping_conditions: StoppingConditionVec,
+    /// Time acceleration factor used to run simulation at a faster (or slower) rate
+    #[xml(default, flatten_text="TimeAccel")]
+    pub time_acceleration: f64,
 }
 impl SimulationParams {
-    pub fn new(dt: f64, stopping_conditions: Vec<SimStoppingCondition>) -> Self {
+    pub fn new(dt: f64, time_acceleration: f64, stopping_conditions: Vec<SimStoppingCondition>) -> Self {
         Self {
             dt,
+            time_acceleration,
             stopping_conditions: StoppingConditionVec(stopping_conditions),
         }
     }
@@ -95,6 +99,7 @@ impl Default for SimulationParams {
     fn default() -> Self {
         Self {
             dt: 1.0 / 100.0,
+            time_acceleration: 1.0,
             stopping_conditions: StoppingConditionVec(vec![SimStoppingCondition::MaxDuration(100.0)]),
         }
     }
@@ -149,13 +154,16 @@ impl DerefMut for SimClock {
 }
 
 // System used to initalize the simulation
-pub fn initialize_simulation(mut query: Query<(&SpacecraftModel, &mut OrbitalDynamics, &mut SimulationResults, &mut SimClock)>)
+pub fn initialize_simulation(mut query: Query<(&SpacecraftModel, &mut OrbitalDynamics, &mut SimulationResults)>,
+mut clock_query: Query<&mut SimClock>)
 {
     let initial_state: InitialState = InitialState::from_str(include_str!("../initial_state.xml")).unwrap();
-    let (_, mut orbital_dynamics, mut sim_results, mut timer) = query.single_mut();
+    let (_, mut orbital_dynamics, mut sim_results) = query.single_mut();
     *orbital_dynamics = OrbitalDynamics::from_initial_state(&initial_state);
     sim_results.history.clear();
-    timer.reset();
+
+    let sim_clock = clock_query.single_mut();
+    sim_clock.into_inner().reset();
 }
 
 // System that updates simulation state and the time after stepping the dynamics
@@ -178,14 +186,14 @@ pub fn update_simulation_state_and_time(
 
     t.0 += sim_params.dt;
 }
-pub fn tick_sim_clock(time: Res<Time>, mut query: Query<&mut SimClock, With<SpacecraftModel>>) {
+pub fn tick_sim_clock(time: Res<Time>, mut query: Query<&mut SimClock>) {
     let mut timer = query.single_mut();
     timer.tick(time.delta());
 }
 
 // We will step the simulation only when the timer has finished
 pub fn simulation_should_step(
-    q_timer: Query<&SimClock, With<SpacecraftModel>>,
+    q_timer: Query<&SimClock>,
 ) -> bool {
     let timer = q_timer.single();
     timer.just_finished()

@@ -7,7 +7,7 @@ use crate::{
 
 #[derive(Debug, XmlRead, PartialEq)]
 #[xml(tag = "Config")]
-pub struct SystemConfig {
+pub struct Config {
     #[xml(child = "UniverseConfig")]
     pub universe: UniverseConfig,
     #[xml(child = "SpacecraftConfig")]

@@ -36,9 +36,14 @@ impl Plugin for SurveyorGraphicsPlugin{
 
         // Spacecraft
         .add_systems(Startup, spawn_lander)
-        .add_systems(Update, update_lander_pos.after(surveyor_physics::simulation::update_simulation_state_and_time))
-        .add_systems(Update, sync_camera.after(update_lander_pos))
-        ;
+        .add_event::<LanderStateUpdate>()
+        .add_systems(Update,
+            (
+                compute_lander_state_from_simulation,
+                render_lander_state,
+                sync_camera
+            ).chain().after(surveyor_physics::simulation::update_simulation_state_and_time)
+        );
         // app.add_systems(Startup, setup);
     }
 }
