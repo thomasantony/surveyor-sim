@@ -42,5 +42,7 @@ fn main() {
         .add_plugins(surveyor_gnc::SurveyorGNC::new())
         .add_systems(Startup, start_sim)
         .add_systems(Update, show_sim_time)
+        // .add_plugins(bevy::diagnostic::LogDiagnosticsPlugin::default())
+        // .add_plugins(bevy::diagnostic::FrameTimeDiagnosticsPlugin::default())
         .run();
 }
