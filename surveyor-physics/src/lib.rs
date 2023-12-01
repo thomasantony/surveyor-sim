@@ -21,7 +21,7 @@ use bevy_ecs::prelude::*;
 use bevy_enum_filter::prelude::AddEnumFilter;
 use config::Config;
 use simulation::{initialize_simulation, tick_sim_clock, update_simulation_state_and_time, simulation_should_step, SimClock, SimulationParams};
-use spacecraft::{InitialState, build_spacecraft_entity, do_discrete_update, DiscreteUpdateEvent};
+use spacecraft::{InitialState, build_spacecraft_entity, do_discrete_update_from_event, DiscreteUpdateEvent};
 use hard_xml::XmlRead;
 use subsystems::Subsystem;
 use universe::Universe;
@@ -70,6 +70,7 @@ impl Plugin for SurveyorPhysicsPlugin {
         // initializes the simulation. The latter can be run anytime we trigger a new simulation
         app.add_systems(Startup, build_sim_ecs)
             .add_enum_filter::<Subsystem>()
+            .add_event::<DiscreteUpdateEvent>()
             .add_state::<SimulationState>()
 
             // Run simulation when we are in the `Running` state
@@ -79,7 +80,7 @@ impl Plugin for SurveyorPhysicsPlugin {
             .add_systems(Update,
                 (
                     spacecraft::step_spacecraft_model,
-                    do_discrete_update,
+                    do_discrete_update_from_event,
                     update_simulation_state_and_time,
                 ).chain().run_if(in_state(SimulationState::Running).and_then(simulation_should_step))
             )
@@ -89,7 +90,7 @@ impl Plugin for SurveyorPhysicsPlugin {
                 (
                     crate::interfaces::imu_event_generator,
                     crate::interfaces::rcs_event_receiver
-                ).chain().after(do_discrete_update)
+                ).chain().after(do_discrete_update_from_event)
             )
             // Add a Timer that keeps track of time since the simulation started
             // Run `initialize_simulation` when we enter the `Running` state

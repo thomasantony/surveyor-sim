@@ -314,13 +314,15 @@ fn dydt(_t: f64, state: &[f64], universe: &Universe, subsystems: &[&Subsystem], 
 }
 
 use crate::SimulationTime;
-use crate::simulation::{SimulationParams, SimulationResults};
+use crate::simulation::{SimulationParams, SimulationResults, SimClock};
 // System that steps the spacecraft model over one timestep and updates orbital dynamics component
 pub fn step_spacecraft_model(
     mut q_universe: Query<&mut Universe>,
     mut q_spacecrafts: Query<(&mut SpacecraftModel, &SimulationTime, &SpacecraftProperties, &mut OrbitalDynamics, &mut SimulationResults, &Children)>,
     q_subsystems: Query<&mut Subsystem>,
-    sim_params: Res<SimulationParams>)
+    q_sim_clock: Query<&SimClock>,
+    sim_params: Res<SimulationParams>,
+    mut discrete_update_event: EventWriter<DiscreteUpdateEvent>)
 {
     let dt = sim_params.dt;
 
@@ -348,34 +350,29 @@ pub fn step_spacecraft_model(
             .history
             .push(orb.clone());
     }
-}
 
-// System that updates the discrete state of all subsystems
-// Will be called at half the simulation rate
-pub fn do_discrete_update(mut q_spacecrafts: Query<(&mut SpacecraftModel, &SimulationTime, &OrbitalDynamics, &Children)>,
-    mut q_subsystems: Query<&mut Subsystem>)
-{
-    for (_spacecraft_model, t, orbital_dynamics, children) in q_spacecrafts.iter_mut() {
-        let t = t.0;
-        let spacecraft_discrete_state =
-            SpacecraftDiscreteState::new(t, &orbital_dynamics.state);
-
-        for child in children.iter() {
-            let mut subsystem = q_subsystems.get_mut(*child).unwrap();
-            subsystem.update_discrete(t, &spacecraft_discrete_state);
+    // If we have a discrete update, send it as an event
+    let sim_clock = q_sim_clock.single();
+    if sim_clock.num_steps % sim_params.num_steps_per_gnc_update == 0 {
+        for (_, t, _, orb, _, _) in q_spacecrafts.iter_mut() {
+            let t = t.0;
+            let spacecraft_discrete_state =
+                SpacecraftDiscreteState::new(t, &orb.state);
+            // Send event
+            discrete_update_event.send(DiscreteUpdateEvent(spacecraft_discrete_state));
         }
     }
 }
 
-// // System that updates the discrete state of all subsystems
-// // Will be called at half the simulation rate
-// pub fn do_discrete_update_from_event(mut discrete_update_event: EventReader<DiscreteUpdateEvent>,
-//     mut q_subsystems: Query<&mut Subsystem>)
-// {
-//     for discrete_update in discrete_update_event.read() {
-//         for subsystem in q_subsystems.iter_mut() {
-//             subsystem.into_inner().update_discrete(discrete_update.time, &discrete_update);
-//         }
-//     }
+// System that updates the discrete state of all subsystems
+// Will be called only when a discrete update event is received (which is every num_steps_per_gnc_update)
+pub fn do_discrete_update_from_event(mut discrete_update_event: EventReader<DiscreteUpdateEvent>,
+    mut q_subsystems: Query<&mut Subsystem>)
+{
+    for discrete_update in discrete_update_event.read() {
+        for subsystem in q_subsystems.iter_mut() {
+            subsystem.into_inner().update_discrete(discrete_update.time, &discrete_update);
+        }
+    }
 
-// }
+}

@@ -25,7 +25,6 @@ pub fn spawn_camera(
     let camera_transform = Transform::from_translation(camera_translation)
                                             .looking_at(lander_translation, Vec3::Y);
 
-    println!("Initially we have {:?} looking at {:?}", camera_translation, lander_translation);
     commands.spawn((
         Camera3dBundle {
             transform: camera_transform.clone(),
