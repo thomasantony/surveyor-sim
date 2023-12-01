@@ -1,5 +1,6 @@
 use std::fmt::Formatter;
 use std::ops::{DerefMut, Deref};
+use std::time::Duration;
 
 
 use crate::{SimulationState, SimulationTime};
@@ -127,9 +128,11 @@ impl SimulationResults {
     }
 }
 
+// A timer that keeps track of the progress of the simulation and also the number of steps so far
 #[derive(Component)]
 pub struct SimClock {
     timer: Timer,
+    pub num_steps: u64,
     pub dt: f32
 }
 impl SimClock {
@@ -137,21 +140,27 @@ impl SimClock {
         Self {
             timer: Timer::from_seconds(dt as f32, TimerMode::Repeating),
             dt,
+            num_steps: 0,
         }
     }
+    pub fn tick(&mut self, delta: Duration) {
+        self.timer.tick(delta);
+        // Increment the number of steps if the timer has just finished
+        if self.timer.just_finished() {
+            self.num_steps += 1;
+        }
+    }
+    pub fn reset_timer(&mut self) {
+        self.timer.reset();
+    }
+    pub fn just_finished(&self) -> bool {
+        self.timer.just_finished()
+    }
+    pub fn elapsed_secs(&self) -> f32 {
+        self.timer.elapsed().as_secs_f32()
+    }
 }
-impl Deref for SimClock {
-    type Target = Timer;
 
-    fn deref(&self) -> &Self::Target {
-        &self.timer
-    }
-}
-impl DerefMut for SimClock {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.timer
-    }
-}
 
 // System used to initalize the simulation
 pub fn initialize_simulation(mut query: Query<(&SpacecraftModel, &mut OrbitalDynamics, &mut SimulationResults)>,
@@ -163,7 +172,7 @@ mut clock_query: Query<&mut SimClock>)
     sim_results.history.clear();
 
     let sim_clock = clock_query.single_mut();
-    sim_clock.into_inner().reset();
+    sim_clock.into_inner().reset_timer();
 }
 
 // System that updates simulation state and the time after stepping the dynamics
