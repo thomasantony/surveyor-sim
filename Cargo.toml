@@ -7,3 +7,7 @@ members = [
     "surveyor-physics",
     "surveyor-app",
 ]
+
+# Enable max optimizations for dependencies, but not for our code:
+[profile.dev.package."*"]
+opt-level = 3
