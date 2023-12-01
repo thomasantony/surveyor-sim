@@ -21,7 +21,7 @@ use bevy_ecs::prelude::*;
 use bevy_enum_filter::prelude::AddEnumFilter;
 use config::Config;
 use simulation::{initialize_simulation, tick_sim_clock, update_simulation_state_and_time, simulation_should_step, SimClock, SimulationParams};
-use spacecraft::{InitialState, build_spacecraft_entity, do_discrete_update};
+use spacecraft::{InitialState, build_spacecraft_entity, do_discrete_update, DiscreteUpdateEvent};
 use hard_xml::XmlRead;
 use subsystems::Subsystem;
 use universe::Universe;
@@ -56,9 +56,10 @@ pub fn build_sim_ecs(mut commands: Commands)
     build_spacecraft_entity(&mut commands, &config, &initial_state);
     commands.spawn(Universe::from_config(config.universe));
 
-    let sim_params = SimulationParams::from(config.simulation);
+    let sim_params = SimulationParams::new(config.simulation, config.gnc.update_rate_hz);
     commands.spawn(SimClock::new((sim_params.get_update_period_secs()) as f32));
     commands.insert_resource(sim_params);
+    commands.insert_resource(config.gnc);
 }
 
 

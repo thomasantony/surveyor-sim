@@ -3923,6 +3923,7 @@ dependencies = [
  "bevy_ecs",
  "chrono",
  "dashmap",
+ "hard-xml",
  "log",
  "nalgebra",
 ]

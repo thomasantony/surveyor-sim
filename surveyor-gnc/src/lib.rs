@@ -11,6 +11,7 @@ pub mod control;
 use bevy_ecs::{prelude::*};
 use control::{update_attitude_controller, update_control_allocator, update_rcs_controller};
 use guidance::{update_guidance};
+use hard_xml::XmlRead;
 use navigation::{update_simple_attitude_estimator, update_sensor_aggregator};
 use sensors::{update_imu, update_star_tracker};
 use nalgebra as na;
@@ -21,6 +22,15 @@ use dashmap::DashMap;
 use bevy_app::{prelude::*};
 use bevy_ecs::prelude::Entity;
 use bevy_ecs::schedule::IntoSystemConfigs;
+
+
+#[derive(Debug, PartialEq, Resource, XmlRead)]
+#[xml(tag = "GncConfig")]
+pub struct GncConfig {
+    #[xml(flatten_text = "UpdateRateHz")]
+    pub update_rate_hz: f64,
+}
+
 
 pub struct SurveyorGNC {
     pub entities: DashMap<&'static str, Entity>,

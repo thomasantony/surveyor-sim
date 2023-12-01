@@ -1,8 +1,9 @@
 use hard_xml::XmlRead;
+use surveyor_gnc::GncConfig;
 
 use crate::{
     math::{UnitQuaternion, UnitVector3, Vector3},
-    universe::CelestialBodyType, simulation::{SimulationConfig},
+    universe::CelestialBodyType, simulation::SimulationConfig,
 };
 
 #[derive(Debug, XmlRead, PartialEq)]
@@ -14,6 +15,8 @@ pub struct Config {
     pub spacecraft: SpacecraftConfig,
     #[xml(child = "SimulationConfig")]
     pub simulation: SimulationConfig,
+    #[xml(child = "GncConfig")]
+    pub gnc: GncConfig,
 }
 #[derive(Debug, XmlRead, PartialEq)]
 #[xml(tag = "UniverseConfig")]

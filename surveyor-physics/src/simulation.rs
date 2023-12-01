@@ -77,8 +77,8 @@ impl SimStoppingCondition {
 #[derive(Debug, XmlRead, PartialEq)]
 #[xml(tag = "SimulationConfig")]
 pub struct SimulationConfig {
-    #[xml(default, flatten_text="UpdateRateHz")]
-    pub update_rate_hz: f64,
+    #[xml(default, flatten_text="SimRateHz")]
+    pub sim_rate_hz: f64,
     #[xml(child="StoppingConditions")]
     pub stopping_conditions: StoppingConditionVec,
     /// Time acceleration factor used to run simulation at a faster (or slower) rate
@@ -86,9 +86,9 @@ pub struct SimulationConfig {
     pub time_acceleration: f64,
 }
 impl SimulationConfig {
-    pub fn new(update_rate_hz: f64, time_acceleration: f64, stopping_conditions: Vec<SimStoppingCondition>) -> Self {
+    pub fn new(sim_rate_hz: f64, time_acceleration: f64, stopping_conditions: Vec<SimStoppingCondition>) -> Self {
         Self {
-            update_rate_hz,
+            sim_rate_hz,
             time_acceleration,
             stopping_conditions: StoppingConditionVec(stopping_conditions),
         }
@@ -98,7 +98,7 @@ impl SimulationConfig {
 impl Default for SimulationConfig {
     fn default() -> Self {
         Self {
-            update_rate_hz: 100.0,
+            sim_rate_hz: 100.0,
             time_acceleration: 1.0,
             stopping_conditions: StoppingConditionVec(vec![SimStoppingCondition::MaxDuration(100.0)]),
         }
@@ -108,11 +108,19 @@ impl Default for SimulationConfig {
 pub struct SimulationParams {
     pub config: SimulationConfig,
     pub dt: f64,
+    // Number of simulation steps for each GNC update
+    pub num_steps_per_gnc_update: u64,
 }
 impl SimulationParams {
-    pub fn from(config: SimulationConfig) -> Self {
+    pub fn new(config: SimulationConfig, gnc_update_rate_hz: f64) -> Self {
+        // Sim update rate must be evenly divisible by GNC update rate
+        assert!(config.sim_rate_hz % gnc_update_rate_hz == 0.0);
+        // GNC update rate must be less than half the sim update rate
+        assert!(gnc_update_rate_hz < config.sim_rate_hz);
+
         Self {
-            dt: 1.0/config.update_rate_hz,
+            dt: 1.0/config.sim_rate_hz,
+            num_steps_per_gnc_update: (config.sim_rate_hz / gnc_update_rate_hz) as u64,
             config,
         }
     }
