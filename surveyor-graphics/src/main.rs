@@ -44,5 +44,7 @@ fn main() {
         .add_systems(Update, show_sim_time)
         // .add_plugins(bevy::diagnostic::LogDiagnosticsPlugin::default())
         // .add_plugins(bevy::diagnostic::FrameTimeDiagnosticsPlugin::default())
+        .add_plugins(bevy_screen_diagnostics::ScreenDiagnosticsPlugin::default())
+        .add_plugins(bevy_screen_diagnostics::ScreenFrameDiagnosticsPlugin)
         .run();
 }

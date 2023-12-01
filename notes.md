@@ -1,15 +1,9 @@
-- `surveyor-gnc` will be the main flight-software module
-- `surveyor-sim` will contain all the simulation code
-    - this includes the "universe" as well as spacecraft components
-    - possibly move the universe/physics/integrator stuff into a separate crate later
+TODO
 
-
-- New design for simulator
-    -
-
-
-Could have a new flow:
-
-1. update_discrete on all subsystems
-2. integrate
-...
+- use ephemerides for moon/earth? (low priority)
+- add play/pause/restart UI and functionality
+- fork camera and fix it
+- implement simple radar sensor truth side
+- implement radar sensor on embedded side
+- port the landing algo from orbiter to this demo
+- update FSW to no longer use chrono::time, but time provided by something (which is then populated from the simulation)
