@@ -2,7 +2,7 @@ use hard_xml::XmlRead;
 
 use crate::{
     math::{UnitQuaternion, UnitVector3, Vector3},
-    universe::CelestialBodyType, simulation::SimulationParams,
+    universe::CelestialBodyType, simulation::{SimulationConfig},
 };
 
 #[derive(Debug, XmlRead, PartialEq)]
@@ -13,7 +13,7 @@ pub struct Config {
     #[xml(child = "SpacecraftConfig")]
     pub spacecraft: SpacecraftConfig,
     #[xml(child = "SimulationConfig")]
-    pub simulation: SimulationParams,
+    pub simulation: SimulationConfig,
 }
 #[derive(Debug, XmlRead, PartialEq)]
 #[xml(tag = "UniverseConfig")]

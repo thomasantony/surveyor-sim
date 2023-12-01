@@ -74,35 +74,50 @@ impl SimStoppingCondition {
 }
 
 // Struct holding parameters for simulation
-#[derive(Debug, Resource, PartialEq)]
-#[derive(XmlRead)]
+#[derive(Debug, XmlRead, PartialEq)]
 #[xml(tag = "SimulationConfig")]
-pub struct SimulationParams {
-    #[xml(default, flatten_text="StepSize")]
-    pub dt: f64,
+pub struct SimulationConfig {
+    #[xml(default, flatten_text="UpdateRateHz")]
+    pub update_rate_hz: f64,
     #[xml(child="StoppingConditions")]
     pub stopping_conditions: StoppingConditionVec,
     /// Time acceleration factor used to run simulation at a faster (or slower) rate
     #[xml(default, flatten_text="TimeAccel")]
     pub time_acceleration: f64,
 }
-impl SimulationParams {
-    pub fn new(dt: f64, time_acceleration: f64, stopping_conditions: Vec<SimStoppingCondition>) -> Self {
+impl SimulationConfig {
+    pub fn new(update_rate_hz: f64, time_acceleration: f64, stopping_conditions: Vec<SimStoppingCondition>) -> Self {
         Self {
-            dt,
+            update_rate_hz,
             time_acceleration,
             stopping_conditions: StoppingConditionVec(stopping_conditions),
         }
     }
 }
 // Implement a sane default for SimulationParams
-impl Default for SimulationParams {
+impl Default for SimulationConfig {
     fn default() -> Self {
         Self {
-            dt: 1.0 / 100.0,
+            update_rate_hz: 100.0,
             time_acceleration: 1.0,
             stopping_conditions: StoppingConditionVec(vec![SimStoppingCondition::MaxDuration(100.0)]),
         }
+    }
+}
+#[derive(Debug, Resource, PartialEq, Default)]
+pub struct SimulationParams {
+    pub config: SimulationConfig,
+    pub dt: f64,
+}
+impl SimulationParams {
+    pub fn from(config: SimulationConfig) -> Self {
+        Self {
+            dt: 1.0/config.update_rate_hz,
+            config,
+        }
+    }
+    pub fn get_update_period_secs(&self) -> f64 {
+        self.dt / self.config.time_acceleration
     }
 }
 
@@ -186,7 +201,7 @@ pub fn update_simulation_state_and_time(
     let obs = Observation::new(&universe);
     // Use query to extract references to the spacecraft model and orbital dynamics inputs
     let (mut t, state) = query.single_mut();
-    if sim_params.stopping_conditions.iter().any(|c| c.check(&state, &obs)) {
+    if sim_params.config.stopping_conditions.iter().any(|c| c.check(&state, &obs)) {
         log::info!("Simulation has finished");
         set_sim_state.set(SimulationState::Finished);
         return;

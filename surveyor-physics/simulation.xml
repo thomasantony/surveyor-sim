@@ -1,13 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <Config>
+    <!-- Configuration for the "flight software" -->
+    <GncConfig>
+        <UpdateRateHz>10.0</UpdateRateHz>
+    </GncConfig>
+
     <SimulationConfig>
         <StoppingConditions>
             <MaxDuration>1000.0</MaxDuration>
             <CollisionWith>Moon</CollisionWith>
         </StoppingConditions>
         <Integrator>RungeKutta4</Integrator>
-        <StepSize>0.1</StepSize>
+        <!-- Sim rate must be at least twice the UpdateRateHz of the GncConfig -->
+        <SimRateHz>20.0</SimRateHz>
         <TimeAccel>1.0</TimeAccel>
     </SimulationConfig>
     <UniverseConfig>
