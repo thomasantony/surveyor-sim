@@ -224,26 +224,44 @@ impl<'a> DynamicSystem<'a> for OrbitalDynamics {
 }
 
 /// Struct used to pass spacecraft state information to subsystems without copying
-pub struct SpacecraftDiscreteState<'a> {
+pub struct SpacecraftDiscreteState {
     pub time: f64,
-    pub pos: &'a [f64],
-    pub vel: &'a [f64],
-    pub q_i2b: &'a [f64],
-    pub omega_b: &'a [f64],
+    pub state: SVector<f64, 13>,
 }
-impl<'a> SpacecraftDiscreteState<'a> {
-    pub fn new(time: f64, state_vector: &'a SVector<f64, 13>) -> Self {
+impl SpacecraftDiscreteState {
+    pub fn new(time: f64, state: &SVector<f64, 13>) -> Self {
         Self {
             time,
-            pos: &state_vector.as_slice()[0..3],
-            vel: &state_vector.as_slice()[3..6],
-            q_i2b: &state_vector.as_slice()[6..10],
-            omega_b: &state_vector.as_slice()[10..13],
+            state: state.clone(),
         }
+    }
+    pub fn pos(&self) -> Vector3 {
+        Vector3::from_column_slice(&self.state.as_slice()[0..3])
+    }
+    pub fn vel(&self) -> Vector3 {
+        Vector3::from_column_slice(&self.state.as_slice()[3..6])
+    }
+    pub fn q_i2b(&self) -> UnitQuaternion {
+        UnitQuaternion::from_parts(
+            self.state[6],
+            self.state[7],
+            self.state[8],
+            self.state[9],
+        )
+    }
+    pub fn omega_b(&self) -> Vector3 {
+        Vector3::from_column_slice(&self.state.as_slice()[10..13])
     }
 }
 
-
+#[derive(Event)]
+pub struct DiscreteUpdateEvent(pub SpacecraftDiscreteState);
+impl std::ops::Deref for DiscreteUpdateEvent{
+    type Target = SpacecraftDiscreteState;
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
 
 
 // Have a startup system that initializes all the continuous systems
@@ -348,3 +366,16 @@ pub fn do_discrete_update(mut q_spacecrafts: Query<(&mut SpacecraftModel, &Simul
         }
     }
 }
+
+// // System that updates the discrete state of all subsystems
+// // Will be called at half the simulation rate
+// pub fn do_discrete_update_from_event(mut discrete_update_event: EventReader<DiscreteUpdateEvent>,
+//     mut q_subsystems: Query<&mut Subsystem>)
+// {
+//     for discrete_update in discrete_update_event.read() {
+//         for subsystem in q_subsystems.iter_mut() {
+//             subsystem.into_inner().update_discrete(discrete_update.time, &discrete_update);
+//         }
+//     }
+
+// }

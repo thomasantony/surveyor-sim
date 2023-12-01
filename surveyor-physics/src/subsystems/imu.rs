@@ -57,7 +57,7 @@ impl IMUSubsystem {
     pub fn update_discrete(&mut self, _dt: f64, discrete_state: &SpacecraftDiscreteState) {
         // Store omega and accel from discrete state
         for imu in &mut self.imus.iter_mut() {
-            let omega_b = Vector3::from_column_slice(discrete_state.omega_b);
+            let omega_b = discrete_state.omega_b();
             imu.omega_cf = imu.q_cf2b.inverse_transform_vector(&omega_b);
             // imu.accel_cf = ...
         }

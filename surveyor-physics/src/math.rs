@@ -8,7 +8,16 @@ use std::{
 // Wrapper type to allow parsing of quaternion from string
 #[derive(ValueStruct, Debug, Clone, PartialEq)]
 pub struct UnitQuaternion(pub nalgebra::UnitQuaternion<f64>);
-
+impl UnitQuaternion {
+    pub fn from_quaternion(q: nalgebra::Quaternion<f64>) -> Self {
+        UnitQuaternion(nalgebra::UnitQuaternion::from_quaternion(q))
+    }
+    pub fn from_parts(w: f64, x: f64, y: f64, z: f64) -> Self {
+        UnitQuaternion(nalgebra::UnitQuaternion::from_quaternion(
+            nalgebra::Quaternion::new(x, y, z, w),
+        ))
+    }
+}
 impl Deref for UnitQuaternion {
     type Target = nalgebra::UnitQuaternion<f64>;
     fn deref(&self) -> &Self::Target {
@@ -42,6 +51,11 @@ impl FromStr for UnitQuaternion {
 
 #[derive(ValueStruct, Debug, Clone, PartialEq)]
 pub struct Vector3(pub nalgebra::Vector3<f64>);
+impl Vector3 {
+    pub fn from_column_slice(slice: &[f64]) -> Self {
+        Vector3(nalgebra::Vector3::from_column_slice(slice))
+    }
+}
 impl Deref for Vector3 {
     type Target = nalgebra::Vector3<f64>;
     fn deref(&self) -> &Self::Target {
