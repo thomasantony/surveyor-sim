@@ -6,7 +6,7 @@ use crate::{
     integrators::DynamicSystem,
     models::{
         surveyor_engines::{VernierRocket, VernierRocketContinuousInputs},
-        ActuatorModel, TVC,
+        ActuatorModel, tvc::TVC,
     },
     spacecraft::OrbitalDynamicsInputs,
 };
