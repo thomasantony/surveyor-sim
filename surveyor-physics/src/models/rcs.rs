@@ -1,4 +1,5 @@
-use crate::{config::ThrusterConfig, spacecraft::OrbitalDynamicsInputs};
+use crate::spacecraft::OrbitalDynamicsInputs;
+use surveyor_types::config::ThrusterConfig;
 
 #[derive(Debug)]
 pub struct RcsThruster {

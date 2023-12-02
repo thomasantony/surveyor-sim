@@ -1,9 +1,11 @@
 use std::{collections::HashMap, str::FromStr};
+use surveyor_types::CelestialBodyType;
+use surveyor_types::config::UniverseConfig;
 
 use nalgebra::{SVector, SVectorView};
 use bevy_ecs::prelude::*;
 
-use crate::{config::UniverseConfig, spacecraft::SpacecraftProperties};
+use crate::spacecraft::SpacecraftProperties;
 
 /// Environment models
 pub const MU: f64 = 398600.4418; // km^3/s^2
@@ -40,27 +42,6 @@ pub struct CelestialBodyModel {
     pub radius: f64,
     /// Position
     pub position: SVector<f64, 3>,
-}
-
-
-/// Celestial body type
-#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
-pub enum CelestialBodyType {
-    Sun,
-    Earth,
-    Moon,
-}
-impl FromStr for CelestialBodyType {
-    type Err = &'static str;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "Sun" => Ok(Self::Sun),
-            "Earth" => Ok(Self::Earth),
-            "Moon" => Ok(Self::Moon),
-            _ => Err("Celestial body not supported"),
-        }
-    }
 }
 
 #[derive(Debug, Component)]

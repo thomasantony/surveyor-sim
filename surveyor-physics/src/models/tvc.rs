@@ -1,4 +1,4 @@
-use crate::config::TVCConfig;
+use surveyor_types::config::TVCConfig;
 
 use super::ActuatorModel;
 

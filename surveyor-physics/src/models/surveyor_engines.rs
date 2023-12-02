@@ -1,4 +1,5 @@
-use crate::{config::ThrusterConfig, spacecraft::OrbitalDynamicsInputs};
+use crate::spacecraft::OrbitalDynamicsInputs;
+use surveyor_types::config::ThrusterConfig;
 
 use super::ActuatorModel;
 
@@ -97,7 +98,7 @@ mod tests {
     use nalgebra::Vector3;
 
     use super::*;
-    use crate::config::{GeometryParams, ThrusterConfig};
+    use surveyor_types::config::{GeometryParams, ThrusterConfig};
 
     fn create_test_engine() -> VernierRocket {
         let config = ThrusterConfig {

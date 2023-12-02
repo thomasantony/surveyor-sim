@@ -1,6 +1,6 @@
 use bevy_ecs::prelude::*;
 
-use crate::config::EngineSubsystemConfig;
+use surveyor_types::config::EngineSubsystemConfig;
 use crate::spacecraft::SpacecraftDiscreteState;
 use crate::{
     integrators::DynamicSystem,

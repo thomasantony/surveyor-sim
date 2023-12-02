@@ -1,7 +1,7 @@
 use bevy_app::App;
 use bevy_ecs::prelude::*;
 
-use crate::config::EngineSubsystemConfig;
+use surveyor_types::config::EngineSubsystemConfig;
 use crate::{
     integrators::NewDynamicSystem,
     models::{

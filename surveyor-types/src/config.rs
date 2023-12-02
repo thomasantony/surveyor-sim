@@ -1,10 +1,11 @@
+use bevy_ecs::prelude::*;
 use hard_xml::XmlRead;
-use surveyor_gnc::GncConfig;
+use nalgebra as na;
 
-use crate::{
-    math::{UnitQuaternion, UnitVector3, Vector3},
-    universe::CelestialBodyType, simulation::SimulationConfig,
-};
+use crate::math::{UnitQuaternion, UnitVector3, Vector3};
+use crate::CelestialBodyType;
+
+use crate::simulation::SimulationConfig;
 
 #[derive(Debug, XmlRead, PartialEq)]
 #[xml(tag = "Config")]
@@ -18,9 +19,17 @@ pub struct Config {
     #[xml(child = "GncConfig")]
     pub gnc: GncConfig,
 }
+
+
+#[derive(Debug, PartialEq, Resource, XmlRead)]
+#[xml(tag = "GncConfig")]
+pub struct GncConfig {
+    #[xml(flatten_text = "UpdateRateHz")]
+    pub update_rate_hz: f64,
+}
+
 #[derive(Debug, XmlRead, PartialEq)]
 #[xml(tag = "UniverseConfig")]
-
 pub struct UniverseConfig {
     #[xml(child = "CelestialBodies", child = "CelestialBody")]
     pub celestial_bodies: Vec<CelestialBodyConfig>,
@@ -147,4 +156,27 @@ pub struct GeometryParams {
 pub struct ImuConfig {
     #[xml(child = "geometry")]
     pub geometry: GeometryParams,
+}
+
+/// Structure defining geometry of any spacecraft component
+#[derive(Debug, Clone, Component)]
+pub struct GeometryConfig {
+    pub q_cf2b: na::UnitQuaternion<f64>,
+    pub cf_b: na::Vector3<f64>,
+}
+impl Default for GeometryConfig {
+    fn default() -> Self {
+        Self {
+            q_cf2b: na::UnitQuaternion::identity(),
+            cf_b: na::Vector3::zeros(),
+        }
+    }
+}
+impl GeometryConfig {
+    pub fn vec_cf2b(&self, vec_cf: &na::Vector3<f64>) -> na::Vector3<f64> {
+        self.q_cf2b * vec_cf
+    }
+    pub fn vec_b2cf(&self, vec_b: &na::Vector3<f64>) -> na::Vector3<f64> {
+        self.q_cf2b.inverse_transform_vector(vec_b)
+    }
 }

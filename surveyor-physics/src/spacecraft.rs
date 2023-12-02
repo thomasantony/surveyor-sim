@@ -1,10 +1,12 @@
 //! New module for spacecraft model
+//!
+
+use surveyor_types::config::Config;
+
 use na::SVectorView;
 use nalgebra as na;
 use bevy::prelude::*;
 use bevy_ecs::system::Commands;
-
-
 
 /// A component defining a continuous system that can be stepped over time
 #[derive(Debug, Component)]
@@ -29,7 +31,7 @@ impl ContinuousSystemState {
 }
 
 
-use crate::config::Config;
+
 use crate::subsystems::Subsystem;
 use crate::universe::Universe;
 use crate::{

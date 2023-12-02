@@ -1,12 +1,6 @@
 
 use surveyor_physics::SimulationState;
-use surveyor_physics::config::Config;
-
-
-
-
-
-
+use surveyor_types::config::Config;
 
 
 // use bevy::prelude::*;

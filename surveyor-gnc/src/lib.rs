@@ -24,14 +24,6 @@ use bevy_ecs::prelude::Entity;
 use bevy_ecs::schedule::IntoSystemConfigs;
 
 
-#[derive(Debug, PartialEq, Resource, XmlRead)]
-#[xml(tag = "GncConfig")]
-pub struct GncConfig {
-    #[xml(flatten_text = "UpdateRateHz")]
-    pub update_rate_hz: f64,
-}
-
-
 pub struct SurveyorGNC {
     pub entities: DashMap<&'static str, Entity>,
 }

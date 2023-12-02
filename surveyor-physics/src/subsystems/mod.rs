@@ -1,7 +1,7 @@
+use surveyor_types::config::SubsystemConfig;
 use enum_as_inner::EnumAsInner;
 
 use crate::{
-    config::SubsystemConfig,
     integrators::DynamicSystem,
     spacecraft::{OrbitalDynamicsInputs, SpacecraftDiscreteState}
 };

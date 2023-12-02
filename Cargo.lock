@@ -2922,6 +2922,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "na"
+version = "0.32.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d55e951497fc25eefc5629a3895d8854b4de5db850076d9b14f5a779cf148c9f"
+dependencies = [
+ "nalgebra",
+ "num-traits",
+ "simba",
+]
+
+[[package]]
 name = "naga"
 version = "0.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3935,7 +3946,7 @@ dependencies = [
  "dashmap",
  "hard-xml",
  "log",
- "nalgebra",
+ "na",
  "surveyor-types",
 ]
 
@@ -3969,12 +3980,23 @@ dependencies = [
  "hard-xml",
  "hifitime",
  "log",
- "nalgebra",
+ "na",
  "plotly",
  "rvstruct",
  "surveyor-gnc",
+ "surveyor-types",
  "wasm-bindgen-futures",
  "web-sys",
+]
+
+[[package]]
+name = "surveyor-types"
+version = "0.1.0"
+dependencies = [
+ "bevy_ecs",
+ "hard-xml",
+ "na",
+ "rvstruct",
 ]
 
 [[package]]

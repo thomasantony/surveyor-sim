@@ -5,6 +5,7 @@ edition = "2021"
 
 [dependencies]
 surveyor-gnc = { path = "../surveyor-gnc" }
+surveyor-types = { path = "../surveyor-types" }
 
 nalgebra = {workspace = true}
 bevy     = {workspace = true}

@@ -9,17 +9,15 @@ pub mod visualization;
 pub mod models;
 pub mod subsystems;
 
-pub mod config;
-
-pub mod math;
-
+pub use surveyor_types::math;
+use surveyor_types::config::Config;
 pub mod interfaces;
 
 
 use bevy_app::prelude::*;
 use bevy_ecs::prelude::*;
 use bevy_enum_filter::prelude::AddEnumFilter;
-use config::Config;
+
 use simulation::{initialize_simulation, tick_sim_clock, update_simulation_state_and_time, simulation_should_step, SimClock, SimulationParams};
 use spacecraft::{InitialState, build_spacecraft_entity, do_discrete_update_from_event, DiscreteUpdateEvent};
 use hard_xml::XmlRead;

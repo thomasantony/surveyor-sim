@@ -1,5 +1,3 @@
-use std::fmt::Formatter;
-use std::ops::{DerefMut, Deref};
 use std::time::Duration;
 
 
@@ -13,97 +11,27 @@ use hard_xml::XmlRead;
 use nalgebra::{Dyn, U13};
 use bevy_ecs::prelude::*;
 use bevy::time::{Time, Timer, TimerMode};
+use surveyor_types::simulation::{SimStoppingCondition, SimulationConfig};
 
-// Enum defining stopping conditions for simulation
-#[derive(Resource, Clone, PartialEq)]
-#[derive(XmlRead)]
-pub enum SimStoppingCondition {
-    #[xml(tag="MaxDuration")]
-    MaxDuration(#[xml(text)] f64),
-    #[xml(tag="CollisionWith")]
-    CollisionWith(#[xml(text)] String),
-    // Custom(Box<dyn Fn(&OrbitalDynamics, &Universe) -> bool + Sync + Send + 'static>),
-}
 
-#[derive(Debug, Resource, Clone, PartialEq)]
-#[derive(XmlRead)]
-#[xml(tag="StoppingConditions")]
-pub struct StoppingConditionVec(
-    #[xml(child="MaxDuration", child="CollisionWith")] pub Vec<SimStoppingCondition>
-);
-impl Deref for StoppingConditionVec {
-    type Target = Vec<SimStoppingCondition>;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-impl DerefMut for StoppingConditionVec {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.0
+pub fn check_stopping_condition(cond: &SimStoppingCondition, state: &OrbitalDynamics, observation: &Observation) -> bool {
+    match cond {
+        SimStoppingCondition::MaxDuration(t) => {
+            state.time >= *t
+        },
+        SimStoppingCondition::CollisionWith(body) => {
+            let body = observation.get_body_by_name(&body).unwrap();
+            let sc_pos = state.state.fixed_rows::<3>(0);
+            let r = sc_pos - body.position;
+            let r_mag = r.norm();
+            r_mag < body.radius
+        },
+        // _ => false,
+        // SimStoppingCondition::Custom(f) => f(state, universe),
     }
 }
 
-impl std::fmt::Debug for SimStoppingCondition {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        match self {
-            SimStoppingCondition::MaxDuration(t) => write!(f, "MaxDuration({})", t),
-            SimStoppingCondition::CollisionWith(body) => write!(f, "CollisionWith({})", body),
-            // SimStoppingCondition::Custom(_) => write!(f, "Custom"),
-        }
-    }
-}
 
-impl SimStoppingCondition {
-    pub fn check(&self, state: &OrbitalDynamics, observation: &Observation) -> bool {
-        match self {
-            SimStoppingCondition::MaxDuration(t) => {
-                state.time >= *t
-            },
-            SimStoppingCondition::CollisionWith(body) => {
-                let body = observation.get_body_by_name(&body).unwrap();
-                let sc_pos = state.state.fixed_rows::<3>(0);
-                let r = sc_pos - body.position;
-                let r_mag = r.norm();
-                r_mag < body.radius
-            },
-            // _ => false,
-            // SimStoppingCondition::Custom(f) => f(state, universe),
-        }
-    }
-}
-
-// Struct holding parameters for simulation
-#[derive(Debug, XmlRead, PartialEq)]
-#[xml(tag = "SimulationConfig")]
-pub struct SimulationConfig {
-    #[xml(default, flatten_text="SimRateHz")]
-    pub sim_rate_hz: f64,
-    #[xml(child="StoppingConditions")]
-    pub stopping_conditions: StoppingConditionVec,
-    /// Time acceleration factor used to run simulation at a faster (or slower) rate
-    #[xml(default, flatten_text="TimeAccel")]
-    pub time_acceleration: f64,
-}
-impl SimulationConfig {
-    pub fn new(sim_rate_hz: f64, time_acceleration: f64, stopping_conditions: Vec<SimStoppingCondition>) -> Self {
-        Self {
-            sim_rate_hz,
-            time_acceleration,
-            stopping_conditions: StoppingConditionVec(stopping_conditions),
-        }
-    }
-}
-// Implement a sane default for SimulationParams
-impl Default for SimulationConfig {
-    fn default() -> Self {
-        Self {
-            sim_rate_hz: 100.0,
-            time_acceleration: 1.0,
-            stopping_conditions: StoppingConditionVec(vec![SimStoppingCondition::MaxDuration(100.0)]),
-        }
-    }
-}
 #[derive(Debug, Resource, PartialEq, Default)]
 pub struct SimulationParams {
     pub config: SimulationConfig,
@@ -209,7 +137,7 @@ pub fn update_simulation_state_and_time(
     let obs = Observation::new(&universe);
     // Use query to extract references to the spacecraft model and orbital dynamics inputs
     let (mut t, state) = query.single_mut();
-    if sim_params.config.stopping_conditions.iter().any(|c| c.check(&state, &obs)) {
+    if sim_params.config.stopping_conditions.iter().any(|c| check_stopping_condition(&c, &state, &obs)) {
         log::info!("Simulation has finished");
         set_sim_state.set(SimulationState::Finished);
         return;

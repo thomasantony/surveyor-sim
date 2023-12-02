@@ -6,6 +6,7 @@ members = [
     "surveyor-graphics",
     "surveyor-physics",
     "surveyor-app",
+    "surveyor-types",
 ]
 
 # Enable max optimizations for dependencies, but not for our code:

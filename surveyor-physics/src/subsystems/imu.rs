@@ -4,7 +4,7 @@
 use nalgebra::Vector3;
 
 use crate::spacecraft::SpacecraftDiscreteState;
-use crate::config::{ImuSubsystemConfig, ImuConfig};
+use surveyor_types::config::{ImuSubsystemConfig, ImuConfig};
 
 #[derive(Debug, Default)]
 pub struct IMUSensor{

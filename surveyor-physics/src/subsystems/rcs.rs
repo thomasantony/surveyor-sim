@@ -1,4 +1,5 @@
-use crate::{config::RcsSubsystemConfig, models::rcs::RcsThruster, spacecraft::SpacecraftDiscreteState};
+use surveyor_types::config::RcsSubsystemConfig;
+use crate::{models::rcs::RcsThruster, spacecraft::SpacecraftDiscreteState};
 
 #[derive(Debug)]
 pub struct RcsSubsystem {
