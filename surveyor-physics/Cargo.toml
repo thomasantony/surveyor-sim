@@ -4,21 +4,24 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-nalgebra = "0.32.2"
-bevy_ecs = "0.12"
+surveyor-gnc = { path = "../surveyor-gnc" }
+
+nalgebra = {workspace = true}
+bevy     = {workspace = true}
+bevy_app = {workspace = true}
+bevy_ecs = {workspace = true}
+
 hard-xml = "1.25.0"
 rvstruct = "0.3.2"
 log = "0.4.19"
-bevy_app = "0.12"
 hifitime = "3.8.2"
-surveyor-gnc = { path = "../surveyor-gnc" }
+
 enum-as-inner = "0.6.0"
 wasm-bindgen-futures = "0.4.37"
 plotly = { version = "0.8.3", features = ["wasm"] }
 console_error_panic_hook = "0.1.7"
 console_log = { version = "1.0.0", features = ["wasm-bindgen"] }
 web-sys = { version = "0.3.64", features = ["Window", "Document", "HtmlElement"] }
-bevy = {version ="0.12", default-features = false}
 bevy_enum_filter = "0.3.0"
 bevy-debug-text-overlay = "7.0.0"
 
