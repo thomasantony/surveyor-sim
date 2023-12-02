@@ -43,12 +43,12 @@ impl Default for RCSController {
 }
 
 #[derive(Debug, Event)]
-pub struct RCSControllerInput {
+pub struct RCSTorqueRequest {
     /// Torque vector in body frame
     pub torque_b: na::Vector3<f64>,
 }
 
-impl Default for RCSControllerInput {
+impl Default for RCSTorqueRequest {
     fn default() -> Self {
         Self {
             torque_b: na::Vector3::zeros(),
@@ -110,7 +110,7 @@ pub fn update_attitude_controller(
 pub fn update_control_allocator(
     control_allocator_query: Query<&ControlAllocator>,
     mut torque_request_reader: EventReader<AttitudeTorqueRequest>,
-    mut rcs_torque_request_writer: EventWriter<RCSControllerInput>,
+    mut rcs_torque_request_writer: EventWriter<RCSTorqueRequest>,
 )
 {
     // The control allocator gets configured elsewhere
@@ -119,7 +119,7 @@ pub fn update_control_allocator(
         |torque_request|{
             if control_allocator.use_rcs {
                 // Pass through the torque request to the RCS controller
-                let rcs_torque_request = RCSControllerInput {
+                let rcs_torque_request = RCSTorqueRequest {
                     torque_b: torque_request.torque_b,
                 };
                 rcs_torque_request_writer.send(rcs_torque_request);
@@ -138,7 +138,7 @@ pub fn update_control_allocator(
 }
 
 pub fn update_rcs_controller(
-    mut rcs_controller_input_reader: EventReader<RCSControllerInput>,
+    mut rcs_controller_input_reader: EventReader<RCSTorqueRequest>,
     mut query: Query<(&RCSController, &mut RCSControllerOutput)>,
     mut rcs_output_writer: EventWriter<RCSControllerOutput>,
 ) {
@@ -157,4 +157,10 @@ pub fn update_rcs_controller(
         output.duty_cycles = duty_cycles;
         rcs_output_writer.send(output.clone());
     }
+}
+
+/// Receives torque request and maps it to a TVC angle and thrust levels
+pub fn update_vernier_controller()
+{
+
 }

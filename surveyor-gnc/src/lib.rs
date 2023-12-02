@@ -71,7 +71,7 @@ impl Plugin for SurveyorGNC {
 
             // Control
             .add_event::<control::AttitudeTorqueRequest>()
-            .add_event::<control::RCSControllerInput>()
+            .add_event::<control::RCSTorqueRequest>()
             .add_event::<control::RCSControllerOutput>()
             .add_systems(Update, (update_attitude_controller, update_control_allocator, update_rcs_controller).chain()
                 .in_set(SurveyorGncSystemSet::Control)
