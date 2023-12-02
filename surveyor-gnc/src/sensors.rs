@@ -2,7 +2,7 @@
 use bevy_ecs::prelude::*;
 use nalgebra as na;
 
-use crate::GeometryConfig;
+use surveyor_types::config::GeometryConfig;
 
 #[derive(Debug, Clone, Component)]
 pub struct StarTracker;

@@ -5,6 +5,8 @@ edition = "2021"
 description = "A simple GNC flight software implementation using bevy-ecs"
 
 [dependencies]
+surveyor-types ={ path = "../surveyor-types" }
+
 nalgebra = {workspace = true}
 bevy     = {workspace = true}
 bevy_app = {workspace = true}

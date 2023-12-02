@@ -7,6 +7,7 @@ pub mod sensors;
 pub mod navigation;
 pub mod guidance;
 pub mod control;
+pub mod config;
 
 use bevy_ecs::{prelude::*};
 use control::{update_attitude_controller, update_control_allocator, update_rcs_controller};
@@ -17,7 +18,6 @@ use sensors::{update_imu, update_star_tracker};
 use nalgebra as na;
 
 use dashmap::DashMap;
-
 
 use bevy_app::{prelude::*};
 use bevy_ecs::prelude::Entity;
@@ -72,6 +72,9 @@ impl Plugin for SurveyorGNC {
             // Control
             .add_event::<control::AttitudeTorqueRequest>()
             .add_event::<control::RCSTorqueRequest>()
+            .add_event::<control::TVCTorqueRequest>()
+            .add_event::<control::TVCControllerOutput>()
+            .add_event::<control::VernierTorqueRequest>()
             .add_event::<control::RCSControllerOutput>()
             .add_systems(Update, (update_attitude_controller, update_control_allocator, update_rcs_controller).chain()
                 .in_set(SurveyorGncSystemSet::Control)
