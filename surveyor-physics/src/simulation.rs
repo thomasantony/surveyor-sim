@@ -55,6 +55,9 @@ impl SimulationParams {
     pub fn get_update_period_secs(&self) -> f64 {
         self.dt / self.config.time_acceleration
     }
+    pub fn set_multiplier(&mut self, multiplier: f64) {
+        self.config.time_acceleration = multiplier;
+    }
 }
 
 #[derive(Component, Debug, Default)]
@@ -100,6 +103,11 @@ impl SimClock {
         if self.timer.just_finished() {
             self.num_steps += 1;
         }
+    }
+    pub fn set_update_period(&mut self, dt: f32) {
+        self.timer.set_duration(Duration::from_secs_f32(dt));
+        self.dt = dt;
+        self.reset_timer();
     }
     pub fn reset_timer(&mut self) {
         self.timer.reset();
@@ -173,4 +181,22 @@ pub fn reset_simulation(
     let sim_clock = clock_query.single_mut();
     sim_clock.into_inner().reset_timer();
     set_sim_state.set(SimulationState::Paused);
+}
+
+#[derive(Debug, Clone, Event)]
+pub struct SetSimulationRate{
+    pub multiplier: f64,
+}
+
+pub fn set_simulation_rate(
+    mut sim_params: ResMut<SimulationParams>,
+    mut set_sim_rate: EventReader<SetSimulationRate>,
+    mut q_clock: Query<&mut SimClock>,
+)
+{
+    if let Some(set_sim_rate) = set_sim_rate.read().last() {
+        let mut clock = q_clock.single_mut();
+        sim_params.set_multiplier(set_sim_rate.multiplier);
+        clock.set_update_period(sim_params.get_update_period_secs() as f32);
+    }
 }

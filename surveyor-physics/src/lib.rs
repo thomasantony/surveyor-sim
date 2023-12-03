@@ -101,10 +101,12 @@ impl Plugin for SurveyorPhysicsPlugin {
             .add_enum_filter::<Subsystem>()
             .add_event::<DiscreteUpdateEvent>()
             .add_state::<SimulationState>()
+            .add_event::<SetSimulationRate>()
 
             // Run simulation when we are in the `Running` state
             .add_systems(Update,
-                tick_sim_clock.run_if(in_state(SimulationState::Running))
+                (tick_sim_clock.run_if(in_state(SimulationState::Running)),
+                        set_simulation_rate)
             )
             .add_systems(Update,
                 (
