@@ -4,20 +4,32 @@ use bevy_ecs::prelude::*;
 use nalgebra as na;
 use surveyor_types::config::ThrusterConfig;
 
-use crate::{guidance::AttitudeTarget};
+use crate::guidance::AttitudeTarget;
 
 #[derive(Debug, Component)]
 pub struct ControlAllocator{
-    pub use_diff_thrust: bool,
-    pub use_rcs: bool,
-    pub use_tvc: bool,
+    pub rcs_controller: Option<RCSController>,
+    pub tvc_controller: Option<TVCController>,
+    pub diff_thrust_controller: Option<VernierEngineController>,
 }
 impl Default for ControlAllocator {
     fn default() -> Self {
         Self {
-            use_diff_thrust: false,
-            use_rcs: true,
-            use_tvc: false,
+            rcs_controller: None,
+            tvc_controller: None,
+            diff_thrust_controller: None,
+        }
+    }
+}
+impl ControlAllocator {
+    pub fn new(rcs_controller: Option<RCSController>,
+        tvc_controller: Option<TVCController>,
+        diff_thrust_controller: Option<VernierEngineController>) -> Self
+    {
+        Self {
+            rcs_controller,
+            tvc_controller,
+            diff_thrust_controller,
         }
     }
 }
@@ -122,21 +134,21 @@ pub fn update_control_allocator(
     let control_allocator = control_allocator_query.single();
     torque_request_reader.read().last().map(
         |torque_request|{
-            if control_allocator.use_rcs {
+            if let Some(control_allocator) = control_allocator.rcs_controller.as_ref() {
                 // Pass through the torque request to the RCS controller
                 let rcs_torque_request = RCSTorqueRequest {
                     torque_b: torque_request.torque_b,
                 };
                 rcs_torque_request_writer.send(rcs_torque_request);
             }
-            if control_allocator.use_tvc {
+            if let Some(tvc_controller) = control_allocator.tvc_controller.as_ref() {
                 // Pass through the torque request to the TVC controller
                 let tvc_torque_request = TVCTorqueRequest {
                     torque_b: torque_request.torque_b,
                 };
                 tvc_torque_request_writer.send(tvc_torque_request);
             }
-            if control_allocator.use_diff_thrust {
+            if let Some(diff_thrust_controller) = control_allocator.diff_thrust_controller.as_ref() {
                 // Pass through the torque request to the differential thrust allocator
                 todo!("Not implemented yet");
             }

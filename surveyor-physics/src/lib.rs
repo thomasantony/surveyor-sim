@@ -57,7 +57,7 @@ pub fn build_sim_ecs(mut commands: Commands)
     let sim_params = SimulationParams::new(config.simulation, config.gnc.update_rate_hz);
     commands.spawn(SimClock::new((sim_params.get_update_period_secs()) as f32));
     commands.insert_resource(sim_params);
-    commands.insert_resource(config.gnc);
+    // commands.insert_resource(config.gnc);
 }
 
 

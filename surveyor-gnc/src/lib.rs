@@ -15,7 +15,6 @@ use guidance::{update_guidance};
 use hard_xml::XmlRead;
 use navigation::{update_simple_attitude_estimator, update_sensor_aggregator};
 use sensors::{update_imu, update_star_tracker};
-use nalgebra as na;
 
 use dashmap::DashMap;
 
@@ -81,6 +80,11 @@ impl Plugin for SurveyorGNC {
         let imu_b = app.world.spawn((Name("IMU_B"), sensors::IMU, GeometryConfig::default())).id();
         let star_tracker = app.world.spawn((Name("ST_A"), sensors::StarTracker, GeometryConfig::default())).id();
         let guidance = app.world.spawn((Name("SurveyorGNCMode"), guidance::GuidanceMode::Idle)).id();
+
+        let _rcs_controller = RCSController::default();
+        // let _control_allocator = control::ControlAllocator::default();
+        // let vernier_controller = control::VernierAttitudeController::default();
+
         let control_allocator = app.world.spawn((Name("ControlAllocator"), control::ControlAllocator::default())).id();
         let rcs_controller = app.world.spawn((Name("RCSController"), control::RCSController::default(), control::RCSControllerOutput::default())).id();
 
@@ -105,29 +109,7 @@ impl SurveyorGNC {
 
 #[derive(Component)]
 pub struct Name(pub &'static str);
-
-/// Structure defining geometry of any spacecraft component
-#[derive(Debug, Clone, Component)]
-pub struct GeometryConfig {
-    pub q_cf2b: na::UnitQuaternion<f64>,
-    pub cf_b: na::Vector3<f64>,
-}
-impl Default for GeometryConfig {
-    fn default() -> Self {
-        Self {
-            q_cf2b: na::UnitQuaternion::identity(),
-            cf_b: na::Vector3::zeros(),
-        }
-    }
-}
-impl GeometryConfig {
-    pub fn vec_cf2b(&self, vec_cf: &na::Vector3<f64>) -> na::Vector3<f64> {
-        self.q_cf2b * vec_cf
-    }
-    pub fn vec_b2cf(&self, vec_b: &na::Vector3<f64>) -> na::Vector3<f64> {
-        self.q_cf2b.inverse_transform_vector(vec_b)
-    }
-}
+pub use surveyor_types::config::GeometryConfig;
 
 #[derive(Event)]
 pub enum GncCommand {

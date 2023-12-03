@@ -1,12 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <Config>
-    <!-- Configuration for the "flight software" -->
+   <!-- Configuration for the "flight software" -->
     <GncConfig>
         <UpdateRateHz>10.0</UpdateRateHz>
     </GncConfig>
-
-    <SimulationConfig>
+     <SimulationConfig>
         <StoppingConditions>
             <MaxDuration>1000.0</MaxDuration>
             <CollisionWith>Moon</CollisionWith>
