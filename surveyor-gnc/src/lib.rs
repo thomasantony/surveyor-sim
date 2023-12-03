@@ -7,12 +7,11 @@ pub mod sensors;
 pub mod navigation;
 pub mod guidance;
 pub mod control;
-pub mod config;
 
 use bevy_ecs::{prelude::*};
-use control::{update_attitude_controller, update_control_allocator, update_rcs_controller};
+use control::{update_attitude_controller, update_control_allocator, update_rcs_controller, RCSController};
 use guidance::{update_guidance};
-use hard_xml::XmlRead;
+
 use navigation::{update_simple_attitude_estimator, update_sensor_aggregator};
 use sensors::{update_imu, update_star_tracker};
 
@@ -21,6 +20,7 @@ use dashmap::DashMap;
 use bevy_app::{prelude::*};
 use bevy_ecs::prelude::Entity;
 use bevy_ecs::schedule::IntoSystemConfigs;
+
 
 
 pub struct SurveyorGNC {

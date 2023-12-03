@@ -180,7 +180,7 @@ mod tests
         // Read IMU output event
         let evt = app.world.get_resource::<Events<IMUOutput>>().unwrap();
         let mut reader = evt.get_reader();
-        let imu_output = reader.iter(&evt).next().unwrap();
+        let imu_output = reader.read(&evt).next().unwrap();
         assert_eq!(imu_output.omega_b, omega_b);
     }
     #[test]
@@ -202,7 +202,7 @@ mod tests
         // Read Star Tracker output event
         let evt = app.world.get_resource::<Events<StarTrackerOutput>>().unwrap();
         let mut reader = evt.get_reader();
-        let st_output = reader.iter(&evt).next().unwrap();
+        let st_output = reader.read(&evt).next().unwrap();
         assert_eq!(st_output.q_i2b, q_j20002cf);
     }
 }
