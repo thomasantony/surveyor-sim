@@ -8,16 +8,17 @@ pub mod navigation;
 pub mod guidance;
 pub mod control;
 
-use bevy_ecs::{prelude::*};
+use bevy::core::Name;
+use bevy_ecs::prelude::*;
 use control::{update_attitude_controller, update_control_allocator, update_rcs_controller, RCSController};
-use guidance::{update_guidance};
+use guidance::update_guidance;
 
 use navigation::{update_simple_attitude_estimator, update_sensor_aggregator};
 use sensors::{update_imu, update_star_tracker};
 
 use dashmap::DashMap;
 
-use bevy_app::{prelude::*};
+use bevy_app::prelude::*;
 use bevy_ecs::prelude::Entity;
 use bevy_ecs::schedule::IntoSystemConfigs;
 
@@ -75,18 +76,18 @@ impl Plugin for SurveyorGNC {
         app.configure_sets(Update, SurveyorGncSystemSet::Navigation.before(SurveyorGncSystemSet::Guidance));
         app.configure_sets(Update, SurveyorGncSystemSet::Guidance.before(SurveyorGncSystemSet::Control));
 
-        let traj = app.world.spawn((Name("TrajectoryPhase"), TrajectoryPhase::BeforeRetroBurn,)).id();
-        let imu_a = app.world.spawn((Name("IMU_A"), sensors::IMU, GeometryConfig::default())).id();
-        let imu_b = app.world.spawn((Name("IMU_B"), sensors::IMU, GeometryConfig::default())).id();
-        let star_tracker = app.world.spawn((Name("ST_A"), sensors::StarTracker, GeometryConfig::default())).id();
-        let guidance = app.world.spawn((Name("SurveyorGNCMode"), guidance::GuidanceMode::Idle)).id();
+        let traj = app.world.spawn((Name::new("TrajectoryPhase"), TrajectoryPhase::BeforeRetroBurn,)).id();
+        let imu_a = app.world.spawn((Name::new("IMU_A"), sensors::IMU, GeometryConfig::default())).id();
+        let imu_b = app.world.spawn((Name::new("IMU_B"), sensors::IMU, GeometryConfig::default())).id();
+        let star_tracker = app.world.spawn((Name::new("ST_A"), sensors::StarTracker, GeometryConfig::default())).id();
+        let guidance = app.world.spawn((Name::new("SurveyorGNCMode"), guidance::GuidanceMode::Idle)).id();
 
         let _rcs_controller = RCSController::default();
         // let _control_allocator = control::ControlAllocator::default();
         // let vernier_controller = control::VernierAttitudeController::default();
 
-        let control_allocator = app.world.spawn((Name("ControlAllocator"), control::ControlAllocator::default())).id();
-        let rcs_controller = app.world.spawn((Name("RCSController"), control::RCSController::default(), control::RCSControllerOutput::default())).id();
+        let control_allocator = app.world.spawn((Name::new("ControlAllocator"), control::ControlAllocator::default())).id();
+        let rcs_controller = app.world.spawn((Name::new("RCSController"), control::RCSController::default(), control::RCSControllerOutput::default())).id();
 
         self.entities.insert("TrajectoryPhase", traj);
         self.entities.insert("IMU_A", imu_a);
@@ -106,9 +107,6 @@ impl SurveyorGNC {
         }
     }
 }
-
-#[derive(Component)]
-pub struct Name(pub &'static str);
 pub use surveyor_types::config::GeometryConfig;
 
 #[derive(Event)]

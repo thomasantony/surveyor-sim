@@ -157,8 +157,8 @@ mod tests
             .add_event::<StarTrackerInput>()
             .add_systems(Update, update_imu)
             .add_systems(Update, update_star_tracker);
-        app.world.spawn((Name("IMU_A"), IMU, GeometryConfig::default()));
-        app.world.spawn((Name("ST_A"), StarTracker, GeometryConfig::default()));
+        app.world.spawn((Name::new("IMU_A"), IMU, GeometryConfig::default()));
+        app.world.spawn((Name::new("ST_A"), StarTracker, GeometryConfig::default()));
         app
     }
     #[test]
