@@ -13,6 +13,6 @@ pub fn keyboard_input(
             _ => (),
         }
     }else if keys.just_pressed(KeyCode::R) {
-        println!("R pressed!");
+        set_sim_state.set(SimulationState::Resetting);
     }
 }

@@ -158,3 +158,20 @@ pub fn simulation_should_step(
     let timer = q_timer.single();
     timer.just_finished()
 }
+
+// Reset simulation
+pub fn reset_simulation(
+    mut query: Query<(&SpacecraftModel, &mut OrbitalDynamics, &mut SimulationResults)>,
+    initial_state: Res<InitialState>,
+    mut clock_query: Query<&mut SimClock>,
+    mut set_sim_state: ResMut<NextState<SimulationState>>,
+)
+{
+    let (_, mut orbital_dynamics, mut sim_results) = query.single_mut();
+    *orbital_dynamics = OrbitalDynamics::from_initial_state(&initial_state);
+    sim_results.history.clear();
+
+    let sim_clock = clock_query.single_mut();
+    sim_clock.into_inner().reset_timer();
+    set_sim_state.set(SimulationState::Paused);
+}

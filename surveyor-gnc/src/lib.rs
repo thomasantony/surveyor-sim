@@ -22,8 +22,6 @@ use bevy_app::prelude::*;
 use bevy_ecs::prelude::Entity;
 use bevy_ecs::schedule::IntoSystemConfigs;
 
-
-
 pub struct SurveyorGNC {
     pub entities: DashMap<&'static str, Entity>,
 }

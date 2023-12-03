@@ -18,7 +18,7 @@ use bevy_app::prelude::*;
 use bevy_ecs::prelude::*;
 use bevy_enum_filter::prelude::AddEnumFilter;
 
-use simulation::{initialize_simulation, tick_sim_clock, update_simulation_state_and_time, simulation_should_step, SimClock, SimulationParams};
+use simulation::*;
 use spacecraft::{InitialState, build_spacecraft_entity, do_discrete_update_from_event, DiscreteUpdateEvent};
 use hard_xml::XmlRead;
 use subsystems::Subsystem;
@@ -35,6 +35,7 @@ pub enum SimulationState
     Paused,
     Running,
     Finished,
+    Resetting,
 }
 
 #[derive(Debug, Clone, Copy, Component, Default)]
@@ -95,6 +96,10 @@ impl Plugin for SurveyorPhysicsPlugin {
             // Run `initialize_simulation` when we enter the `Running` state
             .add_systems(OnEnter(SimulationState::Running),
                 initialize_simulation
+            )
+            // Reset the simulation to the initial state when we enter the `Resetting` state
+            .add_systems(OnEnter(SimulationState::Resetting),
+                reset_simulation
             );
     }
 }
