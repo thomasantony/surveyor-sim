@@ -1,6 +1,7 @@
 mod planet;
 mod camera;
 mod lander;
+mod input;
 
 use bevy::{prelude::*};
 use bevy_panorbit_camera::PanOrbitCameraPlugin;
@@ -8,6 +9,7 @@ use big_space::FloatingOriginPlugin;
 use camera::*;
 use planet::*;
 use lander::*;
+use input::*;
 
 // use smooth_bevy_cameras::{controllers::orbit::OrbitCameraPlugin, LookTransformPlugin};
 
@@ -43,7 +45,9 @@ impl Plugin for SurveyorGraphicsPlugin{
                 render_lander_state,
                 sync_camera
             ).chain().after(surveyor_physics::simulation::update_simulation_state_and_time)
-        );
+        )
+        // inputs
+        .add_systems(Update, keyboard_input);
         // app.add_systems(Startup, setup);
     }
 }
