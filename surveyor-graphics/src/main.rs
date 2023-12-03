@@ -5,7 +5,7 @@ use bevy_debug_text_overlay::{screen_print, OverlayPlugin};
 
 fn show_sim_time(phy_query: Query<& surveyor_physics::SimulationTime>) {
     let time = phy_query.single();
-    screen_print!("Sim Time: {:.2}", time.0);
+    screen_print!("Sim Time: {:.2}", time.get_monotonic_time());
 }
 
 fn start_sim(mut set_sim_state: ResMut<NextState<SimulationState>>,

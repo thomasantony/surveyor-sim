@@ -4,6 +4,8 @@ use nalgebra as na;
 
 use surveyor_types::config::GeometryConfig;
 
+use crate::clock::SystemClock;
+
 #[derive(Debug, Clone, Component)]
 pub struct StarTracker;
 
@@ -26,11 +28,13 @@ impl Default for StarTrackerInput {
 pub struct StarTrackerOutput
 {
     pub q_i2b: na::UnitQuaternion<f64>,
+    pub measurement_time: hifitime::Epoch,
 }
 impl Default for StarTrackerOutput {
     fn default() -> Self {
         Self {
             q_i2b: na::UnitQuaternion::identity(),
+            measurement_time: hifitime::Epoch::default(),
         }
     }
 }
@@ -72,12 +76,14 @@ pub struct IMUOutput
 {
     pub omega_b: na::Vector3<f64>,
     pub acc_b: na::Vector3<f64>,
+    pub measurement_time: hifitime::Epoch,
 }
 impl Default for IMUOutput {
     fn default() -> Self {
         Self {
             omega_b: na::Vector3::zeros(),
             acc_b: na::Vector3::zeros(),
+            measurement_time: hifitime::Epoch::default(),
         }
     }
 }
@@ -89,12 +95,14 @@ pub struct EphemerisOutput
 {
     pub pos_i: na::Vector3<f64>,
     pub vel_i: na::Vector3<f64>,
+    pub time: hifitime::Epoch,
 }
 impl Default for EphemerisOutput {
     fn default() -> Self {
         Self {
             pos_i: na::Vector3::zeros(),
             vel_i: na::Vector3::zeros(),
+            time: hifitime::Epoch::default(),
         }
     }
 }
@@ -102,7 +110,12 @@ impl Default for EphemerisOutput {
 
 /// System to update the IMU output
 /// Generalize this later to apply to any sensor with a vector input in component frame
-pub fn update_imu(mut imu_input: EventReader<IMUInput>,  mut query: Query<(&IMU, &GeometryConfig)>, mut output: EventWriter<IMUOutput>) {
+pub fn update_imu(
+    mut imu_input: EventReader<IMUInput>,
+    mut query: Query<(&IMU, &GeometryConfig)>,
+    mut output: EventWriter<IMUOutput>,
+    clock: Res<SystemClock>,
+) {
     // Rotate the angular velocity from the CF frame to the body frame and
     // assign it to the IMU output
 
@@ -114,6 +127,7 @@ pub fn update_imu(mut imu_input: EventReader<IMUInput>,  mut query: Query<(&IMU,
             let imu_output = IMUOutput{
                 omega_b: geometry.q_cf2b * imu_input.omega_cf,
                 acc_b: geometry.q_cf2b * imu_input.acc_cf,
+                measurement_time: clock.time,
             };
             output.send(imu_output);
         }else{
@@ -122,15 +136,20 @@ pub fn update_imu(mut imu_input: EventReader<IMUInput>,  mut query: Query<(&IMU,
     });
 }
 
-pub fn update_star_tracker(mut star_tracker_input: EventReader<StarTrackerInput>,
-                           mut query: Query<(&StarTracker, &GeometryConfig)>, mut output: EventWriter<StarTrackerOutput>) {
+pub fn update_star_tracker(
+    mut star_tracker_input: EventReader<StarTrackerInput>,
+    mut query: Query<(&StarTracker, &GeometryConfig)>,
+    mut output: EventWriter<StarTrackerOutput>,
+    clock: Res<SystemClock>,
+) {
     star_tracker_input.read().last().map(| star_tracker_input|{
         // Get star tracker and geometry by sensor id
         if let Some((_, geometry,
                 )) = query.iter_mut().nth(star_tracker_input.sensor_id)
         {
             let star_tracker_output = StarTrackerOutput{
-                q_i2b: geometry.q_cf2b * star_tracker_input.q_j20002cf
+                q_i2b: geometry.q_cf2b * star_tracker_input.q_j20002cf,
+                measurement_time: clock.time,
             };
             output.send(star_tracker_output);
         }else{
@@ -143,7 +162,7 @@ pub fn update_star_tracker(mut star_tracker_input: EventReader<StarTrackerInput>
 mod tests
 {
     use bevy_app::{App, Update};
-    use bevy_ecs::{prelude::Events};
+    use bevy_ecs::prelude::*;
     use crate::{sensors::{IMUOutput, StarTrackerOutput}, Name};
 
     use super::*;

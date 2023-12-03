@@ -9,6 +9,7 @@ pub mod visualization;
 pub mod models;
 pub mod subsystems;
 
+use hifitime::Epoch;
 pub use surveyor_types::math;
 use surveyor_types::config::Config;
 pub mod interfaces;
@@ -39,7 +40,35 @@ pub enum SimulationState
 }
 
 #[derive(Debug, Clone, Copy, Component, Default)]
-pub struct SimulationTime(pub f64);
+pub struct SimulationTime
+{
+    start_time: Epoch,
+    pub time: Epoch,
+}
+
+impl SimulationTime {
+    pub fn new(start_time: Epoch) -> Self {
+        Self {
+            start_time,
+            time: start_time,
+        }
+    }
+    pub fn reset(&mut self) {
+        self.time = self.start_time;
+    }
+    pub fn now(&self) -> Epoch {
+        self.time
+    }
+    pub fn get_monotonic_time(&self) -> f64 {
+        (self.time - self.start_time).to_seconds()
+    }
+    pub fn get_unix_time_s(&self) -> f64 {
+        self.time.to_unix(hifitime::Unit::Second)
+    }
+    pub fn get_unix_time_ms(&self) -> f64 {
+        self.time.to_unix(hifitime::Unit::Millisecond)
+    }
+}
 
 
 pub fn build_sim_ecs(mut commands: Commands)
@@ -88,6 +117,7 @@ impl Plugin for SurveyorPhysicsPlugin {
             // and receive actuator events from GNC to be used in next update
             .add_systems(Update,
                 (
+                    crate::interfaces::time_event_generator,
                     crate::interfaces::imu_event_generator,
                     crate::interfaces::rcs_event_receiver
                 ).chain().after(do_discrete_update_from_event)

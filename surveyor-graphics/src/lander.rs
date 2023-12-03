@@ -48,7 +48,7 @@ pub fn compute_lander_state_from_simulation(
 {
     let sim_clock = clock_query.single();
     let (sim_time, sc) = phy_query.single();
-    if (sim_time.0 as f32) <= sim_clock.dt || sim_clock.just_finished() {
+    if (sim_time.get_monotonic_time() as f32) <= sim_clock.dt || sim_clock.just_finished() {
         return;
     }
     let sub_step =  sim_clock.elapsed_secs()/sim_clock.dt;

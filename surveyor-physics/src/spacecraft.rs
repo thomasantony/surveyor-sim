@@ -1,6 +1,7 @@
 //! New module for spacecraft model
 //!
 
+use hifitime::{Epoch, Duration};
 use surveyor_types::config::Config;
 
 use na::SVectorView;
@@ -45,6 +46,8 @@ use nalgebra::{DVector, SMatrix, SVector};
 #[derive(Debug, XmlRead, Clone, PartialEq, Resource)]
 #[xml(tag = "InitialState")]
 pub struct InitialState {
+    #[xml(flatten_text = "time")]
+    pub time_str: String,
     #[xml(flatten_text = "position")]
     pub position: Vector3,
     #[xml(flatten_text = "velocity")]
@@ -58,6 +61,7 @@ pub struct InitialState {
 impl Default for InitialState {
     fn default() -> Self {
         Self {
+            time_str: "2020-01-01T00:00:00Z".to_string(),
             position: Vector3(nalgebra::Vector3::zeros()),
             velocity: Vector3(nalgebra::Vector3::zeros()),
             q_i2b: UnitQuaternion(nalgebra::UnitQuaternion::identity()),
@@ -71,13 +75,17 @@ pub struct OrbitalDynamics {
     // State includes position, velocity, quaternion, and angular velocity
     pub state: SVector<f64, 13>,
     pub prev_state: SVector<f64, 13>,
-    pub time: f64,
+    pub start_time: Epoch,
+    pub time: Duration,
 }
 impl OrbitalDynamics {
     pub fn new(t: f64, state: SVector<f64, 13>) -> Self {
-        Self { state, time: t, prev_state: SVector::<f64, 13>::zeros() }
+        let start_time = hifitime::UNIX_REF_EPOCH;
+        Self { state, start_time, prev_state: SVector::<f64, 13>::zeros(), time: Duration::from_seconds(t) }
     }
     pub fn from_initial_state(initial_state: &InitialState) -> Self {
+
+        let sim_time = Epoch::from_gregorian_str(&initial_state.time_str).expect("Invaid time string");
         let y0 = SVector::<f64, 13>::from_vec(vec![
             initial_state.position.x,
             initial_state.position.y,
@@ -96,11 +104,12 @@ impl OrbitalDynamics {
         Self {
             state: y0,
             prev_state: SVector::<f64, 13>::zeros(),
-            time: 0.0,
+            time: Duration::from_seconds(0.0),
+            start_time: sim_time,
         }
     }
     pub fn get_t(&self) -> f64 {
-        self.time
+        self.time.to_seconds()
     }
     pub fn get_trajectory(&self) -> &[f64] {
         self.state.as_slice()
@@ -206,11 +215,11 @@ impl<'a> DynamicSystem<'a> for OrbitalDynamics {
     fn set_state(&mut self, t: f64, state: &[f64]) {
         self.prev_state = self.state.clone();
         self.state.copy_from_slice(state);
-        self.time = t;
+        self.time = Duration::from_seconds(t);
     }
 
     fn get_t(&self) -> f64 {
-        self.time
+        self.time.to_seconds()
     }
     fn get_derivatives(
         &self,
@@ -272,7 +281,7 @@ impl std::ops::Deref for DiscreteUpdateEvent{
 
 pub fn build_spacecraft_entity(commands: &mut Commands, config: &Config, initial_state: &InitialState) {
     let spacecraft_ent = commands.spawn((
-        SimulationTime(0.0),
+        SimulationTime::new(hifitime::Epoch::from_gregorian_str(&initial_state.time_str).unwrap()),
         OrbitalDynamics::from_initial_state(&initial_state),
         SpacecraftProperties::new(
             1.0,
@@ -332,7 +341,7 @@ pub fn step_spacecraft_model(
 
     // Iterate over all spacecrafts
     for (_, t, sc_props, mut orb, mut results, children) in q_spacecrafts.iter_mut() {
-        let t = t.0;
+        let t = t.get_monotonic_time();
 
         // Iterate over all subsystems
         let subsystems = children.iter().map(|child| q_subsystems.get(*child).unwrap()).collect::<Vec<_>>();
@@ -357,7 +366,7 @@ pub fn step_spacecraft_model(
     let sim_clock = q_sim_clock.single();
     if sim_clock.num_steps % sim_params.num_steps_per_gnc_update == 0 {
         for (_, t, _, orb, _, _) in q_spacecrafts.iter_mut() {
-            let t = t.0;
+            let t = t.get_monotonic_time();
             let spacecraft_discrete_state =
                 SpacecraftDiscreteState::new(t, &orb.state);
             // Send event

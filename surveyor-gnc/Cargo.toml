@@ -12,10 +12,9 @@ bevy     = {workspace = true}
 bevy_app = {workspace = true}
 bevy_ecs = {workspace = true}
 
-
-chrono = "0.4.26"
 dashmap = "5.4.0"
 log = "0.4.19"
 
 bevy-debug-text-overlay = "7.0.0"
 hard-xml = "1.27.0"
+hifitime = "3.8.5"

@@ -7,9 +7,11 @@ pub mod sensors;
 pub mod navigation;
 pub mod guidance;
 pub mod control;
+pub mod clock;
 
 use bevy::core::Name;
 use bevy_ecs::prelude::*;
+use clock::TimeTickEvent;
 use control::{update_attitude_controller, update_control_allocator, update_rcs_controller, RCSController};
 use guidance::update_guidance;
 
@@ -34,10 +36,21 @@ pub enum SurveyorGncSystemSet {
     Control,
 }
 
+pub fn setup_gnc(mut commands: Commands)
+{
+    commands.insert_resource(clock::SystemClock::default());
+}
+
 impl Plugin for SurveyorGNC {
     fn build(&self, app: &mut App) {
         app.add_event::<GncCommand>()
-            .add_systems(Update, process_gnc_command.before(SurveyorGncSystemSet::Sensors))
+            // Time
+            .add_event::<TimeTickEvent>()
+            .add_systems(Startup, setup_gnc)
+            .add_systems(Update, clock::update_sys_clock)
+
+            // Main GNC command processor
+            .add_systems(Update, process_gnc_command)
             // Sensors
             .add_event::<sensors::EphemerisOutput>()
             .add_event::<sensors::IMUInput>()
@@ -70,6 +83,8 @@ impl Plugin for SurveyorGNC {
                 .in_set(SurveyorGncSystemSet::Control)
             );
 
+        // Configure the system sets
+        app.configure_sets(Update, SurveyorGncSystemSet::Sensors.after(process_gnc_command));
         app.configure_sets(Update, SurveyorGncSystemSet::Sensors.before(SurveyorGncSystemSet::Navigation));
         app.configure_sets(Update, SurveyorGncSystemSet::Navigation.before(SurveyorGncSystemSet::Guidance));
         app.configure_sets(Update, SurveyorGncSystemSet::Guidance.before(SurveyorGncSystemSet::Control));

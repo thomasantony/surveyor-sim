@@ -17,7 +17,7 @@ use surveyor_types::simulation::{SimStoppingCondition, SimulationConfig};
 pub fn check_stopping_condition(cond: &SimStoppingCondition, state: &OrbitalDynamics, observation: &Observation) -> bool {
     match cond {
         SimStoppingCondition::MaxDuration(t) => {
-            state.time >= *t
+            state.time.to_seconds() >= *t
         },
         SimStoppingCondition::CollisionWith(body) => {
             let body = observation.get_body_by_name(&body).unwrap();
@@ -75,7 +75,7 @@ impl SimulationResults {
         state_history
     }
     pub fn get_time_history(&self) -> Vec<f64> {
-        self.history.iter().map(|state| state.time).collect()
+        self.history.iter().map(|state| state.time.to_seconds()).collect()
     }
 }
 
@@ -143,8 +143,7 @@ pub fn update_simulation_state_and_time(
         return;
     }
     // log::info!("Sim time: {}", t.0);
-
-    t.0 += sim_params.dt;
+    t.time += hifitime::Duration::from_seconds(sim_params.dt);
 }
 pub fn tick_sim_clock(time: Res<Time>, mut query: Query<&mut SimClock>) {
     let mut timer = query.single_mut();
