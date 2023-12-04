@@ -52,7 +52,7 @@ pub fn main() {
     // Parse spacecraft config and initialize spacecraft model object
     let spacecraft_config_xml = include_str!("../simulation.xml");
     let spacecraft_model = Config::from_str(spacecraft_config_xml).unwrap();
-    println!("{:?}\n", spacecraft_model);
+    println!("{:#?}\n", spacecraft_model);
 
     let initial_state_xml = include_str!("../initial_state.xml");
     let initial_state = surveyor_physics::spacecraft::InitialState::from_str(initial_state_xml).unwrap();

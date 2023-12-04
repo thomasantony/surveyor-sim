@@ -1,3 +1,4 @@
+use bevy_debug_text_overlay::screen_print;
 use bevy_ecs::prelude::*;
 use hifitime::prelude::*;
 use nalgebra as na;
@@ -65,7 +66,6 @@ pub fn update_sensor_aggregator(mut imu_query: EventReader<IMUOutput>,
             time: star_tracker_output.measurement_time,
             valid: true,
         };
-
         sensor_data.star_trackers[st_idx] = meas;
     }
     // TODO: Mark measurements as invalid if they are too old
@@ -78,10 +78,17 @@ pub fn update_simple_attitude_estimator(mut sensor_data_reader: EventReader<Sens
     let mut attitude_estimator_output = AttitudeEstimatorOutput::default();
     if let Some(sensor_data) = sensor_data_reader.read().last()
     {
-        let imu = sensor_data.imus[0].value.clone();
-        let star_tracker = sensor_data.star_trackers[0].value.clone();
-        attitude_estimator_output.q_i2b = star_tracker.q_i2b;
-        attitude_estimator_output.omega_b = imu.omega_b;
+        // Find first IMU with valid data
+        if let Some(imu) = sensor_data.imus.iter().filter(|x| x.valid).next()
+        {
+            attitude_estimator_output.omega_b = imu.value.omega_b;
+        }
+
+        if let Some(star_tracker) = sensor_data.star_trackers.iter().filter(|x| x.valid).next()
+        {
+            attitude_estimator_output.q_i2b = star_tracker.value.q_i2b;
+        }
+        screen_print!("Omega_b: {:.2?}", attitude_estimator_output.omega_b);
     }
     attitude_estimate_writer.send(attitude_estimator_output);
 }

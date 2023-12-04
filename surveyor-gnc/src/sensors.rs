@@ -13,13 +13,13 @@ pub struct StarTracker;
 #[derive(Debug, Clone, Event)]
 pub struct StarTrackerInput {
     pub sensor_id: usize,
-    pub q_j20002cf: na::UnitQuaternion<f64>,
+    pub q_i2cf: na::UnitQuaternion<f64>,
 }
 impl Default for StarTrackerInput {
     fn default() -> Self {
         Self {
             sensor_id: 0,
-            q_j20002cf: na::UnitQuaternion::identity(),
+            q_i2cf: na::UnitQuaternion::identity(),
         }
     }
 }
@@ -29,12 +29,14 @@ pub struct StarTrackerOutput
 {
     pub q_i2b: na::UnitQuaternion<f64>,
     pub measurement_time: hifitime::Epoch,
+    pub valid: bool,
 }
 impl Default for StarTrackerOutput {
     fn default() -> Self {
         Self {
             q_i2b: na::UnitQuaternion::identity(),
             measurement_time: hifitime::Epoch::default(),
+            valid: false,
         }
     }
 }
@@ -148,8 +150,9 @@ pub fn update_star_tracker(
                 )) = query.iter_mut().nth(star_tracker_input.sensor_id)
         {
             let star_tracker_output = StarTrackerOutput{
-                q_i2b: geometry.q_cf2b * star_tracker_input.q_j20002cf,
+                q_i2b: geometry.q_cf2b * star_tracker_input.q_i2cf,
                 measurement_time: clock.time,
+                valid: true,
             };
             output.send(star_tracker_output);
         }else{
@@ -208,11 +211,11 @@ mod tests
         let mut app = create_app();
         app.update();
 
-        let q_j20002cf = nalgebra::UnitQuaternion::from_euler_angles(0.1, 0.2, 0.3);
+        let q_i2cf = nalgebra::UnitQuaternion::from_euler_angles(0.1, 0.2, 0.3);
 
         let st_input = crate::sensors::StarTrackerInput {
             sensor_id: 0,
-            q_j20002cf: q_j20002cf,
+            q_i2cf: q_i2cf,
         };
         app.world.send_event(st_input);
 
@@ -222,6 +225,6 @@ mod tests
         let evt = app.world.get_resource::<Events<StarTrackerOutput>>().unwrap();
         let mut reader = evt.get_reader();
         let st_output = reader.read(&evt).next().unwrap();
-        assert_eq!(st_output.q_i2b, q_j20002cf);
+        assert_eq!(st_output.q_i2b, q_i2cf);
     }
 }

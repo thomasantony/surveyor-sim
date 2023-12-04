@@ -47,6 +47,17 @@
                 </geometry>
             </Imu>
         </ImuSubsystem>
+        <StarTrackerSubsystem>
+            <!-- The actual Surveyor probe didn't really have a star tracker in the modern sense -->
+            <StarTracker name="A">
+                <geometry>
+                    <!-- Points boresight along -Y (body frame) -->
+                    <q_cf2b>[0.7071068, 0.0, 0.7071068, 0.0]</q_cf2b>
+                    <!-- Random -->
+                    <cf_offset_com_b>[0.0, 0.0, 0.0]</cf_offset_com_b>
+                </geometry>
+            </StarTracker>
+        </StarTrackerSubsystem>
         <RcsSubsystem>
             <thruster type="RCS" name="roll1">
                 <min_thrust>0.0</min_thrust>

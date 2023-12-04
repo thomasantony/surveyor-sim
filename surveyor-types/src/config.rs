@@ -69,7 +69,8 @@ pub struct SpacecraftConfig {
         child = "Subsystems",
         child = "EngineSubsystem",
         child = "RcsSubsystem",
-        child = "ImuSubsystem"
+        child = "ImuSubsystem",
+        child = "StarTrackerSubsystem"
     )]
     pub subsystems: Vec<SubsystemConfig>,
 }
@@ -82,6 +83,8 @@ pub enum SubsystemConfig {
     Rcs(RcsSubsystemConfig),
     #[xml(tag = "ImuSubsystem")]
     Imu(ImuSubsystemConfig),
+    #[xml(tag = "StarTrackerSubsystem")]
+    StarTracker(StarTrackerSubsystemConfig),
 }
 impl ToString for SubsystemConfig {
     fn to_string(&self) -> String {
@@ -89,6 +92,7 @@ impl ToString for SubsystemConfig {
             SubsystemConfig::Propulsion(_) => "Propulsion".to_string(),
             SubsystemConfig::Rcs(_) => "Rcs".to_string(),
             SubsystemConfig::Imu(_) => "Imu".to_string(),
+            SubsystemConfig::StarTracker(_) => "StarTracker".to_string(),
         }
     }
 }
@@ -105,6 +109,13 @@ pub struct RcsSubsystemConfig {
 pub struct ImuSubsystemConfig {
     #[xml(child = "Imu")]
     pub sensors: Vec<ImuConfig>,
+}
+
+#[derive(Debug, XmlRead, PartialEq)]
+#[xml(tag = "StarTrackerSubsystem")]
+pub struct StarTrackerSubsystemConfig {
+    #[xml(child = "StarTracker")]
+    pub sensors: Vec<StarTrackerConfig>,
 }
 
 #[derive(Debug, XmlRead, PartialEq, Clone)]
@@ -154,6 +165,17 @@ pub struct GeometryParams {
 #[derive(Debug, XmlRead, Clone, PartialEq)]
 #[xml(tag = "Imu")]
 pub struct ImuConfig {
+    #[xml(attr="name")]
+    pub name: String,
+    #[xml(child = "geometry")]
+    pub geometry: GeometryParams,
+}
+
+#[derive(Debug, XmlRead, Clone, PartialEq)]
+#[xml(tag = "StarTracker")]
+pub struct StarTrackerConfig {
+    #[xml(attr="name")]
+    pub name: String,
     #[xml(child = "geometry")]
     pub geometry: GeometryParams,
 }
@@ -173,6 +195,12 @@ impl Default for GeometryConfig {
     }
 }
 impl GeometryConfig {
+    pub fn from_geometry_params(params: &GeometryParams) -> Self {
+        Self {
+            q_cf2b: params.q_cf2b.0,
+            cf_b: params.cf_offset_com_b.0,
+        }
+    }
     pub fn vec_cf2b(&self, vec_cf: &na::Vector3<f64>) -> na::Vector3<f64> {
         self.q_cf2b * vec_cf
     }

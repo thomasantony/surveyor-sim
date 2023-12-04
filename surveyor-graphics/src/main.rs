@@ -12,7 +12,8 @@ fn start_sim(mut set_sim_state: ResMut<NextState<SimulationState>>,
             mut command_writer: EventWriter<surveyor_gnc::GncCommand>)
 {
     set_sim_state.set(SimulationState::Running);
-    command_writer.send(surveyor_gnc::GncCommand::SetGuidanceMode(surveyor_gnc::guidance::GuidanceMode::Manual));
+    // command_writer.send(surveyor_gnc::GncCommand::SetGuidanceMode(surveyor_gnc::guidance::GuidanceMode::Manual));
+    command_writer.send(surveyor_gnc::GncCommand::SetGuidanceMode(surveyor_gnc::guidance::GuidanceMode::Detumble));
 }
 
 

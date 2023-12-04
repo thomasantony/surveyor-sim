@@ -10,6 +10,7 @@ use bevy_ecs::prelude::*;
 pub enum GuidanceMode {
     Idle,
     Manual,
+    Detumble,
 }
 
 #[derive(Debug, Clone, Component, Event)]
@@ -29,6 +30,7 @@ pub fn update_guidance(query: Query<&GuidanceMode>, attitude_target_writer: Even
     match mode {
         GuidanceMode::Idle => update_idle_mode(attitude_target_writer),
         GuidanceMode::Manual => update_manual_mode(attitude_target_writer),
+        GuidanceMode::Detumble => update_detumble_mode(attitude_target_writer),
     }
 }
 // TODO: Make it so that it only changes the target when the mode changes
@@ -39,4 +41,8 @@ pub fn update_idle_mode(mut attitude_target_writer: EventWriter<AttitudeTarget>)
 pub fn update_manual_mode(mut attitude_target_writer: EventWriter<AttitudeTarget>) {
     // attitude_target_writer.send(AttitudeTarget::None);
     attitude_target_writer.send(AttitudeTarget::Attitude(nalgebra::UnitQuaternion::from_euler_angles(0.1, 0.0, 0.0)));
+}
+
+pub fn update_detumble_mode(mut attitude_target_writer: EventWriter<AttitudeTarget>) {
+    attitude_target_writer.send(AttitudeTarget::BodyRate(nalgebra::Vector3::new(0.0, 0.0, 0.0)));
 }

@@ -1,10 +1,8 @@
-
-
 use bevy_ecs::prelude::*;
 use nalgebra as na;
 use surveyor_types::config::ThrusterConfig;
 
-use crate::guidance::AttitudeTarget;
+use crate::{guidance::AttitudeTarget, navigation::AttitudeEstimatorOutput};
 
 #[derive(Debug, Component)]
 pub struct ControlAllocator{
@@ -48,6 +46,29 @@ pub struct RCSController {
     pub max_thrusts: Vec<f64>,
 }
 
+impl RCSController {
+    pub fn new(config: &Vec<ThrusterConfig>) -> Self {
+        let num_thrusters = config.len();
+        let mut distribution_matrix = na::Matrix3xX::zeros(num_thrusters);
+        let mut column_index = 0;
+        let mut max_thrusts = Vec::new();
+        for thruster in config.iter() {
+            let thrust_b = thruster.geometry.q_cf2b.transform_vector(&na::Vector3::new(0.0, 0.0, 1.0));
+            let thrust_b = na::Unit::new_normalize(thrust_b);
+            let thrust = thruster.max_thrust;
+
+            let torque_dir_b: na::Matrix<f64, na::Const<3>, na::Const<1>, na::ArrayStorage<f64, 3, 1>> = thruster.geometry.cf_offset_com_b.cross(&thrust_b);
+            distribution_matrix.set_column(column_index, &torque_dir_b);
+            max_thrusts.push(thrust);
+            column_index += 1;
+        }
+        let distribution_matrix_inv = distribution_matrix.pseudo_inverse(1e-6).expect("Failed to compute pseudo-inverse");
+        Self {
+            distribution_matrix_inv,
+            max_thrusts,
+        }
+    }
+}
 impl Default for RCSController {
     fn default() -> Self {
         // TODO: Get rid of this and configure using a config struct
@@ -102,25 +123,42 @@ impl Default for AttitudeTorqueRequest {
 
 pub fn update_attitude_controller(
     mut attitude_target_reader: EventReader<AttitudeTarget>,
-    mut torque_request_query: EventWriter<AttitudeTorqueRequest>
+    mut torque_request_query: EventWriter<AttitudeTorqueRequest>,
+    mut attitude_estimate: EventReader<AttitudeEstimatorOutput>,
 )
 {
-    let attitude_target = attitude_target_reader.read().last().unwrap_or(&AttitudeTarget::None);
-    let torque_request = match attitude_target {
-        AttitudeTarget::None => {
-            AttitudeTorqueRequest::default()
-        },
-        AttitudeTarget::Attitude(_q_i2b) => {
-            // Implement quaternion feedback control
-            AttitudeTorqueRequest::default()
-            // todo!("Not implemented yet");
-        }
-        AttitudeTarget::BodyRate(_omega_b) => {
-            // Implement body rate feedback control
-            todo!("Not implemented yet");
-        }
-    };
-    torque_request_query.send(torque_request);
+    if let Some(sensor_data) = attitude_estimate.read().last()
+    {
+        let attitude_target = attitude_target_reader.read().last().unwrap_or(&AttitudeTarget::None);
+        let torque_request = match attitude_target {
+            AttitudeTarget::None => {
+                AttitudeTorqueRequest::default()
+            },
+            AttitudeTarget::Attitude(_q_i2b) => {
+                // Implement quaternion feedback control
+                AttitudeTorqueRequest::default()
+                // todo!("Not implemented yet");
+            }
+            AttitudeTarget::BodyRate(_omega_b) => {
+                // Implement body rate feedback control
+                let omega_b = sensor_data.omega_b;
+
+                // TODO: Get deadband and gain from config
+                const DEADBAND_B: f64 = 1e-4; // rad/s
+                if omega_b.norm() < DEADBAND_B {
+                    AttitudeTorqueRequest::default()
+                }
+                else {
+                    // Compute torque to bring omega_b to zero
+                    const K_P: f64 = 10.0;
+                    AttitudeTorqueRequest{
+                        torque_b: -K_P * omega_b,
+                    }
+                }
+            }
+        };
+        torque_request_query.send(torque_request);
+    }
 }
 
 pub fn update_control_allocator(
@@ -160,16 +198,10 @@ pub fn update_rcs_controller(
     let (rcs_controller, mut output) = query.single_mut();
     if let Some(rcs_controller_input) = rcs_controller_input_reader.read().last()
     {
-        let torque_rcs = rcs_controller.distribution_matrix_inv.clone() * rcs_controller_input.torque_b;
-        // Compute duty cycles and assign them to the output
-        let mut duty_cycles = Vec::new();
-        for (thrust, max_thrust) in torque_rcs.iter().zip(rcs_controller.max_thrusts.iter()) {
-            // Clip duty cycles to [0, 1]
-            let duty_cycle = (thrust.abs() / max_thrust).clamp(0., 1.);
-            duty_cycles.push(duty_cycle);
-        }
-        duty_cycles[0] = 0.01;
-        output.duty_cycles = duty_cycles;
+        let duty_cycles =&rcs_controller.distribution_matrix_inv * rcs_controller_input.torque_b;
+        // Clip duty cycles to [0,1]
+        let duty_cycles = duty_cycles.map(|duty_cycle| duty_cycle.clamp(0.0, 1.0));
+        output.duty_cycles = duty_cycles.as_slice().to_vec();
         rcs_output_writer.send(output.clone());
     }
 }

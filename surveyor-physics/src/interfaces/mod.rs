@@ -9,7 +9,7 @@
 // }
 
 use bevy_ecs::prelude::*;
-use surveyor_gnc::sensors::IMUInput;
+use surveyor_gnc::sensors::{IMUInput, StarTrackerInput};
 use surveyor_gnc::clock::TimeTickEvent;
 use bevy_enum_filter::prelude::*;
 
@@ -52,6 +52,26 @@ pub fn imu_event_generator(
         }
     }
 }
+
+pub (crate) fn star_tracker_event_generator(
+    mut q_st: Query<&mut Subsystem, With<Enum![Subsystem::StarTracker]>>,
+    mut st_input_events: EventWriter<surveyor_gnc::sensors::StarTrackerInput>)
+{
+    // The Enum filter does not work on the very first update
+    if let Some(mut subsystem) = q_st.iter_mut().next()
+    {
+        let st_subsystem = subsystem.as_star_tracker_mut().unwrap();
+        for (idx, sensor) in st_subsystem.star_trackers.iter().enumerate() {
+            let st_data = sensor.get_model_output();
+            let st_input = StarTrackerInput{
+                q_i2cf: st_data.q_i2cf.0,
+                sensor_id: idx,
+            };
+            st_input_events.send(st_input);
+        }
+    }
+}
+
 
 /// Receive actuator events from the GNC system and send them to the simulation
 /// We convert it into a truth-side type before passing it through

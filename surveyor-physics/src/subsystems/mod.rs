@@ -10,12 +10,14 @@ use bevy_enum_filter::prelude::*;
 pub mod propulsion;
 pub mod rcs;
 pub mod imu;
+pub mod star_tracker;
 
 #[derive(Debug, EnumAsInner, Component, EnumFilter)]
 pub enum Subsystem {
     Propulsion(propulsion::SurveyorPropulsion),
     Rcs(rcs::RcsSubsystem),
     Imu(imu::IMUSubsystem),
+    StarTracker(star_tracker::StarTrackerSubsystem),
 }
 
 impl Subsystem {
@@ -29,7 +31,10 @@ impl Subsystem {
             },
             SubsystemConfig::Imu(imu_subsystem_config) => {
                 Subsystem::Imu(imu::IMUSubsystem::from_config(imu_subsystem_config))
-            }
+            },
+            SubsystemConfig::StarTracker(star_tracker_subsystem_config) => {
+                Subsystem::StarTracker(star_tracker::StarTrackerSubsystem::from_config(star_tracker_subsystem_config))
+            },
             // _ => panic!("Invalid subsystem config"),
         }
     }
@@ -46,7 +51,9 @@ impl Subsystem {
             Subsystem::Imu(imu_subsystem) => {
                 imu_subsystem.update_discrete(dt, discrete_state);
             }
-
+            Subsystem::StarTracker(star_tracker_subsystem) => {
+                star_tracker_subsystem.update_discrete(dt, discrete_state);
+            }
         }
     }
     pub fn update_continuous(&mut self, dt: f64) {
@@ -58,6 +65,9 @@ impl Subsystem {
                 rcs_subsystem.update_continuous(dt);
             }
             Subsystem::Imu(_) => {}
+            Subsystem::StarTracker(star_tracker_subsystem) => {
+                star_tracker_subsystem.update_continuous(dt);
+            }
         }
     }
     pub fn update_dynamics(&self, outputs: &mut OrbitalDynamicsInputs) {
@@ -69,6 +79,9 @@ impl Subsystem {
                 rcs_subsystem.update_dynamics(outputs);
             }
             Subsystem::Imu(_) => {}
+            Subsystem::StarTracker(star_tracker_subsystem) => {
+                star_tracker_subsystem.update_dynamics(outputs);
+            }
         }
     }
 }

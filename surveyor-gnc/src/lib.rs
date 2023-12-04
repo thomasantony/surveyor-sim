@@ -25,7 +25,7 @@ use bevy_ecs::prelude::Entity;
 use bevy_ecs::schedule::IntoSystemConfigs;
 
 pub struct SurveyorGNC {
-    pub entities: DashMap<&'static str, Entity>,
+    pub entities: DashMap<String, Entity>,
 }
 
 #[derive(SystemSet, Debug, Hash, PartialEq, Eq, Clone)]
@@ -90,25 +90,114 @@ impl Plugin for SurveyorGNC {
         app.configure_sets(Update, SurveyorGncSystemSet::Guidance.before(SurveyorGncSystemSet::Control));
 
         let traj = app.world.spawn((Name::new("TrajectoryPhase"), TrajectoryPhase::BeforeRetroBurn,)).id();
-        let imu_a = app.world.spawn((Name::new("IMU_A"), sensors::IMU, GeometryConfig::default())).id();
-        let imu_b = app.world.spawn((Name::new("IMU_B"), sensors::IMU, GeometryConfig::default())).id();
+
+        let imu_config_xml = vec![r#"
+            <Imu name="A">
+                <geometry>
+                    <q_cf2b>[1.0, 0.0, 0.0, 0.0]</q_cf2b>
+                    <cf_offset_com_b>[0.0, 0.0, 0.0]</cf_offset_com_b>
+                </geometry>
+            </Imu>
+        "#, r#"
+        <Imu name="B">
+                <geometry>
+                    <q_cf2b>[0.0, 0.0, 0.0, 1.0]</q_cf2b>
+                    <cf_offset_com_b>[0.0, 0.0, 0.0]</cf_offset_com_b>
+                </geometry>
+            </Imu>
+        "#];
+
+        let imu_configs = imu_config_xml.iter().map(|c| ImuConfig::from_str(c).unwrap()).collect::<Vec<_>>();
+        for imu_config in imu_configs {
+            let imu = app.world.spawn((
+                Name::new(imu_config.name.clone()),
+                sensors::IMU,
+                GeometryConfig::from_geometry_params(&imu_config.geometry)
+            )).id();
+            self.entities.insert(imu_config.name.to_string(), imu);
+        }
+
+        // let imu_a = app.world.spawn((Name::new("IMU_A"), sensors::IMU, GeometryConfig::default())).id();
+        // let imu_b = app.world.spawn((Name::new("IMU_B"), sensors::IMU, GeometryConfig::default())).id();
         let star_tracker = app.world.spawn((Name::new("ST_A"), sensors::StarTracker, GeometryConfig::default())).id();
         let guidance = app.world.spawn((Name::new("SurveyorGNCMode"), guidance::GuidanceMode::Idle)).id();
 
-        let _rcs_controller = RCSController::default();
-        // let _control_allocator = control::ControlAllocator::default();
-        // let vernier_controller = control::VernierAttitudeController::default();
+        // todo: fix this to use correct config
+        let rcs_config_xml = vec![r#"
+            <thruster type="RCS" name="roll1">
+                <min_thrust>0.0</min_thrust>
+                <max_thrust>0.25</max_thrust>
+                <geometry>
+                    <!-- thruster pointed in the +X direction -->
+                    <q_cf2b>[0.7071068, 0.0, 0.7071068, 0.0]</q_cf2b>
+                    <cf_offset_com_b>[-0.1, 1.0, -0.5]</cf_offset_com_b>
+                </geometry>
+            </thruster>
+            "#, r#"
+            <thruster type="RCS" name="roll2">
+                <min_thrust>0.0</min_thrust>
+                <max_thrust>0.25</max_thrust>
+                <geometry>
+                    <!-- thruster pointed in the -X direction -->
+                    <q_cf2b>[0.7071068, 0.0, -0.7071068, 0.0]</q_cf2b>
+                    <cf_offset_com_b>[-0.1, 1.0, -0.5]</cf_offset_com_b>
+                </geometry>
+            </thruster>
+            "#, r#"
+            <thruster type="RCS" name="leg2A">
+                <min_thrust>0.0</min_thrust>
+                <max_thrust>0.25</max_thrust>
+                <geometry>
+                    <!-- thruster pointed in the +Z direction -->
+                    <q_cf2b>[1.0, 0.0, 0.0, 0.0]</q_cf2b>
+                    <cf_offset_com_b>[0.8660254037844386, -0.5, -0.6]</cf_offset_com_b>
+                </geometry>
+            </thruster>
+            "#, r#"
+            <thruster type="RCS" name="leg2B">
+                <min_thrust>0.0</min_thrust>
+                <max_thrust>0.25</max_thrust>
+                <geometry>
+                    <!-- thruster pointed in the -Z direction -->
+                    <q_cf2b>[0.0, 1.0, 0.0, 0.0]</q_cf2b>
+                    <cf_offset_com_b>[0.8660254037844386, -0.5, -0.4]</cf_offset_com_b>
+                </geometry>
+            </thruster>
+            "#, r#"
+            <thruster type="RCS" name="leg3A">
+                <min_thrust>0.0</min_thrust>
+                <max_thrust>0.25</max_thrust>
+                <geometry>
+                    <!-- thruster pointed in the +Z direction -->
+                    <q_cf2b>[1.0, 0.0, 0.0, 0.0]</q_cf2b>
+                    <cf_offset_com_b>[-0.8660254037844386, -0.5, -0.6]</cf_offset_com_b>
+                </geometry>
+            </thruster>
+            "#, r#"
+            <thruster type="RCS" name="leg3B">
+                <min_thrust>0.0</min_thrust>
+                <max_thrust>0.25</max_thrust>
+                <geometry>
+                    <!-- thruster pointed in the -Z direction -->
+                    <q_cf2b>[0.0, 1.0, 0.0, 0.0]</q_cf2b>
+                    <cf_offset_com_b>[-0.8660254037844386, -0.5, -0.4]</cf_offset_com_b>
+                </geometry>
+            </thruster>
+            "#,
+        ];
+        use hard_xml::XmlRead;
+        let rcs_config = rcs_config_xml.iter().map(|c| ThrusterConfig::from_str(c).unwrap()).collect::<Vec<_>>();
+        let rcs_controller = RCSController::new(&rcs_config);
 
         let control_allocator = app.world.spawn((Name::new("ControlAllocator"), control::ControlAllocator::default())).id();
-        let rcs_controller = app.world.spawn((Name::new("RCSController"), control::RCSController::default(), control::RCSControllerOutput::default())).id();
+        let rcs_controller = app.world.spawn((Name::new("RCSController"), rcs_controller, control::RCSControllerOutput::default())).id();
 
-        self.entities.insert("TrajectoryPhase", traj);
-        self.entities.insert("IMU_A", imu_a);
-        self.entities.insert("IMU_B", imu_b);
-        self.entities.insert("ST_A", star_tracker);
-        self.entities.insert("Guidance", guidance);
-        self.entities.insert("ControlAllocator", control_allocator);
-        self.entities.insert("RCSController", rcs_controller);
+        self.entities.insert("TrajectoryPhase".to_string(), traj);
+
+        self.entities.insert("ST_A".to_string(), star_tracker);
+        self.entities.insert("Guidance".to_string(), guidance);
+        self.entities.insert("ControlAllocator".to_string(), control_allocator);
+        self.entities.insert("RCSController".to_string(), rcs_controller);
     }
 }
 
@@ -120,6 +209,7 @@ impl SurveyorGNC {
         }
     }
 }
+use surveyor_types::config::*;
 pub use surveyor_types::config::GeometryConfig;
 
 #[derive(Event)]
