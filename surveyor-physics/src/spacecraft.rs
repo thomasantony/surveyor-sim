@@ -327,7 +327,7 @@ fn dydt(_t: f64, state: &[f64], universe: &Universe, subsystems: &[&Subsystem], 
 use crate::SimulationTime;
 use crate::simulation::{SimulationParams, SimulationResults, SimClock};
 // System that steps the spacecraft model over one timestep and updates orbital dynamics component
-pub fn step_spacecraft_model(
+pub (crate) fn step_spacecraft_model(
     mut q_universe: Query<&mut Universe>,
     mut q_spacecrafts: Query<(&mut SpacecraftModel, &SimulationTime, &SpacecraftProperties, &mut OrbitalDynamics, &mut SimulationResults, &Children)>,
     q_subsystems: Query<&mut Subsystem>,
@@ -377,7 +377,7 @@ pub fn step_spacecraft_model(
 
 // System that updates the discrete state of all subsystems
 // Will be called only when a discrete update event is received (which is every num_steps_per_gnc_update)
-pub fn do_discrete_update_from_event(mut discrete_update_event: EventReader<DiscreteUpdateEvent>,
+pub (crate) fn do_discrete_update_from_event(mut discrete_update_event: EventReader<DiscreteUpdateEvent>,
     mut q_subsystems: Query<&mut Subsystem>)
 {
     for discrete_update in discrete_update_event.read() {

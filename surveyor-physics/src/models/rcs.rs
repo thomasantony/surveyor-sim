@@ -2,7 +2,7 @@ use crate::spacecraft::OrbitalDynamicsInputs;
 use surveyor_types::config::ThrusterConfig;
 
 #[derive(Debug)]
-pub struct RcsThruster {
+pub (crate) struct RcsThruster {
     pub config: ThrusterConfig,
     pub thrust: f64,
 }

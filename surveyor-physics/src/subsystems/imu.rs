@@ -7,7 +7,7 @@ use crate::spacecraft::SpacecraftDiscreteState;
 use surveyor_types::config::{ImuSubsystemConfig, ImuConfig};
 
 #[derive(Debug, Default)]
-pub struct IMUSensor{
+pub (crate) struct IMUSensor{
     q_cf2b: nalgebra::UnitQuaternion<f64>,
     pub omega_cf: Vector3<f64>,
     pub accel_cf: Vector3<f64>,
@@ -30,13 +30,13 @@ impl IMUSensor {
 }
 
 #[derive(Debug, Clone)]
-pub struct IMUSensorOutput {
+pub (crate) struct IMUSensorOutput {
     pub omega_cf: Vector3<f64>,
     pub accel_cf: Vector3<f64>,
 }
 
 #[derive(Debug)]
-pub struct IMUSubsystem {
+pub (crate) struct IMUSubsystem {
     pub imus: Vec<IMUSensor>,
 }
 

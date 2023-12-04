@@ -13,7 +13,7 @@ pub mod imu;
 pub mod star_tracker;
 
 #[derive(Debug, EnumAsInner, Component, EnumFilter)]
-pub enum Subsystem {
+pub (crate) enum Subsystem {
     Propulsion(propulsion::SurveyorPropulsion),
     Rcs(rcs::RcsSubsystem),
     Imu(imu::IMUSubsystem),

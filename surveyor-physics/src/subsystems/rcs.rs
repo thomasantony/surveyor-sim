@@ -2,7 +2,7 @@ use surveyor_types::config::RcsSubsystemConfig;
 use crate::{models::rcs::RcsThruster, spacecraft::SpacecraftDiscreteState};
 
 #[derive(Debug)]
-pub struct RcsSubsystem {
+pub (crate) struct RcsSubsystem {
     pub thrusters: Vec<RcsThruster>,
 }
 impl RcsSubsystem {
@@ -16,7 +16,7 @@ impl RcsSubsystem {
 }
 
 #[derive(Debug, Clone)]
-pub struct RcsCommands {
+pub (crate) struct RcsCommands {
     pub duty_cycles: Vec<f64>,
 }
 impl RcsSubsystem {

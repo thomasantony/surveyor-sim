@@ -37,7 +37,7 @@ pub enum SensorEvent {
 }
 
 /// Conversion from truth-side data to GNC-side events
-pub fn imu_event_generator(
+pub (crate) fn imu_event_generator(
     mut q_imu: Query<&mut Subsystem, With<Enum![Subsystem::Imu]>>,
     mut imu_input_events: EventWriter<surveyor_gnc::sensors::IMUInput>)
 {
@@ -76,7 +76,7 @@ pub (crate) fn star_tracker_event_generator(
 /// Receive actuator events from the GNC system and send them to the simulation
 /// We convert it into a truth-side type before passing it through
 #[derive(Debug, Clone, Event)]
-pub enum ActuatorEvent {
+pub (crate) enum ActuatorEvent {
     RCS(RcsCommands),
     // TVC(surveyor_gnc::control::TVCControllerOutput),
 }
@@ -89,7 +89,7 @@ impl From<&surveyor_gnc::control::RCSControllerOutput> for RcsCommands {
     }
 }
 
-pub fn rcs_event_receiver(
+pub (crate) fn rcs_event_receiver(
     mut rcs_commands: EventReader<surveyor_gnc::control::RCSControllerOutput>,
     mut q_rcs: Query<&mut Subsystem, With<Enum!(Subsystem::Rcs)>>,
 
