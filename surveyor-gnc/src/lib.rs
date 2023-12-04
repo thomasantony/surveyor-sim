@@ -117,9 +117,23 @@ impl Plugin for SurveyorGNC {
             self.entities.insert(imu_config.name.to_string(), imu);
         }
 
+        let st_config_xml = r#"<StarTracker name="A">
+                <geometry>
+                    <!-- Points boresight along -Y (body frame) -->
+                    <q_cf2b>[0.7071068, 0.0, 0.7071068, 0.0]</q_cf2b>
+                    <!-- Random -->
+                    <cf_offset_com_b>[0.0, 0.0, 0.0]</cf_offset_com_b>
+                </geometry>
+            </StarTracker>"#;
+        let st_config = StarTrackerConfig::from_str(st_config_xml).unwrap();
+        let star_tracker = app.world.spawn((
+            Name::new(st_config.name.clone()),
+            sensors::StarTracker,
+            GeometryConfig::from_geometry_params(&st_config.geometry)
+        )).id();
+
         // let imu_a = app.world.spawn((Name::new("IMU_A"), sensors::IMU, GeometryConfig::default())).id();
         // let imu_b = app.world.spawn((Name::new("IMU_B"), sensors::IMU, GeometryConfig::default())).id();
-        let star_tracker = app.world.spawn((Name::new("ST_A"), sensors::StarTracker, GeometryConfig::default())).id();
         let guidance = app.world.spawn((Name::new("SurveyorGNCMode"), guidance::GuidanceMode::Idle)).id();
 
         // todo: fix this to use correct config

@@ -1,6 +1,6 @@
 use surveyor_graphics::SurveyorGraphicsPlugin;
 use bevy::prelude::*;
-use surveyor_physics::SimulationState;
+use surveyor_physics::{SimulationState, math::Vector3};
 use bevy_debug_text_overlay::{screen_print, OverlayPlugin};
 
 fn show_sim_time(phy_query: Query<& surveyor_physics::SimulationTime>) {
@@ -13,7 +13,20 @@ fn start_sim(mut set_sim_state: ResMut<NextState<SimulationState>>,
 {
     set_sim_state.set(SimulationState::Running);
     // command_writer.send(surveyor_gnc::GncCommand::SetGuidanceMode(surveyor_gnc::guidance::GuidanceMode::Manual));
-    command_writer.send(surveyor_gnc::GncCommand::SetGuidanceMode(surveyor_gnc::guidance::GuidanceMode::Detumble));
+    // command_writer.send(surveyor_gnc::GncCommand::SetGuidanceMode(surveyor_gnc::guidance::GuidanceMode::Pointing(
+    //     surveyor_gnc::guidance::AttitudeTarget::Attitude(
+    //         nalgebra::UnitQuaternion::from_euler_angles(0.0, 0.0, 0.0)
+    //     ))
+    // ));
+    command_writer.send(surveyor_gnc::GncCommand::SetGuidanceMode(surveyor_gnc::guidance::GuidanceMode::Pointing(
+        surveyor_gnc::guidance::AttitudeTarget::Align{
+            align_with_b: Vector3::new(nalgebra::Vector3::new(1.0, 0.0, 0.0)),
+            align_to_i: Vector3::new(nalgebra::Vector3::new(0.0, 0.0, 1.0)),
+        })
+    ));
+    // command_writer.send(surveyor_gnc::GncCommand::SetGuidanceMode(surveyor_gnc::guidance::GuidanceMode::Pointing(
+    //     surveyor_gnc::guidance::AttitudeTarget::BodyRate(nalgebra::Vector3::new(0.1, 0.0, 0.0))
+    // )));
 }
 
 

@@ -135,6 +135,42 @@ pub fn update_attitude_controller(
             AttitudeTarget::None => {
                 AttitudeTorqueRequest::default()
             },
+            AttitudeTarget::Align{ align_with_b, align_to_i } => {
+                // Implement alignment control
+
+                let target_vec_b = sensor_data.q_i2b.transform_vector(&align_to_i);
+                let axis = align_with_b.cross(&target_vec_b);
+                let angle = align_with_b.angle(&target_vec_b);
+
+                if angle.abs() < 1e-4
+                {
+                    AttitudeTorqueRequest::default()
+                }else {
+                    const K_P: f64 = 5.0;
+
+                    const MAX_OMEGA_B_PER_AXIS: f64 = 0.2; // rad/s
+                    let target_omega_b = - axis * angle * K_P;
+                    let target_omega_b = target_omega_b.map(|omega| omega.clamp(-MAX_OMEGA_B_PER_AXIS, MAX_OMEGA_B_PER_AXIS));
+
+                    screen_print!("Target omega_b: {:.2?}", target_omega_b);
+                    screen_print!("Angle: {} deg", angle.to_degrees());
+                    let omega_b = sensor_data.omega_b;
+                    let omega_error_b = target_omega_b - omega_b;
+                    const DEADBAND_B: f64 = 1e-4; // rad/s
+
+                    if omega_error_b.norm() < DEADBAND_B {
+                        AttitudeTorqueRequest::default()
+                    }else{
+                        const K_D: f64 = 10.0;
+                        let torque_b = K_D * omega_error_b;
+
+                        AttitudeTorqueRequest{
+                            torque_b,
+                        }
+                    }
+
+                }
+            },
             AttitudeTarget::Attitude(target_q_i2b) => {
                 // Implement quaternion feedback control
 
@@ -145,35 +181,47 @@ pub fn update_attitude_controller(
                 {
                     let axis = axis.into_inner();
                     let angle = q_err.angle();
-                    const K_P: f64 = 10.0;
-                    let torque_b = - axis * angle * K_P;
 
-                    let target_omega_b = na::Vector3::zeros();
+                    const K_P: f64 = 1.0;
+                    const MAX_OMEGA_B_PER_AXIS: f64 = 0.1; // rad/s
+                    let target_omega_b = - axis * angle * K_P;
+                    let target_omega_b = target_omega_b.map(|omega| omega.clamp(-MAX_OMEGA_B_PER_AXIS, MAX_OMEGA_B_PER_AXIS));
+
+                    screen_print!("Target omega_b: {:.2?}", target_omega_b);
+                    screen_print!("Angle: {} deg", angle.to_degrees());
                     let omega_b = sensor_data.omega_b;
-                    const K_D: f64 = 1.0;
-                    let torque_b = torque_b - K_D * (omega_b - target_omega_b);
+                    let omega_error_b = target_omega_b - omega_b;
+                    const DEADBAND_B: f64 = 1e-4; // rad/s
 
-                    AttitudeTorqueRequest{
-                        torque_b,
+                    if omega_error_b.norm() < DEADBAND_B {
+                        AttitudeTorqueRequest::default()
+                    }else{
+                        const K_D: f64 = 10.0;
+                        let torque_b = K_D * omega_error_b;
+
+                        AttitudeTorqueRequest{
+                            torque_b,
+                        }
                     }
                 }else{
                     AttitudeTorqueRequest::default()
                 }
             }
-            AttitudeTarget::BodyRate(_omega_b) => {
+            AttitudeTarget::BodyRate(target_omega_b) => {
                 // Implement body rate feedback control
                 let omega_b = sensor_data.omega_b;
 
+                let error = target_omega_b - omega_b;
                 // TODO: Get deadband and gain from config
                 const DEADBAND_B: f64 = 1e-4; // rad/s
-                if omega_b.norm() < DEADBAND_B {
+                if error.norm() < DEADBAND_B {
                     AttitudeTorqueRequest::default()
                 }
                 else {
                     // Compute torque to bring omega_b to zero
                     const K_P: f64 = 10.0;
                     AttitudeTorqueRequest{
-                        torque_b: -K_P * omega_b,
+                        torque_b: K_P * error,
                     }
                 }
             }

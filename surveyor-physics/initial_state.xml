@@ -12,7 +12,7 @@
     <q_i2b>1.0,0.0,0.0,0.0</q_i2b>
 
     <!-- Tumbling on all three axes -->
-    <omega_b>0.1,0.2,0.3</omega_b>
+    <!-- <omega_b>0.1,0.2,0.3</omega_b> -->
     <!-- No tumble -->
-    <!-- <omega_b>0.0,0.0,0.0</omega_b> -->
+    <omega_b>0.0,0.0,0.0</omega_b>
 </InitialState>

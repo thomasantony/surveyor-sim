@@ -3958,6 +3958,7 @@ dependencies = [
  "bevy_panorbit_camera",
  "bevy_screen_diagnostics",
  "big_space",
+ "na",
  "surveyor-gnc",
  "surveyor-physics",
 ]

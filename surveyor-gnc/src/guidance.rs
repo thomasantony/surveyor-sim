@@ -1,4 +1,5 @@
 use bevy_ecs::prelude::*;
+use surveyor_types::math::Vector3;
 
 // pub struct AttitudeControllerOutput {
 //     pub torque_b: Option<na::Vector3<f64>>,
@@ -17,6 +18,11 @@ pub enum GuidanceMode {
 #[derive(Debug, Clone, Component, Event, PartialEq)]
 pub enum AttitudeTarget {
     None,
+    // Aligns a vector in the body frame with a vector in the inertial frame
+    Align{
+        align_with_b: Vector3,
+        align_to_i: Vector3,
+    },
     Attitude(nalgebra::UnitQuaternion<f64>),
     BodyRate(nalgebra::Vector3<f64>),
 }
