@@ -1,3 +1,4 @@
+use bevy_debug_text_overlay::screen_print;
 use bevy_ecs::prelude::*;
 use nalgebra as na;
 use surveyor_types::config::ThrusterConfig;
@@ -134,10 +135,30 @@ pub fn update_attitude_controller(
             AttitudeTarget::None => {
                 AttitudeTorqueRequest::default()
             },
-            AttitudeTarget::Attitude(_q_i2b) => {
+            AttitudeTarget::Attitude(target_q_i2b) => {
                 // Implement quaternion feedback control
-                AttitudeTorqueRequest::default()
-                // todo!("Not implemented yet");
+
+                let q_i2b = sensor_data.q_i2b;
+                let q_err = q_i2b.inverse() * target_q_i2b;
+
+                if let Some(axis) = q_err.axis()
+                {
+                    let axis = axis.into_inner();
+                    let angle = q_err.angle();
+                    const K_P: f64 = 10.0;
+                    let torque_b = - axis * angle * K_P;
+
+                    let target_omega_b = na::Vector3::zeros();
+                    let omega_b = sensor_data.omega_b;
+                    const K_D: f64 = 1.0;
+                    let torque_b = torque_b - K_D * (omega_b - target_omega_b);
+
+                    AttitudeTorqueRequest{
+                        torque_b,
+                    }
+                }else{
+                    AttitudeTorqueRequest::default()
+                }
             }
             AttitudeTarget::BodyRate(_omega_b) => {
                 // Implement body rate feedback control
