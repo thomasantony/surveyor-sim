@@ -1,6 +1,9 @@
+use std::fmt::Debug;
 use std::{collections::HashMap, str::FromStr};
 use anise::almanac::Almanac;
+use anise::astro::Aberration;
 use bevy::asset::{AssetLoader, AsyncReadExt};
+use bevy_derive::{Deref, DerefMut};
 use bevy::utils::BoxedFuture;
 use surveyor_types::CelestialBodyType;
 use surveyor_types::config::UniverseConfig;
@@ -51,6 +54,7 @@ pub struct CelestialBodyModel {
 #[derive(Debug, Component)]
 pub struct Universe {
     pub celestial_bodies: HashMap<CelestialBodyType, CelestialBodyModel>,
+    pub ephem: Handle<Ephemerides>,
 }
 
 impl Default for Universe {
@@ -71,9 +75,13 @@ impl Universe {
             celestial_bodies: vec![(CelestialBodyType::Earth, earth)]
                 .into_iter()
                 .collect(),
+            ephem: Default::default(),
         }
     }
-    pub fn from_config(config: UniverseConfig) -> Self {
+    pub fn from_config(config: UniverseConfig, server: &Res<AssetServer>, eph_loader: &Res<Assets<Ephemerides>>) -> Self {
+        let ephemerides_path = config.ephemerides_path;
+        let ephemerides_handle = server.load::<Ephemerides>(ephemerides_path);
+
         let celestial_bodies = config
             .celestial_bodies
             .into_iter()
@@ -91,8 +99,9 @@ impl Universe {
                 )
             })
             .collect();
-        Self { celestial_bodies }
+        Self { celestial_bodies, ephem: ephemerides_handle }
     }
+
     pub fn compute_force(
         &self,
         x: &SVectorView<f64, 3>,
@@ -134,8 +143,15 @@ impl<'a> Observation<'a>{
 }
 
 
-#[derive(Asset, TypePath)]
+#[derive(Asset, TypePath, Default, Deref, DerefMut)]
+#[deref(forward)]
 pub struct Ephemerides(pub Almanac);
+
+impl Debug for Ephemerides {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Ephemerides")
+    }
+}
 
 
 #[derive(Default)]
@@ -173,6 +189,21 @@ impl AssetLoader for AlmanacLoader {
     }
 
     fn extensions(&self) -> &[&str] {
-        &["almanac"]
+        &["bsp"]
+    }
+}
+
+pub fn update_universe(
+    mut universe: ResMut<Universe>,
+    mut ephemerides: ResMut<Assets<Ephemerides>>,
+    ephemerides_handle: Res<Handle<Ephemerides>>,
+) {
+    if let Some(ephemerides) = ephemerides.get_mut(&ephemerides_handle) {
+        universe.ephem = ephemerides_handle.clone();
+        universe.celestial_bodies.iter_mut().for_each(|(_body_type, body_model)| {
+            let body_name = _body_type.to_string();
+            let body = ephemerides.0.body(&body_name).unwrap();
+            body_model.position = SVector::<f64, 3>::from_column_slice(&body.position);
+        });
     }
 }

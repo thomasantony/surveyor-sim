@@ -18,13 +18,15 @@ pub mod interfaces;
 use bevy_app::prelude::*;
 use bevy_ecs::prelude::*;
 use bevy_enum_filter::prelude::AddEnumFilter;
+use bevy::{prelude::AssetApp, asset::Assets};
 
 use simulation::*;
 use spacecraft::{InitialState, build_spacecraft_entity, do_discrete_update_from_event, DiscreteUpdateEvent};
 use hard_xml::XmlRead;
 use subsystems::Subsystem;
-use universe::Universe;
+use universe::{Universe, Ephemerides};
 use bevy_ecs::schedule::IntoSystemConfigs;
+use bevy::asset::AssetServer;
 
 // Hardocde the timestep for now
 pub const DT: f64 = 0.1; // s
@@ -71,7 +73,7 @@ impl SimulationTime {
 }
 
 
-pub fn build_sim_ecs(mut commands: Commands)
+pub fn build_sim_ecs(mut commands: Commands, server: Res<AssetServer>, eph_loader: Res<Assets<Ephemerides>>)
 {
     // Orbit with: a = 500 km, 0 degree inclination, 0 degree RAAN, 0 degree argument of perigee, 0 degree true anomaly
     let initial_state: InitialState = InitialState::from_str(include_str!("../initial_state.xml")).unwrap();
@@ -82,7 +84,7 @@ pub fn build_sim_ecs(mut commands: Commands)
 
     // Create new bevy ECS entity for spacecraft
     build_spacecraft_entity(&mut commands, &config, &initial_state);
-    commands.spawn(Universe::from_config(config.universe));
+    commands.spawn(Universe::from_config(config.universe, &server, &eph_loader));
 
     let sim_params = SimulationParams::new(config.simulation, config.gnc.update_rate_hz);
     commands.spawn(SimClock::new((sim_params.get_update_period_secs()) as f32));
@@ -98,6 +100,8 @@ impl Plugin for SurveyorPhysicsPlugin {
         // Split this up into two systems - one that actually builds the ECS and one that
         // initializes the simulation. The latter can be run anytime we trigger a new simulation
         app.add_systems(Startup, build_sim_ecs)
+            .init_asset::<crate::universe::Ephemerides>()
+            .init_asset_loader::<crate::universe::AlmanacLoader>()
             .add_enum_filter::<Subsystem>()
             .add_event::<DiscreteUpdateEvent>()
             .add_state::<SimulationState>()

@@ -16,6 +16,7 @@
         <TimeAccel>1.0</TimeAccel>
     </SimulationConfig>
     <UniverseConfig>
+        <Ephemerides>kernels/de440s.bsp</Ephemerides>
         <!-- <CelestialBody name="Earth">
             <gravity>
                 <mu>3.986004418e14</mu>

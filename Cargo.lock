@@ -2558,7 +2558,7 @@ checksum = "dfa686283ad6dd069f105e5ab091b04c62850d3e4cf5d67debad1933f55023df"
 [[package]]
 name = "hifitime"
 version = "3.8.6"
-source = "git+https://github.com/nyx-space/hifitime.git?branch=master#bd5f7eb9f5885c5250b131a4060352b230c190c7"
+source = "git+https://github.com/nyx-space/hifitime?branch=master#bd5f7eb9f5885c5250b131a4060352b230c190c7"
 dependencies = [
  "js-sys",
  "lexical-core",
