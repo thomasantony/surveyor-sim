@@ -1,0 +1,2 @@
+surveyor-graphics/assets/kernels/ filter=lfs diff=lfs merge=lfs -text
+surveyor-graphics/assets/ filter=lfs diff=lfs merge=lfs -text
