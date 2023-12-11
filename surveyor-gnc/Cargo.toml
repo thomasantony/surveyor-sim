@@ -17,4 +17,4 @@ log = "0.4.19"
 
 bevy-debug-text-overlay = "7.0.0"
 hard-xml = "1.27.0"
-hifitime = "3.8.5"
+hifitime = {version = "3.8.6", git="https://github.com/nyx-space/hifitime.git", branch="master"}

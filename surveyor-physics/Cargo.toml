@@ -15,16 +15,17 @@ bevy_ecs = {workspace = true}
 hard-xml = "1.25.0"
 rvstruct = "0.3.2"
 log = "0.4.19"
-hifitime = "3.8.2"
+hifitime = {version = "3.8.6", git="https://github.com/nyx-space/hifitime", branch="master"}
 
 enum-as-inner = "0.6.0"
-wasm-bindgen-futures = "0.4.37"
-plotly = { version = "0.8.3", features = ["wasm"] }
 console_error_panic_hook = "0.1.7"
 console_log = { version = "1.0.0", features = ["wasm-bindgen"] }
 web-sys = { version = "0.3.64", features = ["Window", "Document", "HtmlElement"] }
 bevy_enum_filter = "0.3.0"
 bevy-debug-text-overlay = "7.0.0"
+anise = { version = "*", git = "https://github.com/thomasantony/anise", branch="web-support" }
+thiserror = "1.0.50"
+bytes = "=1.5.0"
 
 [dev-dependencies]
 approx = "0.5.1"
