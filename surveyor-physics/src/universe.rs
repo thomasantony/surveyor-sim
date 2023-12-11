@@ -1,9 +1,13 @@
 use std::{collections::HashMap, str::FromStr};
+use anise::almanac::Almanac;
+use bevy::asset::{AssetLoader, AsyncReadExt};
+use bevy::utils::BoxedFuture;
 use surveyor_types::CelestialBodyType;
 use surveyor_types::config::UniverseConfig;
 
 use nalgebra::{SVector, SVectorView};
-use bevy_ecs::prelude::*;
+use bevy::prelude::*;
+use bevy::{asset::{AssetServer, io::Reader, LoadContext}, utils::thiserror::Error};
 
 use crate::spacecraft::SpacecraftProperties;
 
@@ -126,5 +130,49 @@ impl<'a> Observation<'a>{
 
     pub fn get_body_by_name(&self, name: &str) -> Option<&CelestialBodyModel> {
         CelestialBodyType::from_str(name).ok().and_then(|body_type| self.get_body(body_type))
+    }
+}
+
+
+#[derive(Asset, TypePath)]
+pub struct Ephemerides(pub Almanac);
+
+
+#[derive(Default)]
+pub struct AlmanacLoader;
+
+
+#[non_exhaustive]
+#[derive(Debug, Error)]
+pub enum AlmanacLoaderError {
+    /// An [IO](std::io) Error
+    #[error("Could not load asset: {0}")]
+    Io(#[from] std::io::Error),
+
+    #[error("Could not load almanac: {0}")]
+    Anise(#[from] anise::errors::AlmanacError),
+}
+
+impl AssetLoader for AlmanacLoader {
+    type Asset = Ephemerides;
+    type Settings = ();
+    type Error = AlmanacLoaderError;
+    fn load<'a>(
+        &'a self,
+        reader: &'a mut Reader,
+        _settings: &'a (),
+        _load_context: &'a mut LoadContext,
+    ) -> BoxedFuture<'a, Result<Self::Asset, Self::Error>> {
+        Box::pin(async move {
+            let mut data = Vec::new();
+            reader.read_to_end(&mut data).await?;
+            let almanac = Almanac::default();
+            let almanac = almanac.load_from_bytes(bytes::Bytes::from(data))?;
+            Ok(Ephemerides(almanac))
+        })
+    }
+
+    fn extensions(&self) -> &[&str] {
+        &["almanac"]
     }
 }

@@ -31,6 +31,8 @@ pub struct GncConfig {
 #[derive(Debug, XmlRead, PartialEq)]
 #[xml(tag = "UniverseConfig")]
 pub struct UniverseConfig {
+    #[xml(flatten_text = "Ephemerides")]
+    pub ephemerides_path: String,
     #[xml(child = "CelestialBodies", child = "CelestialBody")]
     pub celestial_bodies: Vec<CelestialBodyConfig>,
 }
