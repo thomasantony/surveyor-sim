@@ -10,3 +10,4 @@ hard-xml = "1.27.0"
 rvstruct = "0.3.2"
 nalgebra = { workspace = true }
 bevy_ecs = { workspace = true }
+bevy_derive = { workspace = true }

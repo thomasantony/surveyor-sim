@@ -1,12 +1,12 @@
 use rvstruct::ValueStruct;
 use std::{
     num::ParseFloatError,
-    ops::{Deref, DerefMut},
     str::FromStr,
 };
+use bevy_derive::{Deref, DerefMut};
 
 // Wrapper type to allow parsing of quaternion from string
-#[derive(ValueStruct, Debug, Clone, PartialEq)]
+#[derive(ValueStruct, Debug, Clone, PartialEq, Deref, DerefMut)]
 pub struct UnitQuaternion(pub nalgebra::UnitQuaternion<f64>);
 impl UnitQuaternion {
     pub fn from_quaternion(q: nalgebra::Quaternion<f64>) -> Self {
@@ -16,17 +16,6 @@ impl UnitQuaternion {
         UnitQuaternion(nalgebra::UnitQuaternion::from_quaternion(
             nalgebra::Quaternion::new(x, y, z, w),
         ))
-    }
-}
-impl Deref for UnitQuaternion {
-    type Target = nalgebra::UnitQuaternion<f64>;
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-impl DerefMut for UnitQuaternion {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.0
     }
 }
 
@@ -49,22 +38,11 @@ impl FromStr for UnitQuaternion {
     }
 }
 
-#[derive(ValueStruct, Debug, Clone, PartialEq)]
+#[derive(ValueStruct, Debug, Clone, PartialEq, Deref, DerefMut)]
 pub struct Vector3(pub nalgebra::Vector3<f64>);
 impl Vector3 {
     pub fn from_column_slice(slice: &[f64]) -> Self {
         Vector3(nalgebra::Vector3::from_column_slice(slice))
-    }
-}
-impl Deref for Vector3 {
-    type Target = nalgebra::Vector3<f64>;
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-impl DerefMut for Vector3 {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.0
     }
 }
 impl FromStr for Vector3 {
@@ -80,19 +58,8 @@ impl FromStr for Vector3 {
     }
 }
 
-#[derive(ValueStruct, Debug, Clone, PartialEq)]
+#[derive(ValueStruct, Debug, Clone, PartialEq, Deref, DerefMut)]
 pub struct UnitVector3(pub nalgebra::UnitVector3<f64>);
-impl Deref for UnitVector3 {
-    type Target = nalgebra::UnitVector3<f64>;
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-impl DerefMut for UnitVector3 {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.0
-    }
-}
 impl FromStr for UnitVector3 {
     type Err = ParseFloatError;
     // Parse string of format [x,y,z]

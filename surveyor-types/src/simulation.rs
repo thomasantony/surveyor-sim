@@ -1,4 +1,5 @@
-use std::{ops::{Deref, DerefMut}, fmt::Formatter};
+use std::fmt::Formatter;
+use bevy_derive::{Deref, DerefMut};
 use bevy_ecs::prelude::*;
 use hard_xml::XmlRead;
 
@@ -13,24 +14,13 @@ pub enum SimStoppingCondition {
     // Custom(Box<dyn Fn(&OrbitalDynamics, &Universe) -> bool + Sync + Send + 'static>),
 }
 
-#[derive(Debug, Resource, Clone, PartialEq)]
+#[derive(Debug, Resource, Clone, PartialEq, Deref, DerefMut)]
 #[derive(XmlRead)]
 #[xml(tag="StoppingConditions")]
 pub struct StoppingConditionVec(
     #[xml(child="MaxDuration", child="CollisionWith")] pub Vec<SimStoppingCondition>
 );
-impl Deref for StoppingConditionVec {
-    type Target = Vec<SimStoppingCondition>;
 
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-impl DerefMut for StoppingConditionVec {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.0
-    }
-}
 
 impl std::fmt::Debug for SimStoppingCondition {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {

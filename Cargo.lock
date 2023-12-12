@@ -3927,6 +3927,7 @@ dependencies = [
  "bevy",
  "bevy-debug-text-overlay",
  "bevy_app",
+ "bevy_derive",
  "bevy_ecs",
  "bevy_enum_filter",
  "bytes",
@@ -3949,6 +3950,7 @@ dependencies = [
 name = "surveyor-types"
 version = "0.1.0"
 dependencies = [
+ "bevy_derive",
  "bevy_ecs",
  "hard-xml",
  "na",

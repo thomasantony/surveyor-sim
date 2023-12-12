@@ -11,6 +11,7 @@ nalgebra = {workspace = true}
 bevy     = {workspace = true}
 bevy_app = {workspace = true}
 bevy_ecs = {workspace = true}
+bevy_derive = {workspace = true}
 
 hard-xml = "1.25.0"
 rvstruct = "0.3.2"
