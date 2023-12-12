@@ -178,7 +178,7 @@ dependencies = [
 [[package]]
 name = "anise"
 version = "0.1.0"
-source = "git+https://github.com/thomasantony/anise?branch=web-support#0d27b2a09b2bd4c44da7e5f183b38aebc876f5d5"
+source = "git+https://github.com/thomasantony/anise#7acdf5c8d88970a61bc27f15265907425eedb2b9"
 dependencies = [
  "approx",
  "bytes",
@@ -187,7 +187,7 @@ dependencies = [
  "crc32fast",
  "der",
  "heapless",
- "hifitime 3.8.6 (git+https://github.com/nyx-space/hifitime.git?branch=master)",
+ "hifitime",
  "lexical-core",
  "log",
  "memmap2",
@@ -2416,20 +2416,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "hifitime"
-version = "3.8.6"
-source = "git+https://github.com/nyx-space/hifitime.git?branch=master#bd5f7eb9f5885c5250b131a4060352b230c190c7"
-dependencies = [
- "js-sys",
- "lexical-core",
- "num-traits",
- "serde",
- "serde_derive",
- "wasm-bindgen",
- "web-sys",
-]
-
-[[package]]
 name = "humantime"
 version = "2.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3898,7 +3884,7 @@ dependencies = [
  "bevy_ecs",
  "dashmap",
  "hard-xml",
- "hifitime 3.8.6 (registry+https://github.com/rust-lang/crates.io-index)",
+ "hifitime",
  "log",
  "na",
  "surveyor-types",
@@ -3935,7 +3921,7 @@ dependencies = [
  "console_log",
  "enum-as-inner",
  "hard-xml",
- "hifitime 3.8.6 (registry+https://github.com/rust-lang/crates.io-index)",
+ "hifitime",
  "log",
  "na",
  "rvstruct",
@@ -3950,6 +3936,7 @@ dependencies = [
 name = "surveyor-types"
 version = "0.1.0"
 dependencies = [
+ "anise",
  "bevy_derive",
  "bevy_ecs",
  "hard-xml",

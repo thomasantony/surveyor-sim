@@ -20,3 +20,4 @@ bevy = {version = "0.12.1"}
 bevy_app = "0.12"
 bevy_ecs = "0.12"
 bevy_derive = "0.12"
+anise = { version = "0.1.0", git = "https://github.com/thomasantony/anise"}
