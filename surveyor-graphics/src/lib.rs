@@ -3,7 +3,7 @@ mod camera;
 mod lander;
 mod input;
 
-use bevy::{prelude::*};
+use bevy::prelude::*;
 use bevy_panorbit_camera::PanOrbitCameraPlugin;
 use big_space::FloatingOriginPlugin;
 use camera::*;

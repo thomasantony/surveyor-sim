@@ -6,7 +6,7 @@ edition = "2021"
 [dependencies]
 surveyor-gnc = { path = "../surveyor-gnc" }
 surveyor-types = { path = "../surveyor-types" }
-
+wasm-bindgen-futures = "0.4.39"
 nalgebra = {workspace = true}
 bevy     = {workspace = true}
 bevy_app = {workspace = true}
@@ -15,7 +15,7 @@ bevy_ecs = {workspace = true}
 hard-xml = "1.25.0"
 rvstruct = "0.3.2"
 log = "0.4.19"
-hifitime = {version = "3.8.6", git="https://github.com/nyx-space/hifitime", branch="master"}
+hifitime = "3.8.6"
 
 enum-as-inner = "0.6.0"
 console_error_panic_hook = "0.1.7"

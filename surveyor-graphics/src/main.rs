@@ -2,6 +2,7 @@ use surveyor_graphics::SurveyorGraphicsPlugin;
 use bevy::prelude::*;
 use surveyor_physics::{SimulationState, math::Vector3};
 use bevy_debug_text_overlay::{screen_print, OverlayPlugin};
+use bevy::asset::AssetMetaCheck;
 
 fn show_sim_time(phy_query: Query<& surveyor_physics::SimulationTime>) {
     let time = phy_query.single();
@@ -34,6 +35,7 @@ fn start_sim(mut set_sim_state: ResMut<NextState<SimulationState>>,
 pub fn main() {
 
     App::new()
+        .insert_resource(AssetMetaCheck::Never)
         .add_plugins(DefaultPlugins.build().disable::<TransformPlugin>())
         .add_plugins(OverlayPlugin{ font_size: 32.0, ..Default::default() })
         .add_plugins(SurveyorGraphicsPlugin)
@@ -48,6 +50,7 @@ pub fn main() {
 #[cfg(not(target_arch = "wasm32"))]
 fn main() {
     App::new()
+        .insert_resource(AssetMetaCheck::Never)
         .add_plugins(DefaultPlugins.build().disable::<TransformPlugin>())
         .add_plugins(OverlayPlugin{ font_size: 32.0, ..Default::default() })
         .add_plugins(SurveyorGraphicsPlugin)
