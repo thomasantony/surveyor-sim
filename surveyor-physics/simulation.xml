@@ -17,12 +17,20 @@
     </SimulationConfig>
     <UniverseConfig>
         <Ephemerides>kernels/de440s.bsp</Ephemerides>
-        <!-- <CelestialBody name="Earth">
+        <CelestialBody name="Sun">
+            <gravity>
+                <mu>0.0</mu>
+            </gravity>
+            <position>0.0,0.0,0.0</position>
+            <radius>1000.0</radius>
+        </CelestialBody>
+        <CelestialBody name="Earth">
             <gravity>
                 <mu>3.986004418e14</mu>
             </gravity>
+            <radius>6378140.0</radius>
             <position>3.84400e9,0.0,0.0</position>
-        </CelestialBody> -->
+        </CelestialBody>
         <CelestialBody name="Moon">
             <gravity>
                 <mu>4.9028695e12</mu>

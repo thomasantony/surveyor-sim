@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <InitialState>
-    <time>2020-01-01 00:00:00 UTC</time>
+    <time>2020-01-08 00:00:00 UTC</time>
     <!-- TODO: Add frame of reference and reference planet here -->
     <!-- <position>6878100,0.0,0.0</position> -->
     <position>1837100,0.0,0.0</position> <!-- 100 km above moon -->

@@ -12,6 +12,7 @@ use nalgebra::{SVector, SVectorView};
 use bevy::prelude::*;
 use bevy::{asset::{AssetServer, io::Reader, LoadContext}, utils::thiserror::Error};
 
+use crate::SimulationTime;
 use crate::spacecraft::SpacecraftProperties;
 
 /// Environment models
@@ -49,6 +50,7 @@ pub struct CelestialBodyModel {
     pub radius: f64,
     /// Position
     pub position: SVector<f64, 3>,
+    pub velocity: SVector<f64, 3>,
 }
 
 #[derive(Debug, Component)]
@@ -70,6 +72,7 @@ impl Universe {
             ephemerides: (),
             radius: 6378.14,
             position: SVector::<f64, 3>::zeros(),
+            velocity: SVector::<f64, 3>::zeros(),
         };
         Self {
             celestial_bodies: vec![(CelestialBodyType::Earth, earth)]
@@ -95,6 +98,7 @@ impl Universe {
                         ephemerides: (),
                         radius: body_config.radius,
                         position: body_config.position.0,
+                        velocity: SVector::<f64, 3>::zeros(),
                     },
                 )
             })
@@ -194,16 +198,25 @@ impl AssetLoader for AlmanacLoader {
 }
 
 pub fn update_universe(
-    mut universe: ResMut<Universe>,
-    mut ephemerides: ResMut<Assets<Ephemerides>>,
-    ephemerides_handle: Res<Handle<Ephemerides>>,
+    mut universe: Query<&mut Universe>,
+    mut eph_loader: ResMut<Assets<Ephemerides>>,
+    sim_time: Query<&SimulationTime>,
 ) {
-    if let Some(ephemerides) = ephemerides.get_mut(&ephemerides_handle) {
-        universe.ephem = ephemerides_handle.clone();
-        universe.celestial_bodies.iter_mut().for_each(|(_body_type, body_model)| {
-            let body_name = _body_type.to_string();
-            let body = ephemerides.0.body(&body_name).unwrap();
-            body_model.position = SVector::<f64, 3>::from_column_slice(&body.position);
-        });
+    let mut universe = universe.single_mut();
+    let sim_time = sim_time.single();
+    if let Some(eph) = eph_loader.get_mut(&universe.ephem) {
+        let frame_id = anise::constants::frames::LUNA_J2000;
+        let epoch = sim_time.now();
+        for (body_type, body_model) in universe.celestial_bodies.iter_mut() {
+            let body_id = body_type.to_anise_id();
+            let body_state = eph.state_of(body_id, frame_id, epoch, Aberration::None);
+            if let Ok(body_state) = body_state {
+                let posvel = body_state.to_cartesian_pos_vel() * 1000.0;
+                body_model.position = posvel.fixed_rows::<3>(0).into();
+                body_model.velocity = posvel.fixed_rows::<3>(3).into();
+            } else {
+                println!("Failed to get state of body: {:?}", body_type);
+            }
+        }
     }
 }

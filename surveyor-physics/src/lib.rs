@@ -24,7 +24,7 @@ use simulation::*;
 use spacecraft::{InitialState, build_spacecraft_entity, do_discrete_update_from_event, DiscreteUpdateEvent};
 use hard_xml::XmlRead;
 use subsystems::Subsystem;
-use universe::{Universe, Ephemerides};
+use universe::{Universe, Ephemerides, update_universe};
 use bevy_ecs::schedule::IntoSystemConfigs;
 use bevy::asset::AssetServer;
 
@@ -114,6 +114,7 @@ impl Plugin for SurveyorPhysicsPlugin {
             )
             .add_systems(Update,
                 (
+                    crate::universe::update_universe,
                     spacecraft::step_spacecraft_model,
                     do_discrete_update_from_event,
                     update_simulation_state_and_time,
