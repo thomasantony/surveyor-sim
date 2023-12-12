@@ -81,7 +81,7 @@ impl Universe {
             ephem: Default::default(),
         }
     }
-    pub fn from_config(config: UniverseConfig, server: &Res<AssetServer>, eph_loader: &Res<Assets<Ephemerides>>) -> Self {
+    pub fn from_config(config: UniverseConfig, server: &Res<AssetServer>, _eph_loader: &Res<Assets<Ephemerides>>) -> Self {
         let ephemerides_path = config.ephemerides_path;
         let ephemerides_handle = server.load::<Ephemerides>(ephemerides_path);
 

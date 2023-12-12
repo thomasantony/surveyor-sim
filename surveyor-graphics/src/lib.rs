@@ -43,6 +43,7 @@ impl Plugin for SurveyorGraphicsPlugin{
             (
                 compute_lander_state_from_simulation,
                 render_lander_state,
+                render_celbody_position,
                 sync_camera
             ).chain().after(surveyor_physics::simulation::update_simulation_state_and_time)
         )

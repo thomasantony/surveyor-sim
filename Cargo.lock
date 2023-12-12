@@ -3902,6 +3902,7 @@ dependencies = [
  "na",
  "surveyor-gnc",
  "surveyor-physics",
+ "surveyor-types",
 ]
 
 [[package]]

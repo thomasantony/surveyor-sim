@@ -24,7 +24,7 @@ use simulation::*;
 use spacecraft::{InitialState, build_spacecraft_entity, do_discrete_update_from_event, DiscreteUpdateEvent};
 use hard_xml::XmlRead;
 use subsystems::Subsystem;
-use universe::{Universe, Ephemerides, update_universe};
+use universe::{Universe, Ephemerides};
 use bevy_ecs::schedule::IntoSystemConfigs;
 use bevy::asset::AssetServer;
 

@@ -2,8 +2,10 @@ use bevy::{{prelude::*}, math::{DVec3}};
 
 use bevy::math::EulerRot::XYZ;
 // use bevy_mod_paramap::*;
-use big_space::{FloatingOriginSettings};
-
+use big_space::{FloatingOriginSettings, GridCell};
+use surveyor_physics::universe::Universe;
+use surveyor_types::CelestialBodyType;
+use std::str::FromStr;
 
 pub const MOON_RADIUS: f64 = 1737.1e3; // meters
 pub const EARTH_RADIUS: f64 = 6378.14e3; // meters
@@ -28,7 +30,7 @@ const MOON_ALBEDO_MAP: &str = "textures/moon/base_color.jpg";
 pub struct Normal(pub Option<Handle<Image>>);
 
 #[derive(Component, PartialEq, Eq)]
-pub struct CelBody;
+pub struct CelBody(pub CelestialBodyType);
 
 /// Spawns a planet at given position while accounting for floating origin effects due to
 /// large distances.
@@ -52,6 +54,7 @@ pub fn spawn_celestial_body(
         planet_material,
         planet_grid_cell,
         Name::new(name),
+        CelBody(CelestialBodyType::from_str(&name).unwrap()),
     )
 }
 
@@ -133,7 +136,7 @@ pub fn setup_planet(
                 ..default()
             },
             ..default()
-        }).insert((sun_grid_cell, Name::new("Sun")));
+        }).insert((sun_grid_cell, Name::new("Sun"), CelBody(CelestialBodyType::Sun)));
 }
 
 // /// Work around the fact that the default bevy image loader sets the
@@ -160,3 +163,22 @@ pub fn setup_planet(
 //         }
 //     }
 // }
+
+
+// Update mesh transforms from universe
+pub fn render_celbody_position(
+    mut celbody: Query<(&CelBody, &mut Transform, &mut GridCell<GridCellType>)>,
+    mut universe: Query<&Universe>,
+    settings: Res<FloatingOriginSettings>,
+) {
+    let universe = universe.single_mut();
+    for (celbody, mut transform, mut grid_cell) in celbody.iter_mut() {
+        let pos = universe.celestial_bodies.get(&celbody.0).unwrap().position;
+        let pos = DVec3::new(pos.x, pos.y, pos.z);
+        let (new_grid_cell, translation) = settings.translation_to_grid::<GridCellType>(pos);
+        transform.translation = translation;
+        if new_grid_cell != *grid_cell {
+            *grid_cell = new_grid_cell;
+        }
+    }
+}
