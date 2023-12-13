@@ -4,7 +4,6 @@ mod lander;
 mod input;
 
 use bevy::prelude::*;
-use bevy_panorbit_camera::PanOrbitCameraPlugin;
 use big_space::FloatingOriginPlugin;
 use camera::*;
 use planet::*;
@@ -24,13 +23,11 @@ impl Plugin for SurveyorGraphicsPlugin{
             // big_space::debug::FloatingOriginDebugPlugin::<GridCellType>::default(),
 
         ))
-        // .add_plugins(big_space::camera::CameraControllerPlugin::<GridCellType>::default())
 
-        // Camera plugins
-        // .add_plugins(LookTransformPlugin)
-        .add_plugins(PanOrbitCameraPlugin)
+        .add_systems(Update, (
+            camera_inputs,
+        ))
         .insert_resource(ClearColor(Color::BLACK))
-        // .add_plugins(OrbitCameraPlugin::new(true))
         .add_systems(Startup, spawn_camera)
 
         // Planets
