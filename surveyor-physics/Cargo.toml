@@ -13,6 +13,7 @@ bevy_app = {workspace = true}
 bevy_ecs = {workspace = true}
 bevy_derive = {workspace = true}
 anise = {workspace = true}
+nyx-space = {workspace = true}
 
 hard-xml = "1.25.0"
 rvstruct = "0.3.2"
