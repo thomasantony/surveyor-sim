@@ -88,7 +88,7 @@ pub fn update_simple_attitude_estimator(mut sensor_data_reader: EventReader<Sens
         {
             attitude_estimator_output.q_i2b = star_tracker.value.q_i2b;
         }
-        screen_print!("Omega_b: {:.2?}", attitude_estimator_output.omega_b);
+        // screen_print!("Omega_b: {:.2?}", attitude_estimator_output.omega_b);
     }
     attitude_estimate_writer.send(attitude_estimator_output);
 }

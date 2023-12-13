@@ -1,5 +1,5 @@
 //! A model for the system clock (this is controlled by events/data from the simulator)
-use bevy_debug_text_overlay::screen_print;
+
 use bevy_ecs::prelude::*;
 use hifitime::prelude::*;
 
@@ -15,7 +15,7 @@ pub struct TimeTickEvent {
 
 pub fn update_sys_clock(mut sys_clock: ResMut<SystemClock>, mut time_tick_event: EventReader<TimeTickEvent>) {
     if let Some(time) = time_tick_event.read().last() {
-        screen_print!("System clock: {}", time.time);
+        // screen_print!("System clock: {}", time.time);
         sys_clock.time = time.time;
     }
 }

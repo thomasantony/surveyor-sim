@@ -1,4 +1,4 @@
-use bevy_debug_text_overlay::screen_print;
+
 use bevy_ecs::prelude::*;
 use nalgebra as na;
 use surveyor_types::config::ThrusterConfig;
@@ -152,8 +152,8 @@ pub fn update_attitude_controller(
                     let target_omega_b = - axis * angle * K_P;
                     let target_omega_b = target_omega_b.map(|omega| omega.clamp(-MAX_OMEGA_B_PER_AXIS, MAX_OMEGA_B_PER_AXIS));
 
-                    screen_print!("Target omega_b: {:.2?}", target_omega_b);
-                    screen_print!("Angle: {} deg", angle.to_degrees());
+                    // screen_print!("Target omega_b: {:.2?}", target_omega_b);
+                    // screen_print!("Angle: {} deg", angle.to_degrees());
                     let omega_b = sensor_data.omega_b;
                     let omega_error_b = target_omega_b - omega_b;
                     const DEADBAND_B: f64 = 1e-4; // rad/s
@@ -187,8 +187,8 @@ pub fn update_attitude_controller(
                     let target_omega_b = - axis * angle * K_P;
                     let target_omega_b = target_omega_b.map(|omega| omega.clamp(-MAX_OMEGA_B_PER_AXIS, MAX_OMEGA_B_PER_AXIS));
 
-                    screen_print!("Target omega_b: {:.2?}", target_omega_b);
-                    screen_print!("Angle: {} deg", angle.to_degrees());
+                    // screen_print!("Target omega_b: {:.2?}", target_omega_b);
+                    // screen_print!("Angle: {} deg", angle.to_degrees());
                     let omega_b = sensor_data.omega_b;
                     let omega_error_b = target_omega_b - omega_b;
                     const DEADBAND_B: f64 = 1e-4; // rad/s
