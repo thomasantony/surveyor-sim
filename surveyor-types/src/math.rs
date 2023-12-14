@@ -14,7 +14,7 @@ impl UnitQuaternion {
     }
     pub fn from_parts(w: f64, x: f64, y: f64, z: f64) -> Self {
         UnitQuaternion(nalgebra::UnitQuaternion::from_quaternion(
-            nalgebra::Quaternion::new(x, y, z, w),
+            nalgebra::Quaternion::new(w, x, y, z),
         ))
     }
 }
