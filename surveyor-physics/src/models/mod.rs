@@ -1,6 +1,7 @@
 pub mod tvc;
 pub mod rcs;
 pub mod surveyor_engines;
+pub mod star_sensor;
 
 // Trait for a model of an actuator (e.g. a servo)
 pub trait ActuatorModel<'a> {

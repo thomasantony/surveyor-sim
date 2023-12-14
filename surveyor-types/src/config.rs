@@ -210,3 +210,22 @@ impl GeometryConfig {
         self.q_cf2b.inverse_transform_vector(vec_b)
     }
 }
+
+
+#[derive(Debug, XmlRead, PartialEq)]
+#[xml(tag = "StarSensor")]
+pub struct StarSensorConfig {
+    #[xml(attr="name")]
+    pub name: String,
+    #[xml(child = "geometry")]
+    pub geometry: GeometryParams,
+    /// Right Ascension of the star in degrees
+    #[xml(flatten_text = "right_ascension_deg")]
+    pub ra_deg: f64,
+    /// Declination of the star in degrees
+    #[xml(flatten_text = "declinaton_deg")]
+    pub dec_deg: f64,
+    /// Field of view of the sensor in degrees (half-angle)
+    #[xml(flatten_text = "fov_deg")]
+    pub fov_deg: f64,
+}
