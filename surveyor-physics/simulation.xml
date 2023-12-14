@@ -56,6 +56,24 @@
                 </geometry>
             </Imu>
         </ImuSubsystem>
+        <StarSensorSubsystem>
+            <StarSensor name="Canopus">
+                <geometry>
+                    <!-- Points boresight along -Y (body frame) -->
+                    <q_cf2b>[0.7071068, 0.0, 0.7071068, 0.0]</q_cf2b>
+                    <!-- Random -->
+                    <cf_offset_com_b>[0.0, 0.0, 0.0]</cf_offset_com_b>
+                </geometry>
+                <!-- 45 deg FoV (22.5 deg half angle)-->
+                <fov>0.3925</fov>
+                <!-- Canopus:
+                    Right ascension	06h 23m 57.10988s
+                    Declination	−52° 41' 44.3810"
+                -->
+                <right_ascension_deg>95.9875</right_ascension_deg>
+                <declinaton_deg>52.695661389</declinaton_deg>
+            </StarSensor>
+        </StarSensorSubsystem>
         <StarTrackerSubsystem>
             <!-- The actual Surveyor probe didn't really have a star tracker in the modern sense -->
             <StarTracker name="A">
