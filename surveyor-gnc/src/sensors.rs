@@ -109,6 +109,42 @@ impl Default for EphemerisOutput {
     }
 }
 
+/// Star Sensor component, input and output
+#[derive(Debug, Clone, Component)]
+pub struct StarSensor;
+
+#[derive(Debug, Clone, Event)]
+pub struct StarSensorInput
+{
+    pub sensor_id: usize,
+    pub star_vec_cf: na::Vector3<f64>,
+}
+impl Default for StarSensorInput {
+    fn default() -> Self {
+        Self {
+            sensor_id: 0,
+            star_vec_cf: na::Vector3::zeros(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Event)]
+pub struct StarSensorOutput
+{
+    pub star_vec_b: na::Vector3<f64>,
+    pub measurement_time: hifitime::Epoch,
+    pub valid: bool,
+}
+impl Default for StarSensorOutput {
+    fn default() -> Self {
+        Self {
+            star_vec_b: na::Vector3::zeros(),
+            measurement_time: hifitime::Epoch::default(),
+            valid: false,
+        }
+    }
+}
+
 
 /// System to update the IMU output
 /// Generalize this later to apply to any sensor with a vector input in component frame
@@ -138,6 +174,7 @@ pub fn update_imu(
     });
 }
 
+/// System to update the star tracker component
 pub fn update_star_tracker(
     mut star_tracker_input: EventReader<StarTrackerInput>,
     mut query: Query<(&StarTracker, &GeometryConfig)>,
@@ -157,6 +194,30 @@ pub fn update_star_tracker(
             output.send(star_tracker_output);
         }else{
             log::error!("Star tracker sensor id {} not found", star_tracker_input.sensor_id);
+        }
+    });
+}
+
+/// System to update the Star Sensor component
+pub fn update_star_sensor(
+    mut star_sensor_input: EventReader<StarSensorInput>,
+    mut query: Query<(&StarSensor, &GeometryConfig)>,
+    mut output: EventWriter<StarSensorOutput>,
+    clock: Res<SystemClock>,
+) {
+    star_sensor_input.read().last().map(| star_sensor_input|{
+        // Get star sensor and geometry by sensor id
+        if let Some((_, geometry,
+                )) = query.iter_mut().nth(star_sensor_input.sensor_id)
+        {
+            let star_sensor_output = StarSensorOutput{
+                star_vec_b: geometry.q_cf2b * star_sensor_input.star_vec_cf,
+                measurement_time: clock.time,
+                valid: true,
+            };
+            output.send(star_sensor_output);
+        }else{
+            log::error!("Star sensor sensor id {} not found", star_sensor_input.sensor_id);
         }
     });
 }

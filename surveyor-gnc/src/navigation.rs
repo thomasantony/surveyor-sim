@@ -1,8 +1,8 @@
-use bevy_debug_text_overlay::screen_print;
+
 use bevy_ecs::prelude::*;
 use hifitime::prelude::*;
 use nalgebra as na;
-use crate::{sensors::{StarTrackerOutput, IMUOutput}, clock::SystemClock};
+use crate::{sensors::{StarTrackerOutput, IMUOutput, StarSensorOutput}, clock::SystemClock};
 
 
 #[derive(Debug, Clone, Default)]
@@ -17,6 +17,7 @@ pub struct Measurement<T: Default> {
 pub struct SensorData {
     pub imus: [Measurement<IMUOutput>; 2],
     pub star_trackers: [Measurement<StarTrackerOutput>; 2],
+    pub star_sensors: [Measurement<StarSensorOutput>; 2],
 }
 
 impl Default for SensorData {
@@ -24,6 +25,7 @@ impl Default for SensorData {
         Self {
             imus: [Measurement::default(), Measurement::default()],
             star_trackers: [Measurement::default(), Measurement::default()],
+            star_sensors: [Measurement::default(), Measurement::default()],
         }
     }
 }
@@ -43,6 +45,7 @@ impl Default for AttitudeEstimatorOutput {
 
 pub fn update_sensor_aggregator(mut imu_query: EventReader<IMUOutput>,
                                 mut str_query: EventReader<StarTrackerOutput>,
+                                mut star_sensor_query: EventReader<StarSensorOutput>,
                                 mut sensor_data_writer: EventWriter<SensorData>,
                                 _clock: Res<SystemClock>
 )
@@ -68,6 +71,16 @@ pub fn update_sensor_aggregator(mut imu_query: EventReader<IMUOutput>,
         };
         sensor_data.star_trackers[st_idx] = meas;
     }
+
+    for (st_idx, star_sensor_output) in star_sensor_query.read().enumerate() {
+        let meas = Measurement {
+            value: star_sensor_output.clone(),
+            time: star_sensor_output.measurement_time,
+            valid: true,
+        };
+        sensor_data.star_sensors[st_idx] = meas;
+    }
+
     // TODO: Mark measurements as invalid if they are too old
     sensor_data_writer.send(sensor_data);
 }

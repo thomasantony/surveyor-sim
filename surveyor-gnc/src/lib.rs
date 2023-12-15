@@ -57,8 +57,11 @@ impl Plugin for SurveyorGNC {
             .add_event::<sensors::IMUOutput>()
             .add_event::<sensors::StarTrackerOutput>()
             .add_event::<sensors::StarTrackerInput>()
+            .add_event::<sensors::StarSensorOutput>()
+            .add_event::<sensors::StarSensorInput>()
             .add_systems(Update, update_imu.in_set(SurveyorGncSystemSet::Sensors))
             .add_systems(Update, update_star_tracker.in_set(SurveyorGncSystemSet::Sensors))
+            .add_systems(Update, update_star_sensor.in_set(SurveyorGncSystemSet::Sensors))
 
             // Navigation
             .add_event::<navigation::SensorData>()
@@ -132,8 +135,32 @@ impl Plugin for SurveyorGNC {
             GeometryConfig::from_geometry_params(&st_config.geometry)
         )).id();
 
-        // let imu_a = app.world.spawn((Name::new("IMU_A"), sensors::IMU, GeometryConfig::default())).id();
-        // let imu_b = app.world.spawn((Name::new("IMU_B"), sensors::IMU, GeometryConfig::default())).id();
+
+        let star_sensor_config_xml = r#"
+            <StarSensor name="Canopus">
+                <geometry>
+                    <!-- Points boresight along -Y (body frame) -->
+                    <q_cf2b>[0.7071068, 0.0, 0.7071068, 0.0]</q_cf2b>
+                    <!-- Random -->
+                    <cf_offset_com_b>[0.0, 0.0, 0.0]</cf_offset_com_b>
+                </geometry>
+                <!-- 45 deg FoV (22.5 deg half angle)-->
+                <fov_deg>22.5</fov_deg>
+                <!-- Canopus:
+                    Right ascension	06h 23m 57.10988s
+                    Declination	−52° 41' 44.3810"
+                -->
+                <right_ascension_deg>95.9875</right_ascension_deg>
+                <declinaton_deg>52.695661389</declinaton_deg>
+            </StarSensor>
+        "#;
+        let st_config = StarSensorConfig::from_str(star_sensor_config_xml).unwrap();
+        let star_sensor = app.world.spawn((
+            Name::new(st_config.name.clone()),
+            sensors::StarSensor,
+            GeometryConfig::from_geometry_params(&st_config.geometry)
+        )).id();
+
         let guidance = app.world.spawn((Name::new("SurveyorGNCMode"), guidance::GuidanceMode::Idle)).id();
 
         // todo: fix this to use correct config
@@ -212,6 +239,7 @@ impl Plugin for SurveyorGNC {
         self.entities.insert("Guidance".to_string(), guidance);
         self.entities.insert("ControlAllocator".to_string(), control_allocator);
         self.entities.insert("RCSController".to_string(), rcs_controller);
+        self.entities.insert("StarSensor_A".to_string(), star_sensor);
     }
 }
 
@@ -225,6 +253,8 @@ impl SurveyorGNC {
 }
 use surveyor_types::config::*;
 pub use surveyor_types::config::GeometryConfig;
+
+use crate::sensors::update_star_sensor;
 
 #[derive(Event)]
 pub enum GncCommand {
