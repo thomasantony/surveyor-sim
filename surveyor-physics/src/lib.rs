@@ -127,6 +127,7 @@ impl Plugin for SurveyorPhysicsPlugin {
                     crate::interfaces::time_event_generator,
                     crate::interfaces::imu_event_generator,
                     crate::interfaces::star_tracker_event_generator,
+                    crate::interfaces::star_sensor_event_generator,
                     crate::interfaces::rcs_event_receiver
                 ).chain().after(do_discrete_update_from_event)
             )
