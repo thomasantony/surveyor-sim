@@ -72,7 +72,8 @@ pub struct SpacecraftConfig {
         child = "EngineSubsystem",
         child = "RcsSubsystem",
         child = "ImuSubsystem",
-        child = "StarTrackerSubsystem"
+        child = "StarTrackerSubsystem",
+        child = "StarSensorSubsystem",
     )]
     pub subsystems: Vec<SubsystemConfig>,
 }
@@ -87,6 +88,8 @@ pub enum SubsystemConfig {
     Imu(ImuSubsystemConfig),
     #[xml(tag = "StarTrackerSubsystem")]
     StarTracker(StarTrackerSubsystemConfig),
+    #[xml(tag = "StarSensorSubsystem")]
+    StarSensor(StarSensorSubsystemConfig),
 }
 impl ToString for SubsystemConfig {
     fn to_string(&self) -> String {
@@ -95,6 +98,7 @@ impl ToString for SubsystemConfig {
             SubsystemConfig::Rcs(_) => "Rcs".to_string(),
             SubsystemConfig::Imu(_) => "Imu".to_string(),
             SubsystemConfig::StarTracker(_) => "StarTracker".to_string(),
+            SubsystemConfig::StarSensor(_) => "StarSensor".to_string(),
         }
     }
 }
@@ -118,6 +122,13 @@ pub struct ImuSubsystemConfig {
 pub struct StarTrackerSubsystemConfig {
     #[xml(child = "StarTracker")]
     pub sensors: Vec<StarTrackerConfig>,
+}
+
+#[derive(Debug, XmlRead, PartialEq)]
+#[xml(tag = "StarSensorSubsystem")]
+pub struct StarSensorSubsystemConfig {
+    #[xml(child = "StarSensor")]
+    pub sensors: Vec<StarSensorConfig>,
 }
 
 #[derive(Debug, XmlRead, PartialEq, Clone)]

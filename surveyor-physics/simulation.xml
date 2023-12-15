@@ -65,7 +65,7 @@
                     <cf_offset_com_b>[0.0, 0.0, 0.0]</cf_offset_com_b>
                 </geometry>
                 <!-- 45 deg FoV (22.5 deg half angle)-->
-                <fov>0.3925</fov>
+                <fov_deg>22.5</fov_deg>
                 <!-- Canopus:
                     Right ascension	06h 23m 57.10988s
                     Declination	−52° 41' 44.3810"

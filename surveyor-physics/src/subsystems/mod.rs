@@ -11,6 +11,7 @@ pub mod propulsion;
 pub mod rcs;
 pub mod imu;
 pub mod star_tracker;
+pub mod star_sensor;
 
 #[derive(Debug, EnumAsInner, Component, EnumFilter)]
 pub (crate) enum Subsystem {
@@ -18,6 +19,7 @@ pub (crate) enum Subsystem {
     Rcs(rcs::RcsSubsystem),
     Imu(imu::IMUSubsystem),
     StarTracker(star_tracker::StarTrackerSubsystem),
+    StarSensor(star_sensor::StarSensorSubsystem),
 }
 
 impl Subsystem {
@@ -34,6 +36,9 @@ impl Subsystem {
             },
             SubsystemConfig::StarTracker(star_tracker_subsystem_config) => {
                 Subsystem::StarTracker(star_tracker::StarTrackerSubsystem::from_config(star_tracker_subsystem_config))
+            },
+            SubsystemConfig::StarSensor(star_sensor_subsystem_config) => {
+                Subsystem::StarSensor(star_sensor::StarSensorSubsystem::from_config(star_sensor_subsystem_config))
             },
             // _ => panic!("Invalid subsystem config"),
         }
@@ -54,6 +59,9 @@ impl Subsystem {
             Subsystem::StarTracker(star_tracker_subsystem) => {
                 star_tracker_subsystem.update_discrete(dt, discrete_state);
             }
+            Subsystem::StarSensor(star_sensor_subsystem) => {
+                star_sensor_subsystem.update_discrete(dt, discrete_state);
+            }
         }
     }
     pub fn update_continuous(&mut self, dt: f64) {
@@ -68,6 +76,9 @@ impl Subsystem {
             Subsystem::StarTracker(star_tracker_subsystem) => {
                 star_tracker_subsystem.update_continuous(dt);
             }
+            Subsystem::StarSensor(star_sensor_subsystem) => {
+                star_sensor_subsystem.update_continuous(dt);
+            }
         }
     }
     pub fn update_dynamics(&self, outputs: &mut OrbitalDynamicsInputs) {
@@ -81,6 +92,9 @@ impl Subsystem {
             Subsystem::Imu(_) => {}
             Subsystem::StarTracker(star_tracker_subsystem) => {
                 star_tracker_subsystem.update_dynamics(outputs);
+            }
+            Subsystem::StarSensor(star_sensor_subsystem) => {
+                star_sensor_subsystem.update_dynamics(outputs);
             }
         }
     }
