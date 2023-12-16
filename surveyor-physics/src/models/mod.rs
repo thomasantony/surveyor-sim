@@ -1,3 +1,4 @@
+pub mod imu;
 pub mod tvc;
 pub mod rcs;
 pub mod surveyor_engines;
