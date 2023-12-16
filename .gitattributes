@@ -32,3 +32,4 @@ surveyor-graphics/assets/Surveyor/copperfoil.png.meta filter=lfs diff=lfs merge=
 surveyor-graphics/assets/Surveyor/metal.png.meta filter=lfs diff=lfs merge=lfs -text
 surveyor-graphics/assets/Surveyor/Surveyor-Lander.bin.meta filter=lfs diff=lfs merge=lfs -text
 surveyor-graphics/assets/Surveyor/Surveyor-Lander.gltf filter=lfs diff=lfs merge=lfs -text
+surveyor-graphics/assets/kernels/pck08.pca filter=lfs diff=lfs merge=lfs -text
