@@ -34,7 +34,7 @@ impl ContinuousSystemState {
 
 
 use crate::subsystems::Subsystem;
-use crate::universe::Universe;
+use crate::universe::{Universe, Observation};
 use crate::{
     integrators::DynamicSystem,
     math::{UnitQuaternion, Vector3},
@@ -266,13 +266,7 @@ impl SpacecraftDiscreteState {
 }
 
 #[derive(Event)]
-pub struct DiscreteUpdateEvent(pub SpacecraftDiscreteState);
-impl std::ops::Deref for DiscreteUpdateEvent{
-    type Target = SpacecraftDiscreteState;
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
+pub struct DiscreteUpdateEvent(pub SpacecraftDiscreteState, pub Observation);
 
 
 // Have a startup system that initializes all the continuous systems
@@ -327,7 +321,7 @@ fn dydt(_t: f64, state: &[f64], universe: &Universe, subsystems: &[&Subsystem], 
 use crate::SimulationTime;
 use crate::simulation::{SimulationParams, SimulationResults, SimClock};
 // System that steps the spacecraft model over one timestep and updates orbital dynamics component
-pub (crate) fn step_spacecraft_model(
+pub (crate) fn step_spacecraft_model<'a>(
     mut q_universe: Query<&mut Universe>,
     mut q_spacecrafts: Query<(&mut SpacecraftModel, &SimulationTime, &SpacecraftProperties, &mut OrbitalDynamics, &mut SimulationResults, &Children)>,
     q_subsystems: Query<&mut Subsystem>,
@@ -364,13 +358,14 @@ pub (crate) fn step_spacecraft_model(
 
     // If we have a discrete update, send it as an event
     let sim_clock = q_sim_clock.single();
+    let observation = universe.observe();
     if sim_clock.num_steps % sim_params.num_steps_per_gnc_update == 0 {
         for (_, t, _, orb, _, _) in q_spacecrafts.iter_mut() {
             let t = t.get_monotonic_time();
             let spacecraft_discrete_state =
                 SpacecraftDiscreteState::new(t, &orb.state);
             // Send event
-            discrete_update_event.send(DiscreteUpdateEvent(spacecraft_discrete_state));
+            discrete_update_event.send(DiscreteUpdateEvent(spacecraft_discrete_state, observation.clone()));
         }
     }
 }
@@ -382,7 +377,7 @@ pub (crate) fn do_discrete_update_from_event(mut discrete_update_event: EventRea
 {
     for discrete_update in discrete_update_event.read() {
         for subsystem in q_subsystems.iter_mut() {
-            subsystem.into_inner().update_discrete(discrete_update.time, &discrete_update);
+            subsystem.into_inner().update_discrete(discrete_update.0.time, &discrete_update.0,& discrete_update.1);
         }
     }
 

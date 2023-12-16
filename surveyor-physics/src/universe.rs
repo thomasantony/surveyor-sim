@@ -11,6 +11,7 @@ use surveyor_types::config::UniverseConfig;
 use nalgebra::{SVector, SVectorView};
 use bevy::prelude::*;
 use bevy::{asset::{AssetServer, io::Reader, LoadContext}, utils::thiserror::Error};
+use surveyor_types::math::Vector3;
 
 use crate::SimulationTime;
 use crate::spacecraft::SpacecraftProperties;
@@ -51,6 +52,15 @@ pub struct CelestialBodyModel {
     /// Position
     pub position: SVector<f64, 3>,
     pub velocity: SVector<f64, 3>,
+}
+
+impl CelestialBodyModel {
+    pub fn observe(&self) -> CelestialBodyObservation {
+        CelestialBodyObservation {
+            position: self.position.into(),
+            velocity: self.velocity.into(),
+        }
+    }
 }
 
 #[derive(Debug, Component)]
@@ -128,21 +138,30 @@ impl Universe {
 }
 
 // Struct representing an observation of the state of all bodies in the universe
-pub struct Observation<'a>{
-    pub celestial_bodies: HashMap<CelestialBodyType, &'a CelestialBodyModel>,
+#[derive(Debug, Clone)]
+pub struct CelestialBodyObservation {
+    pub position: Vector3,
+    pub velocity: Vector3,
 }
-impl<'a> Observation<'a>{
-    pub fn new(universe: &'a Universe) -> Self {
+#[derive(Debug, Clone)]
+pub struct Observation{
+    pub celestial_bodies: HashMap<CelestialBodyType, CelestialBodyObservation>,
+}
+impl Observation{
+    pub fn new(universe: & Universe) -> Self {
         Self {
-            celestial_bodies: universe.celestial_bodies.iter().map(|(body_type, body_model)| (*body_type, body_model)).collect(),
+            celestial_bodies: universe.celestial_bodies.iter().map(|(body_type, body_model)|
+            (*body_type, body_model.observe())
+        ).collect(),
         }
     }
-    pub fn get_body(&self, body_type: CelestialBodyType) -> Option<&CelestialBodyModel> {
-        self.celestial_bodies.get(&body_type).copied()
+    pub fn get_body(&self, body_type: CelestialBodyType) -> Option<&CelestialBodyObservation> {
+        self.celestial_bodies.get(&body_type)
     }
 
-    pub fn get_body_by_name(&self, name: &str) -> Option<&CelestialBodyModel> {
-        CelestialBodyType::from_str(name).ok().and_then(|body_type| self.get_body(body_type))
+    pub fn get_body_by_name(&self, name: &str) -> Option<&CelestialBodyObservation> {
+        CelestialBodyType::from_str(name).ok().and_then(
+            |body_type| self.get_body(body_type))
     }
 }
 

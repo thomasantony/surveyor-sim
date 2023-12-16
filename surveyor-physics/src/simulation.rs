@@ -14,7 +14,11 @@ use bevy::time::{Time, Timer, TimerMode};
 use surveyor_types::simulation::{SimStoppingCondition, SimulationConfig};
 
 
-pub fn check_stopping_condition(cond: &SimStoppingCondition, state: &OrbitalDynamics, observation: &Observation) -> bool {
+pub fn check_stopping_condition(
+    cond: &SimStoppingCondition,
+    state: &OrbitalDynamics,
+    observation: &Observation
+) -> bool {
     match cond {
         SimStoppingCondition::MaxDuration(t) => {
             state.time.to_seconds() >= *t
@@ -22,9 +26,11 @@ pub fn check_stopping_condition(cond: &SimStoppingCondition, state: &OrbitalDyna
         SimStoppingCondition::CollisionWith(body) => {
             let body = observation.get_body_by_name(&body).unwrap();
             let sc_pos = state.state.fixed_rows::<3>(0);
-            let r = sc_pos - body.position;
+            let r = sc_pos - body.position.0;
             let r_mag = r.norm();
-            r_mag < body.radius
+            // TODO: Fix this to use a common resource for celestial body params
+            const RADIUS: f64 = 1737400.0;
+            r_mag < RADIUS
         },
         // _ => false,
         // SimStoppingCondition::Custom(f) => f(state, universe),
