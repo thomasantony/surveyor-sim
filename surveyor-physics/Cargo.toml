@@ -7,13 +7,13 @@ edition = "2021"
 surveyor-gnc = { path = "../surveyor-gnc" }
 surveyor-types = { path = "../surveyor-types" }
 wasm-bindgen-futures = "0.4.39"
-nalgebra = {workspace = true}
-bevy     = {workspace = true}
-bevy_app = {workspace = true}
-bevy_ecs = {workspace = true}
-bevy_derive = {workspace = true}
-anise = {workspace = true}
-nyx-space = {workspace = true}
+nalgebra = { workspace = true }
+bevy = { workspace = true }
+bevy_app = { workspace = true }
+bevy_ecs = { workspace = true }
+bevy_derive = { workspace = true }
+anise = { workspace = true }
+nyx-space = { workspace = true }
 
 hard-xml = "1.25.0"
 rvstruct = "0.3.2"
@@ -23,8 +23,12 @@ hifitime = "3.8.6"
 enum-as-inner = "0.6.0"
 console_error_panic_hook = "0.1.7"
 console_log = { version = "1.0.0", features = ["wasm-bindgen"] }
-web-sys = { version = "0.3.64", features = ["Window", "Document", "HtmlElement"] }
-bevy_enum_filter = "0.3.0"
+web-sys = { version = "0.3.64", features = [
+    "Window",
+    "Document",
+    "HtmlElement",
+] }
+bevy_enum_filter = { version = "0.4.0", git = "https://github.com/sardap/bevy_enum_filter" }
 bevy-debug-text-overlay = "7.0.0"
 
 thiserror = "1.0.50"
