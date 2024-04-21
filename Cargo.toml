@@ -16,9 +16,9 @@ opt-level = 3
 
 [workspace.dependencies]
 nalgebra = {version = "0.32.2", package = "na"}
-bevy = {version = "0.12.1"}
-bevy_app = "0.12"
-bevy_ecs = "0.12"
-bevy_derive = "0.12"
+bevy = {version = "0.13.2"}
+bevy_app = "0.13"
+bevy_ecs = "0.13"
+bevy_derive = "0.13"
 anise = { version = "0.1.0", git = "https://github.com/thomasantony/anise" }
 nyx-space = { version = "2.0.0-alpha", git = "https://github.com/thomasantony/nyx", default-features = false}
