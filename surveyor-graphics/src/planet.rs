@@ -1,11 +1,11 @@
-use bevy::{{prelude::*}, math::{DVec3}};
+use bevy::{math::DVec3, prelude::*};
 
 use bevy::math::EulerRot::XYZ;
 // use bevy_mod_paramap::*;
-use big_space::{FloatingOriginSettings, GridCell};
+use big_space::{reference_frame::RootReferenceFrame, GridCell};
+use std::str::FromStr;
 use surveyor_physics::universe::Universe;
 use surveyor_types::CelestialBodyType;
-use std::str::FromStr;
 
 pub const MOON_RADIUS: f64 = 1737.1e3; // meters
 pub const EARTH_RADIUS: f64 = 6378.14e3; // meters
@@ -39,15 +39,14 @@ pub fn spawn_celestial_body(
     position: DVec3,
     mesh_handle: Handle<Mesh>,
     matl_handle: Handle<StandardMaterial>,
-    settings: &FloatingOriginSettings,
-) -> impl Bundle
-{
-    let (planet_grid_cell, translation) = settings.translation_to_grid::<GridCellType>(position);
+    settings: &RootReferenceFrame<GridCellType>,
+) -> impl Bundle {
+    let (planet_grid_cell, translation) = settings.translation_to_grid(position);
     let planet_material: MaterialMeshBundle<StandardMaterial> = PbrBundle {
         mesh: mesh_handle,
         material: matl_handle,
         transform: Transform::from_rotation(Quat::from_euler(XYZ, -TAU / 4.0, 0.0, TAU / 2.0))
-                        .with_translation(translation),
+            .with_translation(translation),
         ..default()
     };
     (
@@ -63,10 +62,9 @@ pub fn setup_planet(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     // mut normal: ResMut<Normal>,
-    settings: Res<FloatingOriginSettings>,
+    settings: Res<RootReferenceFrame<GridCellType>>,
     assets: Res<AssetServer>,
-)
-{
+) {
     println!("Setting up planets");
     // let normal_handle = assets.load(MOON_NORMAL_MAP);
     // normal.0 = Some(normal_handle.clone());
@@ -86,13 +84,12 @@ pub fn setup_planet(
     });
     // Moon-centered inertial frame
     let moon_pos = DVec3::new(0.0, 0.0, 0.0);
-    commands.spawn(
-    spawn_celestial_body(
+    commands.spawn(spawn_celestial_body(
         "Moon",
         moon_pos,
         moon_mesh,
         moon_material,
-        &settings
+        &settings,
     ));
 
     let mut sphere: Mesh = Mesh::from(shape::UVSphere {
@@ -109,14 +106,13 @@ pub fn setup_planet(
         ..default()
     });
     let earth_pos = DVec3::new(386000e3, 0.0, 0.0);
-    commands.spawn(
-        spawn_celestial_body(
-            "Earth",
-             earth_pos,
-             earth_mesh,
-             earth_material,
-             &settings)
-    );
+    commands.spawn(spawn_celestial_body(
+        "Earth",
+        earth_pos,
+        earth_mesh,
+        earth_material,
+        &settings,
+    ));
 
     // // let sun_matl_handle = materials.add(StandardMaterial {
     // //     base_color: Color::rgb_u8(255, 255, 255),
@@ -125,18 +121,22 @@ pub fn setup_planet(
     // // });
 
     // *Really bad* approximate position of the sun
-    let sun_pos = DVec3::new(-100.0*EARTH_RADIUS, 0.0, -100.0 * EARTH_RADIUS);
-    let (sun_grid_cell, translation) = settings.translation_to_grid::<GridCellType>(sun_pos);
+    let sun_pos = DVec3::new(-100.0 * EARTH_RADIUS, 0.0, -100.0 * EARTH_RADIUS);
+    let (sun_grid_cell, translation) = settings.translation_to_grid(sun_pos);
     commands
         .spawn(DirectionalLightBundle {
-            transform: Transform::from_translation(translation)
-                            .looking_at(Vec3::ZERO, Vec3::Y),
+            transform: Transform::from_translation(translation).looking_at(Vec3::ZERO, Vec3::Y),
             directional_light: DirectionalLight {
                 illuminance: 100_000.0,
                 ..default()
             },
             ..default()
-        }).insert((sun_grid_cell, Name::new("Sun"), CelBody(CelestialBodyType::Sun)));
+        })
+        .insert((
+            sun_grid_cell,
+            Name::new("Sun"),
+            CelBody(CelestialBodyType::Sun),
+        ));
 }
 
 // /// Work around the fact that the default bevy image loader sets the
@@ -164,18 +164,17 @@ pub fn setup_planet(
 //     }
 // }
 
-
 // Update mesh transforms from universe
 pub fn render_celbody_position(
     mut celbody: Query<(&CelBody, &mut Transform, &mut GridCell<GridCellType>)>,
     mut universe: Query<&Universe>,
-    settings: Res<FloatingOriginSettings>,
+    settings: Res<RootReferenceFrame<GridCellType>>,
 ) {
     let universe = universe.single_mut();
     for (celbody, mut transform, mut grid_cell) in celbody.iter_mut() {
         let pos = universe.celestial_bodies.get(&celbody.0).unwrap().position;
         let pos = DVec3::new(pos.x, pos.y, pos.z);
-        let (new_grid_cell, translation) = settings.translation_to_grid::<GridCellType>(pos);
+        let (new_grid_cell, translation) = settings.translation_to_grid(pos);
         transform.translation = translation;
         if new_grid_cell != *grid_cell {
             *grid_cell = new_grid_cell;

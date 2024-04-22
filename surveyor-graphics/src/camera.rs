@@ -1,24 +1,31 @@
-use bevy::{prelude::*, math::DVec3, input::mouse::{MouseWheel, MouseMotion, MouseScrollUnit}};
-use big_space::{FloatingOriginSettings, FloatingOrigin, GridCell};
+use bevy::{
+    input::mouse::{MouseMotion, MouseScrollUnit, MouseWheel},
+    math::DVec3,
+    prelude::*,
+};
+use big_space::{reference_frame::RootReferenceFrame, FloatingOrigin, GridCell};
 
-
-use crate::{GridCellType, planet::MOON_RADIUS, lander::{Lander, LanderStateUpdate}};
+use crate::{
+    lander::{Lander, LanderStateUpdate},
+    planet::MOON_RADIUS,
+    GridCellType,
+};
 
 pub fn spawn_camera(
     mut commands: Commands,
     _lander_query: Query<(&Lander, &mut GridCell<GridCellType>, &mut Transform)>,
-    settings: Res<FloatingOriginSettings>,
+    settings: Res<RootReferenceFrame<GridCellType>>,
 ) {
     let lander_pos = DVec3::new(MOON_RADIUS + 100e3, 0.0, 0.0);
-    let (_, lander_translation) = settings.translation_to_grid::<GridCellType>(lander_pos);
+    let (_, lander_translation) = settings.translation_to_grid(lander_pos);
 
     let camera_rel_pos: DVec3 = DVec3::new(10.0, 0.0, 0.0);
     let camera_pos: DVec3 = lander_pos + camera_rel_pos;
-    let (grid_cell, camera_translation) = settings.translation_to_grid::<GridCellType>(camera_pos.clone());
-    let camera_transform = Transform::from_translation(camera_translation)
-                                            .looking_at(lander_translation, Vec3::Y);
+    let (grid_cell, camera_translation) = settings.translation_to_grid(camera_pos.clone());
+    let camera_transform =
+        Transform::from_translation(camera_translation).looking_at(lander_translation, Vec3::Y);
 
-     commands.spawn((
+    commands.spawn((
         Camera3dBundle {
             transform: camera_transform.clone(),
             ..default()
@@ -61,20 +68,22 @@ pub fn apply_limits(value: f32, upper_limit: Option<f32>, lower_limit: Option<f3
     new_val
 }
 
-
 /// Pan the camera with middle mouse click, zoom with scroll wheel, orbit with right mouse click.
 pub fn camera_inputs(
     time: Res<Time>,
     mut mouse_wheel_reader: EventReader<MouseWheel>,
     mut mouse_motion_events: EventReader<MouseMotion>,
-    mouse_buttons: Res<Input<MouseButton>>,
-    _keyboard: Res<Input<KeyCode>>,
-    input_mouse: Res<Input<MouseButton>>,
+    mouse_buttons: Res<ButtonInput<MouseButton>>,
+    _keyboard: Res<ButtonInput<KeyCode>>,
+    input_mouse: Res<ButtonInput<MouseButton>>,
     mut cameras: Query<&mut FollowCamera>,
 ) {
     // change input mapping for orbit and panning here
     let orbit_button = MouseButton::Left;
-    let mouse_delta = mouse_motion_events.read().map(|event| event.delta).sum::<Vec2>();
+    let mouse_delta = mouse_motion_events
+        .read()
+        .map(|event| event.delta)
+        .sum::<Vec2>();
 
     let mut rotation_move = Vec2::ZERO;
     let mouse_zoom_sensitivity = 0.2;
@@ -84,8 +93,7 @@ pub fn camera_inputs(
     let mut orbit_button_changed = false;
 
     // Can only control one camera at a time.
-    let mut camera =
-    if let Some(camera) = cameras.iter_mut().next() {
+    let mut camera = if let Some(camera) = cameras.iter_mut().next() {
         camera
     } else {
         return;
@@ -107,15 +115,13 @@ pub fn camera_inputs(
         };
     }
 
-    if mouse_buttons.just_pressed(orbit_button)
-        || mouse_buttons.just_released(orbit_button)
-    {
+    if mouse_buttons.just_pressed(orbit_button) || mouse_buttons.just_released(orbit_button) {
         orbit_button_changed = true;
     }
 
-    use std::f32::consts::{TAU, PI};
+    use std::f32::consts::{PI, TAU};
     let dt = time.delta_seconds();
-    if  orbit_button_changed {
+    if orbit_button_changed {
         let wrapped_beta = (camera.beta % TAU).abs();
         camera.is_upside_down = wrapped_beta > TAU / 4.0 && wrapped_beta < 3.0 * TAU / 4.0;
     }
@@ -159,14 +165,21 @@ pub fn camera_inputs(
 // Receives the lander state update event and updates the graphics
 pub fn sync_camera(
     mut lander_state: EventReader<LanderStateUpdate>,
-    mut camera_query: Query<(&mut Transform, &mut GridCell<GridCellType>, &mut FollowCamera), With<Camera>>,
-    settings: Res<FloatingOriginSettings> )
-{
+    mut camera_query: Query<
+        (
+            &mut Transform,
+            &mut GridCell<GridCellType>,
+            &mut FollowCamera,
+        ),
+        With<Camera>,
+    >,
+    settings: Res<RootReferenceFrame<GridCellType>>,
+) {
     if let Some(lander_state) = lander_state.read().last() {
         let (mut camera_transform, mut camera_cell, camera) = camera_query.single_mut();
 
         let lander_pos = lander_state.pos;
-        let (lander_cell, lander_translation) = settings.translation_to_grid::<GridCellType>(lander_pos);
+        let (lander_cell, lander_translation) = settings.translation_to_grid(lander_pos);
 
         // Rotate the position around focus by yaw and pitch.
         let yaw = Quat::from_rotation_y(camera.alpha);
@@ -183,5 +196,4 @@ pub fn sync_camera(
         // pano.target_radius = 10.0;
         // pano.target_alpha += 0.001;
     }
-
 }
