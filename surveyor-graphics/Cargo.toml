@@ -13,5 +13,5 @@ big_space = "0.6.0"
 surveyor-physics = { path = "../surveyor-physics" }
 surveyor-gnc = { path = "../surveyor-gnc" }
 surveyor-types = { path = "../surveyor-types" }
-bevy-debug-text-overlay = "7.0.0"
+bevy-debug-text-overlay = "8.1.0"
 bevy_screen_diagnostics = "0.4.0"

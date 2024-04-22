@@ -704,6 +704,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "bevy-debug-text-overlay"
+version = "8.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0638988bc8f643ae6bb73a5ceebde9db7d7926904a05e961e4255d0f99408357"
+dependencies = [
+ "bevy 0.13.2",
+]
+
+[[package]]
 name = "bevy_a11y"
 version = "0.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5918,7 +5927,7 @@ name = "surveyor-gnc"
 version = "0.1.0"
 dependencies = [
  "bevy 0.13.2",
- "bevy-debug-text-overlay",
+ "bevy-debug-text-overlay 7.0.0",
  "bevy_app 0.13.2",
  "bevy_ecs 0.13.2",
  "dashmap",
@@ -5934,7 +5943,7 @@ name = "surveyor-graphics"
 version = "0.1.0"
 dependencies = [
  "bevy 0.13.2",
- "bevy-debug-text-overlay",
+ "bevy-debug-text-overlay 8.1.0",
  "bevy_screen_diagnostics",
  "big_space",
  "na",
@@ -5950,7 +5959,7 @@ dependencies = [
  "anise",
  "approx",
  "bevy 0.13.2",
- "bevy-debug-text-overlay",
+ "bevy-debug-text-overlay 7.0.0",
  "bevy_app 0.13.2",
  "bevy_derive 0.13.2",
  "bevy_ecs 0.13.2",
