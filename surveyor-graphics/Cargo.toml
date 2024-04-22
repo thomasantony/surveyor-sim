@@ -14,4 +14,4 @@ surveyor-physics = { path = "../surveyor-physics" }
 surveyor-gnc = { path = "../surveyor-gnc" }
 surveyor-types = { path = "../surveyor-types" }
 bevy-debug-text-overlay = "8.1.0"
-bevy_screen_diagnostics = "0.4.0"
+bevy_screen_diagnostics = "0.5.0"
