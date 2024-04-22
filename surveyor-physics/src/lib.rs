@@ -10,30 +10,30 @@ pub mod models;
 pub mod subsystems;
 
 use hifitime::Epoch;
-pub use surveyor_types::math;
 use surveyor_types::config::Config;
+pub use surveyor_types::math;
 pub mod interfaces;
 
-
+use bevy::{asset::Assets, prelude::AssetApp};
 use bevy_app::prelude::*;
 use bevy_ecs::prelude::*;
 use bevy_enum_filter::prelude::AddEnumFilter;
-use bevy::{prelude::AssetApp, asset::Assets};
 
-use simulation::*;
-use spacecraft::{InitialState, build_spacecraft_entity, do_discrete_update_from_event, DiscreteUpdateEvent};
-use hard_xml::XmlRead;
-use subsystems::Subsystem;
-use universe::{Universe, Ephemerides};
-use bevy_ecs::schedule::IntoSystemConfigs;
 use bevy::asset::AssetServer;
+use bevy_ecs::schedule::IntoSystemConfigs;
+use hard_xml::XmlRead;
+use simulation::*;
+use spacecraft::{
+    build_spacecraft_entity, do_discrete_update_from_event, DiscreteUpdateEvent, InitialState,
+};
+use subsystems::Subsystem;
+use universe::{Ephemerides, Universe};
 
 // Hardocde the timestep for now
 pub const DT: f64 = 0.1; // s
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash, Default, States)]
-pub enum SimulationState
-{
+pub enum SimulationState {
     #[default]
     Paused,
     Running,
@@ -42,8 +42,7 @@ pub enum SimulationState
 }
 
 #[derive(Debug, Clone, Copy, Component, Default)]
-pub struct SimulationTime
-{
+pub struct SimulationTime {
     start_time: Epoch,
     pub time: Epoch,
 }
@@ -72,11 +71,14 @@ impl SimulationTime {
     }
 }
 
-
-pub fn build_sim_ecs(mut commands: Commands, server: Res<AssetServer>, eph_loader: Res<Assets<Ephemerides>>)
-{
+pub fn build_sim_ecs(
+    mut commands: Commands,
+    server: Res<AssetServer>,
+    eph_loader: Res<Assets<Ephemerides>>,
+) {
     // Orbit with: a = 500 km, 0 degree inclination, 0 degree RAAN, 0 degree argument of perigee, 0 degree true anomaly
-    let initial_state: InitialState = InitialState::from_str(include_str!("../initial_state.xml")).unwrap();
+    let initial_state: InitialState =
+        InitialState::from_str(include_str!("../initial_state.xml")).unwrap();
     // Create new spacecraft with engine subsystem
     let spacecraft_config_xml = include_str!("../simulation.xml");
 
@@ -93,7 +95,6 @@ pub fn build_sim_ecs(mut commands: Commands, server: Res<AssetServer>, eph_loade
     commands.insert_resource(initial_state);
 }
 
-
 pub struct SurveyorPhysicsPlugin;
 impl Plugin for SurveyorPhysicsPlugin {
     fn build(&self, app: &mut App) {
@@ -104,41 +105,45 @@ impl Plugin for SurveyorPhysicsPlugin {
             .init_asset_loader::<crate::universe::AlmanacLoader>()
             .add_enum_filter::<Subsystem>()
             .add_event::<DiscreteUpdateEvent>()
-            .add_state::<SimulationState>()
+            .init_state::<SimulationState>()
             .add_event::<SetSimulationRate>()
-
             // Run simulation when we are in the `Running` state
-            .add_systems(Update,
-                (tick_sim_clock.run_if(in_state(SimulationState::Running)),
-                        set_simulation_rate)
+            .add_systems(
+                Update,
+                (
+                    tick_sim_clock.run_if(in_state(SimulationState::Running)),
+                    set_simulation_rate,
+                ),
             )
-            .add_systems(Update,
+            .add_systems(
+                Update,
                 (
                     crate::universe::update_universe,
                     spacecraft::step_spacecraft_model,
                     do_discrete_update_from_event,
                     update_simulation_state_and_time,
-                ).chain().run_if(in_state(SimulationState::Running).and_then(simulation_should_step))
+                )
+                    .chain()
+                    .run_if(in_state(SimulationState::Running).and_then(simulation_should_step)),
             )
             // Pass sensor data to GNC after all the models have been updated
             // and receive actuator events from GNC to be used in next update
-            .add_systems(Update,
+            .add_systems(
+                Update,
                 (
                     crate::interfaces::time_event_generator,
                     crate::interfaces::imu_event_generator,
                     crate::interfaces::star_tracker_event_generator,
                     crate::interfaces::star_sensor_event_generator,
-                    crate::interfaces::rcs_event_receiver
-                ).chain().after(do_discrete_update_from_event)
+                    crate::interfaces::rcs_event_receiver,
+                )
+                    .chain()
+                    .after(do_discrete_update_from_event),
             )
             // Add a Timer that keeps track of time since the simulation started
             // Run `initialize_simulation` when we enter the `Running` state
-            .add_systems(OnEnter(SimulationState::Running),
-                initialize_simulation
-            )
+            .add_systems(OnEnter(SimulationState::Running), initialize_simulation)
             // Reset the simulation to the initial state when we enter the `Resetting` state
-            .add_systems(OnEnter(SimulationState::Resetting),
-                reset_simulation
-            );
+            .add_systems(OnEnter(SimulationState::Resetting), reset_simulation);
     }
 }
